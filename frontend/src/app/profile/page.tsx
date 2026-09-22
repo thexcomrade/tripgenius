@@ -1,0 +1,326 @@
+"use client";
+
+import { useEffect, useRef, useState, ChangeEvent } from "react";
+import ProfileHeader from "../../components/profile/ProfileHeader";
+import ProfileTabs from "../../components/profile/ProfileTabs";
+import ProfileGrid from "../../components/profile/ProfileGrid";
+import ProfileSettingsModal from "../../components/profile/ProfileSettingsModal";
+import EditProfileModal from "../../components/profile/EditProfileModal";
+import { tripService } from "../../services/trip.service";
+
+interface UserProfile {
+  uid: string;
+  tripgenius_id: string;
+  full_name: string;
+  username: string;
+  email: string;
+  bio: string;
+  country: string;
+  profile_image: string;
+  total_trips: number;
+  saved_trips: number;
+  eco_score: number;
+  countries_visited: number;
+  is_verified: boolean;
+  created_at: string;
+  travel_preferences: string[];
+}
+
+interface Achievement {
+  id: number;
+  title: string;
+  icon: string;
+  description: string;
+  unlocked: boolean;
+  progress?: string;
+}
+
+const DEFAULT_ACHIEVEMENTS: Achievement[] = [
+  {
+    id: 1,
+    title: "First Journey",
+    icon: "✈️",
+    description: "Generated your first AI-crafted travel itinerary",
+    unlocked: true,
+  },
+  {
+    id: 2,
+    title: "Eco Explorer",
+    icon: "🌱",
+    description: "Maintained a sustainability score above 75%",
+    unlocked: true,
+  },
+  {
+    id: 3,
+    title: "Highland Trailblazer",
+    icon: "🏔️",
+    description: "Explored scenic hill stations like Munnar or Coorg",
+    unlocked: true,
+  },
+  {
+    id: 4,
+    title: "Budget Architect",
+    icon: "💰",
+    description: "Planned and paced trips within optimal budget tiers",
+    unlocked: false,
+  },
+  {
+    id: 5,
+    title: "Coastal Nomad",
+    icon: "🌊",
+    description: "Planned beach and seaside journeys like Varkala",
+    unlocked: false,
+  },
+  {
+    id: 6,
+    title: "Global Voyager",
+    icon: "🌍",
+    description: "Planned itineraries across multiple regional corridors",
+    unlocked: false,
+  },
+];
+
+function generateTripGeniusId() {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let id = "TG-";
+  for (let i = 0; i < 6; i++) {
+    id += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return id;
+}
+
+function generateUID() {
+  return "user_" + Date.now() + "_" + Math.random().toString(36).substring(2, 8);
+}
+
+export default function ProfilePage() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("trips");
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editProfileOpen, setEditProfileOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [savedTripsList, setSavedTripsList] = useState<any[]>([]);
+
+  const [achievements] = useState<Achievement[]>(DEFAULT_ACHIEVEMENTS);
+
+  const [user, setUser] = useState<UserProfile>({
+    uid: generateUID(),
+    tripgenius_id: generateTripGeniusId(),
+    full_name: "Traveler",
+    username: "voyager",
+    email: "traveler@tripgenius.com",
+    bio: "Passionate globetrotter seeking sustainable routes, hidden mountain viewpoints, and authentic regional culinary traditions.",
+    country: "India",
+    profile_image: "",
+    total_trips: 3,
+    saved_trips: 0,
+    eco_score: 84,
+    countries_visited: 2,
+    is_verified: true,
+    created_at: new Date().toISOString(),
+    travel_preferences: [
+      "Scenic Highlands & Tea Hills",
+      "Eco Tourism & Sustainable",
+      "Local Food & Street Dining",
+      "Photography & Drone Spots",
+    ],
+  });
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
+
+  async function loadProfile() {
+    try {
+      const token = localStorage.getItem("tripgenius_token");
+      const storedUser = localStorage.getItem("tripgenius_user");
+      const image = localStorage.getItem("tripgenius_profile_image");
+      const storedSaved = localStorage.getItem("tripgenius_saved_trips");
+
+      let parsedSaved: any[] = [];
+      if (storedSaved) {
+        try {
+          parsedSaved = JSON.parse(storedSaved);
+          if (Array.isArray(parsedSaved)) {
+            setSavedTripsList(parsedSaved);
+          }
+        } catch {
+          parsedSaved = [];
+        }
+      }
+
+      if (token && storedUser) {
+        const parsed = JSON.parse(storedUser);
+        setIsLoggedIn(true);
+
+        // Fetch statistics if available
+        let liveTotalTrips = parsed.total_trips ?? (parsedSaved.length > 0 ? parsedSaved.length : 3);
+        try {
+          const stats = await tripService.getStatistics();
+          if (stats && typeof stats.total_trips === "number") {
+            liveTotalTrips = stats.total_trips;
+          }
+        } catch {
+          // Keep local fallback
+        }
+
+        setUser({
+          uid: parsed.uid ?? generateUID(),
+          tripgenius_id: parsed.tripgenius_id ?? generateTripGeniusId(),
+          full_name: parsed.full_name || "Traveler",
+          username: parsed.username || "voyager",
+          email: parsed.email || "",
+          bio:
+            parsed.bio ||
+            "Passionate globetrotter seeking sustainable routes, hidden mountain viewpoints, and authentic regional culinary traditions.",
+          country: parsed.country || "India",
+          profile_image: image || parsed.profile_image || "",
+          total_trips: liveTotalTrips,
+          saved_trips: parsedSaved.length,
+          eco_score: parsed.eco_score ?? 84,
+          countries_visited: parsed.countries_visited ?? 2,
+          is_verified: parsed.is_verified ?? true,
+          created_at: parsed.created_at ?? new Date().toISOString(),
+          travel_preferences:
+            parsed.travel_preferences && parsed.travel_preferences.length > 0
+              ? parsed.travel_preferences
+              : [
+                  "Scenic Highlands & Tea Hills",
+                  "Eco Tourism & Sustainable",
+                  "Local Food & Street Dining",
+                  "Photography & Drone Spots",
+                ],
+        });
+      } else {
+        // Fallback for non-logged-in guest visitor viewing their local profile
+        if (storedUser) {
+          const parsed = JSON.parse(storedUser);
+          setUser((prev) => ({
+            ...prev,
+            ...parsed,
+            saved_trips: parsedSaved.length,
+          }));
+        } else {
+          setUser((prev) => ({
+            ...prev,
+            saved_trips: parsedSaved.length,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error loading profile:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function openPhotoPicker() {
+    fileInputRef.current?.click();
+  }
+
+  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const image = e.target?.result as string;
+      setUser((previous) => ({
+        ...previous,
+        profile_image: image,
+      }));
+      localStorage.setItem("tripgenius_profile_image", image);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleProfileSave(updatedProfile: Partial<UserProfile>) {
+    const updatedUser = {
+      ...user,
+      ...updatedProfile,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("tripgenius_user", JSON.stringify(updatedUser));
+  }
+
+  function handleDeleteSavedTrip(id: string) {
+    const updated = savedTripsList.filter((trip) => trip.id !== id);
+    setSavedTripsList(updated);
+    localStorage.setItem("tripgenius_saved_trips", JSON.stringify(updated));
+    setUser((prev) => ({ ...prev, saved_trips: updated.length }));
+  }
+
+  function handleSavePreferences(newPreferences: string[]) {
+    const updatedUser = {
+      ...user,
+      travel_preferences: newPreferences,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("tripgenius_user", JSON.stringify(updatedUser));
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-[75vh] flex flex-col items-center justify-center gap-3">
+        <div className="w-10 h-10 rounded-full border-2 border-sky-400 border-t-transparent animate-spin" />
+        <p className="text-sm font-medium text-slate-400">Loading Traveler Profile...</p>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <main className="min-h-screen py-10 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        <ProfileHeader
+          user={user}
+          onSettingsClick={() => setSettingsOpen(true)}
+          onEditProfileClick={() => setEditProfileOpen(true)}
+          onPhotoClick={openPhotoPicker}
+        />
+
+        <ProfileTabs
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          tripsCount={user.total_trips}
+          savedCount={savedTripsList.length}
+          achievementsCount={achievements.filter((a) => a.unlocked).length}
+        />
+
+        <ProfileGrid
+          activeTab={activeTab}
+          achievements={achievements}
+          totalTrips={user.total_trips}
+          savedTrips={savedTripsList.length}
+          savedTripsList={savedTripsList}
+          onDeleteSavedTrip={handleDeleteSavedTrip}
+          userPreferences={user.travel_preferences}
+          onSavePreferences={handleSavePreferences}
+        />
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handlePhotoUpload}
+          className="hidden"
+        />
+      </main>
+
+      <ProfileSettingsModal
+        isOpen={settingsOpen}
+        isLoggedIn={isLoggedIn}
+        onClose={() => setSettingsOpen(false)}
+        onChangePhoto={openPhotoPicker}
+      />
+
+      <EditProfileModal
+        isOpen={editProfileOpen}
+        onClose={() => setEditProfileOpen(false)}
+        user={user}
+        onSave={handleProfileSave}
+      />
+    </>
+  );
+}
