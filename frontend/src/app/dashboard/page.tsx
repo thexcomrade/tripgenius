@@ -52,6 +52,7 @@ export default function DashboardPage() {
   const [recentTrips, setRecentTrips] = useState<SavedTripSummary[]>([]);
   const [promptInput, setPromptInput] = useState("");
   const [loading, setLoading] = useState(true);
+  const [destFilter, setDestFilter] = useState<"all" | "india" | "abroad">("all");
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -130,31 +131,83 @@ export default function DashboardPage() {
   const curatedDestinations = [
     {
       name: "Munnar",
-      state: "Kerala",
+      region: "india",
+      state: "Kerala, India",
       days: "3-4 Days",
       image: "/destinations/munnar.jpg",
       eco: "92/100",
     },
     {
-      name: "Varkala",
-      state: "Kerala",
+      name: "Hampi",
+      region: "india",
+      state: "Karnataka, India",
+      days: "3-4 Days",
+      image: "/destinations/hampi.jpg",
+      eco: "90/100",
+    },
+    {
+      name: "Gokarna",
+      region: "india",
+      state: "Karnataka, India",
+      days: "2-4 Days",
+      image: "/destinations/gokarna.jpg",
+      eco: "87/100",
+    },
+    {
+      name: "Thekkady",
+      region: "india",
+      state: "Kerala, India",
       days: "2-3 Days",
-      image: "/destinations/varkala.jpg",
-      eco: "85/100",
+      image: "/destinations/thekkady.jpg",
+      eco: "96/100",
+    },
+    {
+      name: "Kovalam",
+      region: "india",
+      state: "Kerala, India",
+      days: "2-3 Days",
+      image: "/destinations/kovalam.jpg",
+      eco: "86/100",
     },
     {
       name: "Coorg",
-      state: "Karnataka",
+      region: "india",
+      state: "Karnataka, India",
       days: "3-5 Days",
       image: "/destinations/coorg.jpg",
       eco: "94/100",
     },
     {
-      name: "Ooty",
-      state: "Tamil Nadu",
-      days: "3-4 Days",
-      image: "/destinations/ooty.jpg",
-      eco: "88/100",
+      name: "Paris",
+      region: "abroad",
+      state: "France",
+      days: "4-6 Days",
+      image: "/destinations/paris.jpg",
+      eco: "84/100",
+    },
+    {
+      name: "Tokyo",
+      region: "abroad",
+      state: "Japan",
+      days: "5-7 Days",
+      image: "/destinations/tokyo.jpg",
+      eco: "89/100",
+    },
+    {
+      name: "Bali",
+      region: "abroad",
+      state: "Indonesia",
+      days: "4-6 Days",
+      image: "/destinations/bali.jpg",
+      eco: "91/100",
+    },
+    {
+      name: "Dubai",
+      region: "abroad",
+      state: "United Arab Emirates",
+      days: "3-5 Days",
+      image: "/destinations/dubai.jpg",
+      eco: "80/100",
     },
   ];
 

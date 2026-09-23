@@ -136,10 +136,10 @@ const DESTINATIONS: DestinationItem[] = [
     id: 9,
     name: "Hampi",
     location: "Karnataka, India",
-    image: "/destinations/ooty.jpg",
+    image: "/destinations/hampi.jpg",
     category: "Heritage & Royal",
     description:
-      "Breathtaking boulder-strewn landscape with ancient Vijayanagara ruins and stone temples.",
+      "Breathtaking boulder-strewn landscape with ancient Vijayanagara ruins and stone chariot temples.",
     rating: 4.8,
     season: "Nov – Feb",
     budgetEst: "₹9,500",
@@ -148,7 +148,7 @@ const DESTINATIONS: DestinationItem[] = [
     id: 10,
     name: "Gokarna",
     location: "Karnataka, India",
-    image: "/destinations/varkala.jpg",
+    image: "/destinations/gokarna.jpg",
     category: "Beaches",
     description:
       "Untouched crescent beaches, Om beach trekking, and spiritual coastal sanctuaries.",
@@ -160,25 +160,75 @@ const DESTINATIONS: DestinationItem[] = [
     id: 11,
     name: "Thekkady",
     location: "Kerala, India",
-    image: "/destinations/munnar.jpg",
+    image: "/destinations/thekkady.jpg",
     category: "Nature & Wildlife",
     description:
-      "Periyar National Park boat safaris, spice gardens, and elephant reserves.",
+      "Periyar National Park boat safaris, spice gardens, and wild elephant reserves.",
     rating: 4.8,
     season: "Sep – Mar",
-    budgetEst: "₹11,000",
+    budgetEst: "₹7,500",
   },
   {
     id: 12,
     name: "Kovalam",
     location: "Kerala, India",
-    image: "/destinations/varkala.jpg",
+    image: "/destinations/kovalam.jpg",
     category: "Beaches",
     description:
-      "Lighthouse beach with golden sands, shallow waters, and seaside ayurvedic retreats.",
+      "Iconic lighthouse beach with golden sands, shallow waters, and seaside ayurvedic retreats.",
     rating: 4.7,
     season: "Nov – Mar",
     budgetEst: "₹10,500",
+  },
+  {
+    id: 13,
+    name: "Paris",
+    location: "Île-de-France, France",
+    image: "/destinations/paris.jpg",
+    category: "International / Abroad",
+    description:
+      "The City of Light — illuminated Eiffel Tower, Seine river cruises, world-class art, and bistros.",
+    rating: 4.9,
+    season: "Apr – Oct",
+    budgetEst: "₹65,000",
+    featured: true,
+  },
+  {
+    id: 14,
+    name: "Tokyo",
+    location: "Kanto, Japan",
+    image: "/destinations/tokyo.jpg",
+    category: "International / Abroad",
+    description:
+      "Futuristic metropolis meets ancient Edo culture — Senso-ji temple, cherry blossoms, and neon culinary lanes.",
+    rating: 4.9,
+    season: "Mar – May / Sep – Nov",
+    budgetEst: "₹75,000",
+    featured: true,
+  },
+  {
+    id: 15,
+    name: "Bali",
+    location: "Lesser Sunda, Indonesia",
+    image: "/destinations/bali.jpg",
+    category: "International / Abroad",
+    description:
+      "Island of the Gods — dramatic Tanah Lot sea temples, lush jungle terraces, and tropical surf retreats.",
+    rating: 4.8,
+    season: "Apr – Oct",
+    budgetEst: "₹38,000",
+  },
+  {
+    id: 16,
+    name: "Dubai",
+    location: "Dubai, United Arab Emirates",
+    image: "/destinations/dubai.jpg",
+    category: "International / Abroad",
+    description:
+      "Futuristic architectural marvels — soaring Burj Khalifa, desert luxury safaris, and illuminated yacht marinas.",
+    rating: 4.8,
+    season: "Nov – Mar",
+    budgetEst: "₹45,000",
   },
 ];
 
@@ -189,6 +239,7 @@ const CATEGORIES = [
   "Backwaters",
   "Heritage & Royal",
   "Nature & Wildlife",
+  "International / Abroad",
 ];
 
 export default function ExplorePage() {

@@ -84,10 +84,13 @@ class AIService:
         cost = cost_data or self.estimate_trip_cost(
             budget, duration_days, travelers_count, travel_style
         )
-        acc_per_night = round(
-            cost["accommodation_cost"] / max(1, duration_days - 1), 2
-        )
-        food_per_day = round(cost["food_cost"] / max(1, duration_days), 2)
+        nights = max(1, duration_days - 1)
+        travelers = max(1, travelers_count)
+        acc_per_night = round(cost["accommodation_cost"] / nights, 2)
+        food_per_person_day = round(cost["food_cost"] / (duration_days * travelers), 2)
+        food_per_meal = round(food_per_person_day / 3, 2)
+        transit_per_day = round(cost["transportation_cost"] / duration_days, 2)
+        activities_per_day = round(cost["miscellaneous_cost"] / duration_days, 2)
 
         interests_str = (
             ", ".join(interests)
@@ -95,30 +98,32 @@ class AIService:
             else "Sightseeing, Local Culture, Scenic Views"
         )
 
-        return f"""You are TripGenius AI, an elite travel architect and regional specialist.
-Create an inspiring, highly realistic, and budget-tailored travel plan.
+        return f"""You are TripGenius AI, an elite travel architect and real-world expense specialist.
+Create an inspiring, highly realistic, and accurate real-money travel and expense plan.
 
 DESTINATION & TRAVEL DETAILS:
 - Destination: {destination}
-- Duration: {duration_days} Days ({max(1, duration_days - 1)} Nights)
+- Duration: {duration_days} Days ({nights} Nights)
 - Travelers: {travelers_count} Traveler(s)
 - Travel Style: {travel_style or "Leisure"}
 - Transit Mode: {transportation_mode or "Private Car / Taxi"}
 - Preferred Stay: {preferred_accommodation or "Comfort Hotel"}
 - Traveler Interests: {interests_str}
 
-FINANCIAL BUDGET ARCHITECTURE (TOTAL BUDGET: ₹{budget:,.0f}):
-- Daily Total Allowance: ~₹{cost['cost_per_day']:,.0f} / day for all {travelers_count} travelers (~₹{cost['cost_per_person_day']:,.0f} / person / day)
-- Stays & Lodging Budget: ₹{cost['accommodation_cost']:,.0f} total (~₹{acc_per_night:,.0f} / night for room)
-- Food & Dining Budget: ₹{cost['food_cost']:,.0f} total (~₹{food_per_day:,.0f} / day for {travelers_count} people)
-- Transit & Sightseeing: ₹{cost['transportation_cost']:,.0f} total
-- Activities & Miscellaneous: ₹{cost['miscellaneous_cost']:,.0f} total
+REALISTIC EXPENSE ARCHITECTURE (ALL FIGURES IN REAL MARKET INR):
+- Total Allocated Budget: ₹{budget:,.0f} for all {travelers_count} traveler(s) over {duration_days} days.
+- Daily Total Allowance: ~₹{cost['cost_per_day']:,.0f} / day (~₹{cost['cost_per_person_day']:,.0f} / person / day).
+- Stays & Lodging Budget: Total ₹{cost['accommodation_cost']:,.0f} (~₹{acc_per_night:,.0f} / room / night for {nights} nights).
+- Food & Dining Budget: Total ₹{cost['food_cost']:,.0f} (~₹{food_per_person_day:,.0f} / person / day, ~₹{food_per_meal:,.0f} per main meal / person).
+- Transit & Sightseeing: Total ₹{cost['transportation_cost']:,.0f} (~₹{transit_per_day:,.0f} / day).
+- Activities, Passes & Contingency: Total ₹{cost['miscellaneous_cost']:,.0f} (~₹{activities_per_day:,.0f} / day).
 
-BUDGET-ALIGNED SYNTHESIS RULES:
-1. Every day in 'ai_itinerary' MUST contain specific, realistic morning, afternoon, and evening activities in {destination} that fit this exact budget tier.
-2. In 'recommended_hotels', provide 3 specific real/realistic hotel or homestay names in {destination} that strictly match ~₹{acc_per_night:,.0f}/night.
-3. In 'recommended_restaurants', suggest authentic dining spots in {destination} fitting the ~₹{food_per_day:,.0f}/day food budget.
-4. Include authentic local attractions, scenic viewpoints, eco-friendly tips, and regional culinary dishes.
+STRICT REAL MONEY EXPENSE RULES (REAL-WORLD PRICING):
+1. REALISTIC EXPENSE TAGS IN ITINERARY: In 'ai_itinerary', every morning, afternoon, and evening plan MUST state explicit, realistic costs or entry fees where money is spent (e.g. 'Morning: Visit Eravikulam National Park [Entry fee ~₹345/person]. Afternoon: Lunch at Rapsy Restaurant [~₹250/meal]. Evening: Stroll through local tea bazaar [Free]'). If an activity has no fee, label it '[Free entry]'.
+2. REALISTIC HOTEL NAMES & TARIFFS: In 'recommended_hotels', provide 3 real/authentic hotels or homestays in {destination} that accurately cost ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (~₹X,XXX/night) — key highlight'.
+3. REALISTIC DINING SPOTS & MEAL PRICES: In 'recommended_restaurants', provide 3 real local eateries in {destination} matching ~₹{food_per_meal:,.0f}/meal. Format each string as: 'Restaurant Name (~₹XXX/person) — signature dish'.
+4. REALISTIC LOCAL ATTRACTIONS: Provide genuine attractions with up-to-date entry fees.
+5. FINANCIAL INTEGRITY: The daily expense pacing must realistically stay within the user's total budget of ₹{budget:,.0f}.
 
 Return valid JSON ONLY matching this exact schema:
 {{
@@ -129,16 +134,16 @@ Return valid JSON ONLY matching this exact schema:
       "day": 1,
       "title": "Arrival & Initial Highlights",
       "destination": "{destination}",
-      "morning": "Detailed morning plan, check-in, viewpoint",
-      "afternoon": "Detailed afternoon activity and lunch suggestion",
-      "evening": "Detailed sunset or evening walk, dinner spot",
+      "morning": "Detailed morning plan, check-in, [Est. cost in brackets]",
+      "afternoon": "Detailed afternoon activity, lunch spot [Est. cost in brackets]",
+      "evening": "Detailed evening activity, dinner spot [Est. cost in brackets]",
       "activities": ["Activity 1", "Activity 2"]
     }}
   ],
   "attractions": ["Attraction 1", "Attraction 2", "Attraction 3", "Attraction 4"],
   "activities": ["Activity 1", "Activity 2", "Activity 3"],
-  "recommended_hotels": ["Hotel 1", "Hotel 2", "Hotel 3"],
-  "recommended_restaurants": ["Restaurant 1", "Restaurant 2", "Restaurant 3"],
+  "recommended_hotels": ["Hotel 1 (~₹X,XXX/night)", "Hotel 2 (~₹X,XXX/night)", "Hotel 3 (~₹X,XXX/night)"],
+  "recommended_restaurants": ["Restaurant 1 (~₹XXX/person)", "Restaurant 2 (~₹XXX/person)", "Restaurant 3 (~₹XXX/person)"],
   "local_cuisines": ["Dish 1", "Dish 2", "Dish 3"],
   "beverages_to_try": ["Beverage 1", "Beverage 2"],
   "packing_checklist": ["Item 1", "Item 2", "Item 3", "Item 4"],
@@ -394,47 +399,60 @@ Return JSON.
     # Hotel Generator
     # ==================================================
 
-    def generate_hotels(self, destination: str, budget: float) -> list[str]:
+    def generate_hotels(
+        self, destination: str, budget: float, duration_days: int = 3
+    ) -> list[str]:
+        nights = max(1, duration_days - 1)
+        acc_per_night = max(500, round((budget * 0.40) / nights))
 
-        if budget <= 10000:
+        if budget <= 15000:
             return [
-                f"{destination} Budget Inn",
-                f"{destination} Backpackers Hostel",
-                f"{destination} Guest House",
+                f"{destination} Backpackers & Travelers Lodge (~₹{acc_per_night:,.0f}/night) — Clean shared/private dorms, free WiFi",
+                f"{destination} Cozy Eco Homestay (~₹{round(acc_per_night * 0.9):,.0f}/night) — Traditional home-cooked meals",
+                f"{destination} Green Heritage Inn (~₹{round(acc_per_night * 1.1):,.0f}/night) — Central location near bus station",
             ]
 
-        if budget <= 30000:
+        if budget <= 40000:
             return [
-                f"{destination} Eco Residency",
-                f"{destination} Nature Resort",
-                f"{destination} Comfort Stay",
+                f"{destination} Nature View Resort & Suites (~₹{acc_per_night:,.0f}/night) — Balcony mountain/garden view",
+                f"{destination} Comfort Heritage Residency (~₹{round(acc_per_night * 0.95):,.0f}/night) — Solar-powered, breakfast included",
+                f"{destination} Valley Boutique Hotel (~₹{round(acc_per_night * 1.05):,.0f}/night) — Modern amenities & travel desk",
             ]
 
-        if budget <= 60000:
+        if budget <= 80000:
             return [
-                f"{destination} Premium Resort",
-                f"{destination} Hill View Resort",
-                f"{destination} Boutique Hotel",
+                f"{destination} Plantation Resort & Spa (~₹{acc_per_night:,.0f}/night) — Infinity pool & private cottage",
+                f"{destination} Premium Valley Retreat (~₹{round(acc_per_night * 0.92):,.0f}/night) — Ayurveda center & guided nature walks",
+                f"{destination} Grand Heritage Hotel (~₹{round(acc_per_night * 1.08):,.0f}/night) — Royal architecture & multi-cuisine restaurant",
             ]
 
         return [
-            f"{destination} Luxury Resort",
-            f"{destination} Grand Palace Hotel",
-            f"{destination} Five Star Retreat",
+            f"{destination} 5-Star Luxury Palace & Spa (~₹{acc_per_night:,.0f}/night) — Private butler & panoramic vistas",
+            f"{destination} Exclusive Villa Sanctuary (~₹{round(acc_per_night * 0.95):,.0f}/night) — Heated pool & personal chef",
+            f"{destination} Royal Heritage Club & Resort (~₹{round(acc_per_night * 1.1):,.0f}/night) — Presidential suites & experiential tours",
         ]
 
     # ==================================================
     # Restaurant Generator
     # ==================================================
 
-    def generate_restaurants(self, destination: str) -> list[str]:
+    def generate_restaurants(
+        self,
+        destination: str,
+        budget: float = 25000.0,
+        duration_days: int = 3,
+        travelers_count: int = 1,
+    ) -> list[str]:
+        days = max(1, duration_days)
+        travelers = max(1, travelers_count)
+        meal_cost = max(120, round((budget * 0.25) / (days * travelers * 3)))
 
         return [
-            f"{destination} Spice Garden",
-            f"{destination} Traditional Kitchen",
-            f"{destination} Family Restaurant",
-            f"{destination} Food Court",
-            f"{destination} Heritage Dining",
+            f"{destination} Traditional Spice Kitchen (~₹{meal_cost:,.0f}/person) — Authentic regional thalis",
+            f"{destination} Harvest Garden Bistro (~₹{round(meal_cost * 1.25):,.0f}/person) — Farm-to-table organic dining",
+            f"{destination} Heritage Street Cafe (~₹{round(meal_cost * 0.85):,.0f}/person) — Artisanal snacks & local brew",
+            f"{destination} Royal Cuisine Dining (~₹{round(meal_cost * 1.5):,.0f}/person) — Classic fine-dining spread",
+            f"{destination} Viewpoint Travelers Dhaba (~₹{round(meal_cost * 0.75):,.0f}/person) — Comfort wholesome meals",
         ]
 
     # ==================================================
@@ -679,14 +697,22 @@ Return JSON.
     # ==================================================
 
     def generate_day_wise_itinerary(
-        self, destination: str, duration_days: int, interests: list[str]
+        self,
+        destination: str,
+        duration_days: int,
+        interests: list[str],
+        budget: float = 25000.0,
+        travelers_count: int = 1,
     ) -> list[dict[str, Any]]:
-
         activities = self.generate_activities(interests)
-
         itinerary = []
-
         activity_index = 0
+
+        days = max(1, duration_days)
+        travelers = max(1, travelers_count)
+        meal_cost = max(120, round((budget * 0.25) / (days * travelers * 3)))
+        transit_cost = max(150, round((budget * 0.20) / days))
+        activity_cost = max(100, round((budget * 0.15) / days))
 
         for day in range(1, duration_days + 1):
             day_plan = {
@@ -699,35 +725,49 @@ Return JSON.
             }
 
             if day == 1:
-                day_plan["title"] = "Arrival & Exploration"
-
-                day_plan["morning"] = "Arrival and hotel check-in"
-
-                day_plan["afternoon"] = "Local sightseeing"
-
-                day_plan["evening"] = "Relax and explore local markets"
+                day_plan["title"] = "Arrival & Cultural Orientation"
+                day_plan["morning"] = (
+                    f"Arrival in {destination}, transfer to stay [Transit ~₹{transit_cost:,.0f}] "
+                    f"and hotel check-in [Free entry]"
+                )
+                day_plan["afternoon"] = (
+                    f"Orientation walk and local regional lunch (~₹{meal_cost:,.0f}/person) "
+                    f"followed by central viewpoint [Free entry]"
+                )
+                day_plan["evening"] = (
+                    f"Sunset stroll through historic marketplace; dinner at traditional dining spot "
+                    f"(~₹{meal_cost:,.0f}/person)"
+                )
 
             elif day == duration_days:
-                day_plan["title"] = "Departure Day"
-
-                day_plan["morning"] = "Breakfast and souvenir shopping"
-
-                day_plan["afternoon"] = "Visit nearby attraction"
-
-                day_plan["evening"] = "Departure"
+                day_plan["title"] = "Farewell & Departure"
+                day_plan["morning"] = (
+                    f"Regional breakfast (~₹{max(80, round(meal_cost * 0.6)):,.0f}/person) "
+                    f"followed by handicraft & spice shopping [Free entry / Self-funded]"
+                )
+                day_plan["afternoon"] = (
+                    f"Final scenic photography stop at landmark viewpoint "
+                    f"[Entry pass ~₹{activity_cost:,.0f}]"
+                )
+                day_plan["evening"] = (
+                    f"Check-out and onward departure transfer [Transit ~₹{transit_cost:,.0f}]"
+                )
 
             else:
-                morning_activity = activities[activity_index % len(activities)]
+                morning_act = activities[activity_index % len(activities)]
+                afternoon_act = activities[(activity_index + 1) % len(activities)]
+                evening_act = activities[(activity_index + 2) % len(activities)]
 
-                afternoon_activity = activities[(activity_index + 1) % len(activities)]
-
-                evening_activity = activities[(activity_index + 2) % len(activities)]
-
-                day_plan["morning"] = morning_activity
-
-                day_plan["afternoon"] = afternoon_activity
-
-                day_plan["evening"] = evening_activity
+                day_plan["title"] = f"Day {day}: Exploration & Natural Highlights"
+                day_plan["morning"] = (
+                    f"{morning_act} [Est. ticket & guide ~₹{activity_cost:,.0f}/person]"
+                )
+                day_plan["afternoon"] = (
+                    f"{afternoon_act} with authentic regional lunch stop (~₹{meal_cost:,.0f}/person)"
+                )
+                day_plan["evening"] = (
+                    f"{evening_act} followed by evening dinner tasting (~₹{meal_cost:,.0f}/person)"
+                )
 
                 activity_index += 3
 
@@ -850,9 +890,11 @@ Return JSON.
 
         activities = self.generate_activities(interests)
 
-        hotels = self.generate_hotels(destination, budget)
+        hotels = self.generate_hotels(destination, budget, duration_days)
 
-        restaurants = self.generate_restaurants(destination)
+        restaurants = self.generate_restaurants(
+            destination, budget, duration_days, travelers_count
+        )
 
         cuisines = self.generate_local_cuisines(destination)
 
@@ -882,7 +924,7 @@ Return JSON.
         eco_recommendations = self.generate_eco_recommendations()
 
         itinerary = self.generate_day_wise_itinerary(
-            destination, duration_days, interests
+            destination, duration_days, interests, budget, travelers_count
         )
 
         destination_profile = recommendation_context.get("destination_profile")
