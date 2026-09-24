@@ -24,6 +24,7 @@ import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import { GlassCard, SectionHeader } from "../../components/ui/Card";
 import tripService from "../../services/trip.service";
+import { parseDestinationQuery } from "../../utils/queryParser";
 
 const POPULAR_DESTINATIONS = [
   "Munnar",
@@ -190,8 +191,20 @@ function PlannerContent() {
     }
 
     const paramDest = searchParams?.get("destination");
+    const paramDuration = searchParams?.get("duration");
+
     if (paramDest) {
-      setDestination(paramDest);
+      const parsed = parseDestinationQuery(paramDest);
+      setDestination(parsed.destination || paramDest);
+      if (paramDuration) {
+        const d = parseInt(paramDuration);
+        if (!isNaN(d) && d > 0) setDurationDays(d);
+      } else if (parsed.isCustomDuration) {
+        setDurationDays(parsed.duration);
+      }
+    } else if (paramDuration) {
+      const d = parseInt(paramDuration);
+      if (!isNaN(d) && d > 0) setDurationDays(d);
     }
   }, [router, searchParams]);
 
@@ -737,6 +750,8 @@ function PlannerContent() {
                         textAlign: "center",
                         fontSize: "1.2rem",
                         fontWeight: 700,
+                        MozAppearance: "textfield",
+                        WebkitAppearance: "none",
                       }}
                     />
                     <button
@@ -800,24 +815,26 @@ function PlannerContent() {
                     <input
                       type="number"
                       min="1"
-                      max="20"
+                      max="500"
                       value={travelersCount}
-                      onChange={(e) =>
-                        setTravelersCount(
-                          Math.max(1, Math.min(20, Number(e.target.value))),
-                        )
-                      }
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setTravelersCount(isNaN(val) ? 1 : Math.max(1, Math.min(500, val)));
+                      }}
                       className="input-base"
                       style={{
                         textAlign: "center",
                         fontSize: "1.2rem",
                         fontWeight: 700,
+                        width: "100px",
+                        MozAppearance: "textfield",
+                        WebkitAppearance: "none",
                       }}
                     />
                     <button
                       type="button"
                       onClick={() =>
-                        setTravelersCount(Math.min(20, travelersCount + 1))
+                        setTravelersCount(Math.min(500, travelersCount + 1))
                       }
                       style={{
                         width: "42px",
@@ -833,6 +850,68 @@ function PlannerContent() {
                       +
                     </button>
                   </div>
+
+                  {/* Quick Select Preset Pills (including College & Mega Tours) */}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "6px",
+                      marginTop: "10px",
+                    }}
+                  >
+                    {[
+                      { label: "Solo (1)", count: 1 },
+                      { label: "Couple (2)", count: 2 },
+                      { label: "Friends (6)", count: 6 },
+                      { label: "Group (15)", count: 15 },
+                      { label: "🎓 College (50)", count: 50 },
+                      { label: "🚌 Mega Tour (100+)", count: 100 },
+                    ].map((preset) => (
+                      <button
+                        key={preset.count}
+                        type="button"
+                        onClick={() => setTravelersCount(preset.count)}
+                        style={{
+                          fontSize: "0.75rem",
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          border:
+                            travelersCount === preset.count
+                              ? "1px solid #38BDF8"
+                              : "1px solid rgba(255, 255, 255, 0.12)",
+                          background:
+                            travelersCount === preset.count
+                              ? "rgba(14, 165, 233, 0.2)"
+                              : "rgba(255, 255, 255, 0.04)",
+                          color:
+                            travelersCount === preset.count
+                              ? "#38BDF8"
+                              : "#94A3B8",
+                          cursor: "pointer",
+                          fontWeight: travelersCount === preset.count ? 700 : 500,
+                        }}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {travelersCount >= 30 && (
+                    <div
+                      style={{
+                        marginTop: "8px",
+                        padding: "6px 10px",
+                        borderRadius: "8px",
+                        background: "rgba(14, 165, 233, 0.1)",
+                        border: "1px solid rgba(14, 165, 233, 0.25)",
+                        fontSize: "0.78rem",
+                        color: "#38BDF8",
+                      }}
+                    >
+                      🎓 <b>Large Group / College Trip Mode:</b> Accommodations & transport will auto-scale for bulk coach fleets and group stays.
+                    </div>
+                  )}
                 </div>
               </div>
 

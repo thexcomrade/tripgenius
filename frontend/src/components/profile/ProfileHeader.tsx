@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
-  Camera,
   Settings,
   Edit3,
   Sparkles,
@@ -39,14 +38,13 @@ interface ProfileHeaderProps {
   user: UserProfile;
   onSettingsClick: () => void;
   onEditProfileClick: () => void;
-  onPhotoClick: () => void;
+  onPhotoClick?: () => void;
 }
 
 export default function ProfileHeader({
   user,
   onSettingsClick,
   onEditProfileClick,
-  onPhotoClick,
 }: ProfileHeaderProps) {
   const [copied, setCopied] = useState(false);
 
@@ -58,173 +56,352 @@ export default function ProfileHeader({
     }
   };
 
-  // Humanize eco badge rating
   const getEcoRank = (score: number) => {
     if (score >= 80) return { label: "Eco Sentinel", color: "#10B981" };
     if (score >= 60) return { label: "Green Traveler", color: "#14B8A6" };
     return { label: "Conscious Explorer", color: "#38BDF8" };
   };
 
-  const ecoRank = getEcoRank(user.eco_score || 72);
+  const ecoRank = getEcoRank(user.eco_score || 92);
+
+  // Compute clean initials e.g. "SB" for Sivya Babu
+  const getInitials = (name: string) => {
+    const parts = name.trim().split(" ");
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase() || "SB";
+  };
 
   return (
-    <section className="w-full max-w-6xl mx-auto mb-10">
+    <section style={{ width: "100%", maxWidth: "1200px", margin: "0 auto 36px" }}>
       {/* Background Banner with Ambient Glow */}
       <div
-        className="relative overflow-hidden rounded-3xl border border-white/10 p-8 sm:p-10"
         style={{
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: "28px",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          padding: "36px",
           background:
-            "linear-gradient(135deg, rgba(15, 23, 42, 0.90) 0%, rgba(11, 17, 32, 0.95) 100%)",
+            "linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(11, 17, 32, 0.96) 100%)",
           backdropFilter: "blur(24px)",
           WebkitBackdropFilter: "blur(24px)",
-          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.4)",
+          boxShadow: "0 20px 50px rgba(0, 0, 0, 0.45)",
         }}
       >
         {/* Subtle Ambient Radial Accents */}
         <div
-          className="absolute -top-24 -right-24 w-80 h-80 rounded-full pointer-events-none opacity-25"
           style={{
+            position: "absolute",
+            top: "-100px",
+            right: "-100px",
+            width: "320px",
+            height: "320px",
+            borderRadius: "50%",
+            pointerEvents: "none",
+            opacity: 0.25,
             background: "radial-gradient(circle, #0EA5E9 0%, transparent 70%)",
             filter: "blur(50px)",
           }}
         />
         <div
-          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full pointer-events-none opacity-20"
           style={{
+            position: "absolute",
+            bottom: "-100px",
+            left: "-100px",
+            width: "320px",
+            height: "320px",
+            borderRadius: "50%",
+            pointerEvents: "none",
+            opacity: 0.20,
             background: "radial-gradient(circle, #10B981 0%, transparent 70%)",
             filter: "blur(50px)",
           }}
         />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-8">
-          {/* AVATAR WITH INTERACTIVE CAMERA OVERLAY */}
-          <div className="relative group">
+        <div
+          style={{
+            position: "relative",
+            zIndex: 10,
+            display: "flex",
+            flexDirection: "row",
+            alignItems: "flex-start",
+            gap: "32px",
+            flexWrap: "wrap",
+          }}
+        >
+          {/* AVATAR WITH PHOTO UPLOAD */}
+          <div style={{ position: "relative", flexShrink: 0 }}>
             <div
-              className="w-32 h-32 sm:w-36 sm:h-36 rounded-full overflow-hidden flex items-center justify-center p-1"
               style={{
+                width: "130px",
+                height: "130px",
+                borderRadius: "50%",
+                padding: "3px",
                 background:
                   "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 50%, #10B981 100%)",
-                boxShadow: "0 0 25px rgba(14, 165, 233, 0.35)",
+                boxShadow: "0 0 30px rgba(14, 165, 233, 0.40)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <div className="w-full h-full rounded-full overflow-hidden bg-slate-900 flex items-center justify-center">
+              <div
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: "50%",
+                  overflow: "hidden",
+                  background: "#0F172A",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
                 {user.profile_image ? (
                   <img
                     src={user.profile_image}
                     alt={user.full_name}
-                    className="w-full h-full object-cover"
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
                   />
                 ) : (
-                  <span className="text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-tr from-sky-400 to-teal-200">
-                    {(user.full_name || "T").charAt(0).toUpperCase()}
+                  <span
+                    style={{
+                      fontSize: "2.4rem",
+                      fontWeight: 900,
+                      background: "linear-gradient(135deg, #38BDF8 0%, #34D399 100%)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                      letterSpacing: "1px",
+                    }}
+                  >
+                    {getInitials(user.full_name || "Sivya Babu")}
                   </span>
                 )}
               </div>
             </div>
-
-            {/* Photo Upload Floating Button */}
-            <button
-              onClick={onPhotoClick}
-              title="Upload new profile picture"
-              className="absolute bottom-1 right-1 p-2.5 rounded-full bg-sky-500 hover:bg-sky-400 text-white shadow-lg transition-all transform hover:scale-110 active:scale-95 border-2 border-slate-900 cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-            </button>
           </div>
 
           {/* USER INFO & METRICS */}
-          <div className="flex-1 text-center md:text-left">
+          <div style={{ flex: 1, minWidth: "280px" }}>
             {/* TOP ROW: Name + Verified + Action Buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-3">
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "16px",
+                flexWrap: "wrap",
+                marginBottom: "12px",
+              }}
+            >
               <div>
-                <div className="flex items-center justify-center md:justify-start gap-2.5 flex-wrap">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-white tracking-tight">
-                    {user.full_name || "Traveler"}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    flexWrap: "wrap",
+                  }}
+                >
+                  <h1
+                    style={{
+                      fontSize: "clamp(1.6rem, 2.5vw, 2.1rem)",
+                      fontWeight: 800,
+                      color: "#FFFFFF",
+                      margin: 0,
+                      letterSpacing: "-0.5px",
+                    }}
+                  >
+                    {user.full_name || "Sivya Babu"}
                   </h1>
 
                   <span
-                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
                     style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      fontSize: "0.75rem",
+                      fontWeight: 700,
                       background: "rgba(14, 165, 233, 0.15)",
                       color: "#38BDF8",
-                      border: "1px solid rgba(14, 165, 233, 0.3)",
+                      border: "1px solid rgba(14, 165, 233, 0.35)",
                     }}
                   >
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-400" />
+                    <ShieldCheck size={14} color="#38BDF8" />
                     Verified Traveler
                   </span>
                 </div>
 
-                <div className="flex items-center justify-center md:justify-start gap-3 mt-1 text-sm text-slate-400">
-                  <span>@{user.username || "traveler"}</span>
-                  <span className="text-slate-600">•</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    marginTop: "6px",
+                    fontSize: "0.88rem",
+                    color: "#94A3B8",
+                  }}
+                >
+                  <span>@{user.username || "sivyababu"}</span>
+                  <span style={{ color: "#475569" }}>•</span>
                   <button
+                    type="button"
                     onClick={handleCopyId}
-                    className="inline-flex items-center gap-1.5 text-xs font-mono px-2 py-0.5 rounded bg-slate-800/80 hover:bg-slate-700/80 text-sky-400 border border-white/5 transition-colors cursor-pointer"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.78rem",
+                      fontFamily: "monospace",
+                      padding: "3px 8px",
+                      borderRadius: "6px",
+                      background: "rgba(30, 41, 59, 0.8)",
+                      color: "#38BDF8",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      cursor: "pointer",
+                    }}
                     title="Click to copy Passport ID"
                   >
-                    <span>{user.tripgenius_id || "TG-VOYAGER"}</span>
+                    <span>{user.tripgenius_id || "TG-SB8842"}</span>
                     {copied ? (
-                      <Check className="w-3 h-3 text-emerald-400" />
+                      <Check size={12} color="#34D399" />
                     ) : (
-                      <Copy className="w-3 h-3 text-slate-400" />
+                      <Copy size={12} color="#94A3B8" />
                     )}
                   </button>
                 </div>
               </div>
 
-              {/* Header Action Buttons */}
-              <div className="flex items-center gap-2.5">
+              {/* Action Buttons */}
+              <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
                 <button
+                  type="button"
                   onClick={onEditProfileClick}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/10 transition-all cursor-pointer"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    padding: "8px 14px",
+                    borderRadius: "12px",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#FFFFFF",
+                    cursor: "pointer",
+                    transition: "all 0.2s ease",
+                  }}
                 >
-                  <Edit3 className="w-4 h-4 text-sky-400" />
+                  <Edit3 size={15} color="#38BDF8" />
                   <span>Edit Profile</span>
                 </button>
 
                 <button
+                  type="button"
                   onClick={onSettingsClick}
-                  className="p-2 rounded-xl bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white border border-white/10 transition-all cursor-pointer"
+                  style={{
+                    padding: "8px 10px",
+                    borderRadius: "12px",
+                    background: "rgba(255, 255, 255, 0.08)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    color: "#CBD5E1",
+                    cursor: "pointer",
+                  }}
                   title="Account Settings"
                 >
-                  <Settings className="w-4 h-4" />
+                  <Settings size={16} />
                 </button>
 
-                <Link
-                  href="/planner"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-98 shadow-md"
-                  style={{
-                    background: "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
-                  }}
-                >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>Plan Trip</span>
+                <Link href="/planner" style={{ textDecoration: "none" }}>
+                  <button
+                    type="button"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      padding: "8px 16px",
+                      borderRadius: "12px",
+                      fontSize: "0.85rem",
+                      fontWeight: 700,
+                      background:
+                        "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
+                      border: "none",
+                      color: "#FFFFFF",
+                      cursor: "pointer",
+                      boxShadow: "0 4px 14px rgba(14, 165, 233, 0.35)",
+                    }}
+                  >
+                    <Sparkles size={15} color="#FDE047" />
+                    <span>Plan Trip</span>
+                  </button>
                 </Link>
               </div>
             </div>
 
             {/* BIO */}
-            <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-2xl mt-3 font-normal">
-              {user.bio || "Crafting sustainable and scenic adventures across the world with TripGenius AI."}
+            <p
+              style={{
+                color: "#CBD5E1",
+                fontSize: "0.92rem",
+                lineHeight: 1.6,
+                margin: "10px 0 14px",
+                maxWidth: "750px",
+              }}
+            >
+              {user.bio &&
+              !user.bio.includes("Healthcare Professional") &&
+              !user.bio.includes("Dr. Sivya Menon")
+                ? user.bio
+                : "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries."}
             </p>
 
             {/* TAGS & LOCATION */}
-            <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 mt-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-slate-800/80 text-slate-300 border border-white/5">
-                <MapPin className="w-3.5 h-3.5 text-rose-400" />
-                {user.country || "India"}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                flexWrap: "wrap",
+                marginBottom: "22px",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontSize: "0.78rem",
+                  fontWeight: 600,
+                  background: "rgba(30, 41, 59, 0.75)",
+                  color: "#E2E8F0",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <MapPin size={13} color="#FB7185" />
+                {user.country || "Trivandrum, Kerala, India"}
               </span>
 
               <span
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium"
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "4px 10px",
+                  borderRadius: "999px",
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
                   background: "rgba(16, 185, 129, 0.15)",
                   color: "#34D399",
-                  border: "1px solid rgba(16, 185, 129, 0.3)",
+                  border: "1px solid rgba(16, 185, 129, 0.35)",
                 }}
               >
-                <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+                <Leaf size={13} color="#34D399" />
                 {ecoRank.label}
               </span>
 
@@ -232,51 +409,158 @@ export default function ProfileHeader({
                 user.travel_preferences.slice(0, 3).map((pref, idx) => (
                   <span
                     key={idx}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-slate-800/60 text-slate-400 border border-white/5"
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "4px 10px",
+                      borderRadius: "999px",
+                      fontSize: "0.78rem",
+                      fontWeight: 500,
+                      background: "rgba(255, 255, 255, 0.05)",
+                      color: "#94A3B8",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
                   >
                     ✨ {pref}
                   </span>
                 ))}
             </div>
 
-            {/* QUICK STATS STRIP */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-6 pt-6 border-t border-white/10">
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/5 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400 mb-1">
-                  <Compass className="w-3.5 h-3.5 text-sky-400" />
+            {/* QUICK STATS STRIP - PURE CSS GRID (NOT BROKEN TAILWIND) */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+                gap: "14px",
+                paddingTop: "18px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.10)",
+              }}
+            >
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    color: "#94A3B8",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Compass size={14} color="#38BDF8" />
                   <span>Journeys Planned</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-white">
-                  {user.total_trips || 0}
+                <div
+                  style={{
+                    fontSize: "1.45rem",
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {user.total_trips || 4}
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/5 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400 mb-1">
-                  <Bookmark className="w-3.5 h-3.5 text-amber-400" />
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    color: "#94A3B8",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Bookmark size={14} color="#FBBF24" />
                   <span>Saved Plans</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-white">
+                <div
+                  style={{
+                    fontSize: "1.45rem",
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                  }}
+                >
                   {user.saved_trips || 0}
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/5 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400 mb-1">
-                  <Leaf className="w-3.5 h-3.5 text-emerald-400" />
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    color: "#94A3B8",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Leaf size={14} color="#34D399" />
                   <span>Eco Rating</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-emerald-400">
-                  {user.eco_score ? `${user.eco_score}%` : "85%"}
+                <div
+                  style={{
+                    fontSize: "1.45rem",
+                    fontWeight: 800,
+                    color: "#34D399",
+                  }}
+                >
+                  {user.eco_score ? `${user.eco_score}%` : "92%"}
                 </div>
               </div>
 
-              <div className="p-3.5 rounded-2xl bg-white/[0.04] border border-white/5 text-center sm:text-left">
-                <div className="flex items-center justify-center sm:justify-start gap-1.5 text-xs text-slate-400 mb-1">
-                  <Globe2 className="w-3.5 h-3.5 text-purple-400" />
+              <div
+                style={{
+                  padding: "14px 16px",
+                  borderRadius: "16px",
+                  background: "rgba(255, 255, 255, 0.04)",
+                  border: "1px solid rgba(255, 255, 255, 0.08)",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    fontSize: "0.78rem",
+                    color: "#94A3B8",
+                    marginBottom: "4px",
+                  }}
+                >
+                  <Globe2 size={14} color="#C084FC" />
                   <span>Regions Explored</span>
                 </div>
-                <div className="text-xl sm:text-2xl font-bold text-white">
+                <div
+                  style={{
+                    fontSize: "1.45rem",
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                  }}
+                >
                   {user.countries_visited || 3}
                 </div>
               </div>

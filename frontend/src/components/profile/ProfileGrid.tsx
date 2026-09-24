@@ -36,6 +36,7 @@ interface SavedTrip {
   budget: number;
   created_at?: string;
   image?: string;
+  travel_style?: string;
 }
 
 interface ProfileGridProps {
@@ -49,45 +50,45 @@ interface ProfileGridProps {
   onSavePreferences?: (prefs: string[]) => void;
 }
 
-const SAMPLE_INSPIRATIONS = [
+const SAMPLE_INSPIRATIONS: SavedTrip[] = [
   {
     id: "sample-1",
-    title: "Munnar Misty Tea Highlands",
-    destination: "Munnar, Kerala",
+    trip_title: "Varkala Cliffside Coastal Retreat",
+    destination: "Varkala, Kerala",
     duration_days: 3,
-    budget: 24000,
-    image: "https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=80",
-    travel_style: "Scenic Nature",
+    budget: 18000,
+    image: "/destinations/varkala.jpg",
+    travel_style: "Beach & Wellness",
   },
   {
     id: "sample-2",
-    title: "Varkala Cliffside Coastal Retreat",
-    destination: "Varkala, Kerala",
+    trip_title: "Munnar Misty Tea Highlands",
+    destination: "Munnar, Kerala",
     duration_days: 4,
-    budget: 32000,
-    image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?auto=format&fit=crop&w=800&q=80",
-    travel_style: "Eco Relaxation",
+    budget: 24000,
+    image: "/destinations/munnar.jpg",
+    travel_style: "Scenic Nature & Tea Hills",
   },
   {
     id: "sample-3",
-    title: "Coorg Coffee & Waterfalls Trail",
-    destination: "Coorg, Karnataka",
+    trip_title: "Goa Beach & Portuguese Heritage",
+    destination: "Goa",
     duration_days: 3,
-    budget: 28000,
-    image: "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?auto=format&fit=crop&w=800&q=80",
-    travel_style: "Adventure & Heritage",
+    budget: 22000,
+    image: "/destinations/goa.jpg",
+    travel_style: "Coastal Leisure & Culture",
   },
 ];
 
 const PREFERENCE_OPTIONS = [
   "Adventure & Trekking",
   "Scenic Highlands & Tea Hills",
-  "Coastal & Beaches",
+  "Coastal & Beach Escapes",
   "Eco Tourism & Sustainable",
   "Local Food & Street Dining",
   "Heritage, Temples & Culture",
   "Wildlife & Nature Reserves",
-  "Relaxation & Ayurveda",
+  "Ayurveda & Wellness Retreats",
   "Photography & Drone Spots",
   "Budget-Conscious Backpacking",
   "Boutique Luxury Resorts",
@@ -105,7 +106,16 @@ export default function ProfileGrid({
   onSavePreferences,
 }: ProfileGridProps) {
   const router = useRouter();
-  const [selectedPrefs, setSelectedPrefs] = useState<string[]>(userPreferences);
+  const [selectedPrefs, setSelectedPrefs] = useState<string[]>(
+    userPreferences.length > 0
+      ? userPreferences
+      : [
+          "Scenic Highlands & Tea Hills",
+          "Coastal & Beach Escapes",
+          "Eco Tourism & Sustainable",
+          "Local Food & Street Dining",
+        ],
+  );
   const [prefsSaved, setPrefsSaved] = useState(false);
 
   const togglePreference = (pref: string) => {
@@ -124,132 +134,354 @@ export default function ProfileGrid({
     }
   };
 
-  // Render My Journeys Tab
+  // 1. My Journeys Tab
   const renderTripsTab = () => {
     const hasSaved = savedTripsList.length > 0;
     const tripsToDisplay = hasSaved ? savedTripsList : SAMPLE_INSPIRATIONS;
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
+      <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: "12px",
+          }}
+        >
           <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Compass className="w-5 h-5 text-sky-400" />
-              <span>{hasSaved ? "Your Planned & Generated Journeys" : "Curated Journeys & Inspirations"}</span>
+            <h2
+              style={{
+                fontSize: "1.25rem",
+                fontWeight: 800,
+                color: "#FFFFFF",
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+              }}
+            >
+              <Compass size={20} color="#38BDF8" />
+              <span>
+                {hasSaved
+                  ? "Your Planned & Generated Journeys"
+                  : "Curated Journeys & Sample Itineraries"}
+              </span>
             </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
+            <p style={{ fontSize: "0.88rem", color: "#94A3B8", marginTop: "4px" }}>
               {hasSaved
                 ? `You have ${savedTripsList.length} customized itinerary plans saved.`
-                : "Plan your first custom journey with TripGenius AI or browse suggestions."}
+                : "Explore sample journeys or synthesize your own with TripGenius AI."}
             </p>
           </div>
 
-          <Link
-            href="/planner"
-            className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all transform hover:scale-[1.02]"
-            style={{
-              background: "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
-            }}
-          >
-            <PlusCircle className="w-4 h-4" />
-            <span>New Journey</span>
+          <Link href="/planner" style={{ textDecoration: "none" }}>
+            <button
+              type="button"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 16px",
+                borderRadius: "12px",
+                fontSize: "0.85rem",
+                fontWeight: 700,
+                background:
+                  "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+                boxShadow: "0 4px 12px rgba(14, 165, 233, 0.35)",
+              }}
+            >
+              <PlusCircle size={16} />
+              <span>New Journey</span>
+            </button>
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {/* CREATE NEW JOURNEY ACTION CARD */}
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: "24px",
+          }}
+        >
+          {/* CREATE NEW ADVENTURE ACTION CARD */}
           <Link
             href="/planner"
-            className="group flex flex-col items-center justify-center p-8 rounded-2xl border-2 border-dashed border-sky-500/30 hover:border-sky-400 bg-sky-500/[0.03] hover:bg-sky-500/[0.08] transition-all text-center min-h-[260px]"
+            style={{
+              textDecoration: "none",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              padding: "36px 24px",
+              borderRadius: "20px",
+              border: "2px dashed rgba(14, 165, 233, 0.35)",
+              background: "rgba(14, 165, 233, 0.04)",
+              textAlign: "center",
+              minHeight: "260px",
+              transition: "all 0.2s ease",
+            }}
           >
-            <div className="w-14 h-14 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center mb-4 group-hover:scale-110 group-hover:bg-sky-500 group-hover:text-white transition-all">
-              <PlusCircle className="w-7 h-7" />
+            <div
+              style={{
+                width: "56px",
+                height: "56px",
+                borderRadius: "50%",
+                background: "rgba(14, 165, 233, 0.15)",
+                color: "#38BDF8",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                marginBottom: "14px",
+              }}
+            >
+              <PlusCircle size={28} />
             </div>
-            <h3 className="text-lg font-bold text-white group-hover:text-sky-300 transition-colors">
+            <h3
+              style={{
+                fontSize: "1.1rem",
+                fontWeight: 700,
+                color: "#FFFFFF",
+                marginBottom: "6px",
+              }}
+            >
               Plan New Adventure
             </h3>
-            <p className="text-xs text-slate-400 max-w-xs mt-1 leading-relaxed">
-              Synthesize a day-by-day itinerary tailored to your exact budget, style, and destination.
+            <p
+              style={{
+                fontSize: "0.82rem",
+                color: "#94A3B8",
+                maxWidth: "240px",
+                lineHeight: 1.5,
+              }}
+            >
+              Synthesize an AI itinerary with live weather, exact expenses, and real Google-rated stays.
             </p>
           </Link>
 
           {/* TRIP CARDS */}
           {tripsToDisplay.map((trip: any, idx: number) => {
-            const image =
-              trip.image ||
-              `https://images.unsplash.com/photo-1593693397690-362cb9666fc2?auto=format&fit=crop&w=800&q=80`;
+            const fallbackImg =
+              idx === 0
+                ? "/destinations/varkala.jpg"
+                : idx === 1
+                  ? "/destinations/munnar.jpg"
+                  : "/destinations/goa.jpg";
+            const image = trip.image || fallbackImg;
 
             return (
               <div
                 key={trip.id || idx}
-                className="group relative flex flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl hover:border-sky-500/50 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-500/10"
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  borderRadius: "20px",
+                  overflow: "hidden",
+                  border: "1px solid rgba(255, 255, 255, 0.10)",
+                  background: "rgba(15, 23, 42, 0.75)",
+                  backdropFilter: "blur(16px)",
+                  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.30)",
+                  transition: "all 0.25s ease",
+                }}
               >
-                {/* IMAGE COVER */}
-                <div className="relative h-44 w-full overflow-hidden">
+                {/* COVER IMAGE */}
+                <div
+                  style={{
+                    position: "relative",
+                    height: "170px",
+                    width: "100%",
+                    overflow: "hidden",
+                  }}
+                >
                   <img
                     src={image}
-                    alt={trip.destination || trip.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    alt={trip.destination || trip.trip_title}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        "/destinations/munnar.jpg";
+                    }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent" />
+                  <div
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      background:
+                        "linear-gradient(to top, rgba(11, 17, 32, 0.95) 0%, rgba(11, 17, 32, 0.2) 60%, transparent 100%)",
+                    }}
+                  />
 
-                  {/* Top Badges */}
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-950/80 text-white backdrop-blur-md border border-white/10 flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-sky-400" />
+                  {/* BADGES */}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "999px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        background: "rgba(15, 23, 42, 0.85)",
+                        color: "#FFFFFF",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                      }}
+                    >
+                      <Calendar size={12} color="#38BDF8" />
                       {trip.duration_days} Days
                     </span>
                   </div>
 
-                  <div className="absolute top-3 right-3">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/80 text-white backdrop-blur-md flex items-center gap-0.5">
-                      <IndianRupee className="w-3 h-3" />
-                      {trip.budget ? Number(trip.budget).toLocaleString("en-IN") : "Optimized"}
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "12px",
+                      right: "12px",
+                    }}
+                  >
+                    <span
+                      style={{
+                        padding: "3px 10px",
+                        borderRadius: "999px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        background: "rgba(16, 185, 129, 0.85)",
+                        color: "#FFFFFF",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "2px",
+                      }}
+                    >
+                      <IndianRupee size={12} />
+                      {trip.budget
+                        ? Number(trip.budget).toLocaleString("en-IN")
+                        : "18,000"}
                     </span>
                   </div>
 
-                  {/* Destination Tag bottom left */}
-                  <div className="absolute bottom-3 left-3 flex items-center gap-1.5 text-xs text-sky-300 font-medium">
-                    <MapPin className="w-3.5 h-3.5 text-rose-400" />
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "10px",
+                      left: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      color: "#38BDF8",
+                    }}
+                  >
+                    <MapPin size={13} color="#FB7185" />
                     <span>{trip.destination}</span>
                   </div>
                 </div>
 
                 {/* CARD BODY */}
-                <div className="flex-1 p-5 flex flex-col justify-between">
+                <div
+                  style={{
+                    padding: "18px",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    flex: 1,
+                  }}
+                >
                   <div>
-                    <h3 className="text-base font-bold text-white line-clamp-1 group-hover:text-sky-300 transition-colors">
-                      {trip.trip_title || trip.title || `${trip.destination} Experience`}
+                    <h3
+                      style={{
+                        fontSize: "1rem",
+                        fontWeight: 700,
+                        color: "#FFFFFF",
+                        marginBottom: "6px",
+                      }}
+                    >
+                      {trip.trip_title || `${trip.destination} Experience`}
                     </h3>
-                    <p className="text-xs text-slate-400 mt-1 line-clamp-2 leading-relaxed">
-                      {trip.travel_style || "Curated multi-day scenic exploration with tailored dining and activity pacing."}
+                    <p
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#94A3B8",
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      {trip.travel_style ||
+                        "Curated multi-day scenic exploration with tailored dining and activity pacing."}
                     </p>
                   </div>
 
-                  {/* CARD ACTIONS */}
-                  <div className="mt-5 pt-4 border-t border-white/10 flex items-center justify-between">
+                  {/* ACTION FOOTER */}
+                  <div
+                    style={{
+                      marginTop: "16px",
+                      paddingTop: "12px",
+                      borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
                     <button
+                      type="button"
                       onClick={() => {
                         if (hasSaved) {
-                          localStorage.setItem("tripgenius_generated_trip", JSON.stringify(trip));
+                          localStorage.setItem(
+                            "tripgenius_generated_trip",
+                            JSON.stringify(trip),
+                          );
                           router.push("/trip/generated");
                         } else {
-                          router.push(`/planner?destination=${encodeURIComponent(trip.destination)}`);
+                          router.push(
+                            `/planner?destination=${encodeURIComponent(trip.destination)}&duration=${trip.duration_days}`,
+                          );
                         }
                       }}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-sky-400 hover:text-sky-300 transition-colors cursor-pointer"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "transparent",
+                        border: "none",
+                        color: "#38BDF8",
+                        fontSize: "0.82rem",
+                        fontWeight: 700,
+                        cursor: "pointer",
+                      }}
                     >
                       <span>View Itinerary</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
+                      <ExternalLink size={13} />
                     </button>
 
                     {hasSaved && onDeleteSavedTrip && (
                       <button
+                        type="button"
                         onClick={() => onDeleteSavedTrip(trip.id)}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
-                        title="Remove from saved"
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#EF4444",
+                          cursor: "pointer",
+                          padding: "4px",
+                        }}
+                        title="Delete from saved"
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Trash2 size={14} />
                       </button>
                     )}
                   </div>
@@ -262,94 +494,239 @@ export default function ProfileGrid({
     );
   };
 
-  // Render Saved Tab
+  // 2. Saved Plans Tab
   const renderSavedTab = () => {
     if (savedTripsList.length === 0) {
       return (
-        <div className="text-center py-16 px-4 rounded-3xl border border-white/10 bg-slate-900/50 backdrop-blur-xl">
-          <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
-            <BookmarkCheck className="w-8 h-8" />
-          </div>
-          <h3 className="text-lg font-bold text-white mb-2">No Saved Trips Yet</h3>
-          <p className="text-sm text-slate-400 max-w-md mx-auto mb-6 leading-relaxed">
-            When you generate personalized itineraries in the Trip Planner, bookmark your favorites to access them anytime offline or on the go.
-          </p>
-          <Link
-            href="/planner"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-semibold text-white transition-all shadow-lg"
+        <div
+          style={{
+            textAlign: "center",
+            padding: "48px 24px",
+            borderRadius: "24px",
+            border: "1px solid rgba(255, 255, 255, 0.10)",
+            background: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(16px)",
+          }}
+        >
+          <div
             style={{
-              background: "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
+              width: "60px",
+              height: "60px",
+              borderRadius: "50%",
+              background: "rgba(245, 158, 11, 0.15)",
+              color: "#FBBF24",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              margin: "0 auto 16px",
+              border: "1px solid rgba(245, 158, 11, 0.25)",
             }}
           >
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>Generate First Trip</span>
+            <BookmarkCheck size={30} />
+          </div>
+          <h3
+            style={{
+              fontSize: "1.2rem",
+              fontWeight: 800,
+              color: "#FFFFFF",
+              marginBottom: "8px",
+            }}
+          >
+            No Saved Trips Yet
+          </h3>
+          <p
+            style={{
+              fontSize: "0.88rem",
+              color: "#94A3B8",
+              maxWidth: "420px",
+              margin: "0 auto 24px",
+              lineHeight: 1.6,
+            }}
+          >
+            When you generate personalized itineraries in the Trip Planner, bookmark your favorites to access them anytime offline or on the go.
+          </p>
+          <Link href="/planner" style={{ textDecoration: "none" }}>
+            <button
+              type="button"
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "10px 22px",
+                borderRadius: "12px",
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                background:
+                  "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
+                border: "none",
+                color: "#FFFFFF",
+                cursor: "pointer",
+              }}
+            >
+              <Sparkles size={16} color="#FDE047" />
+              <span>Generate First Trip</span>
+            </button>
           </Link>
         </div>
       );
     }
 
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <BookmarkCheck className="w-5 h-5 text-amber-400" />
-              <span>Bookmarked Itineraries ({savedTripsList.length})</span>
-            </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
-              Saved plans saved directly to your TripGenius account.
-            </p>
-          </div>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <h2
+          style={{
+            fontSize: "1.25rem",
+            fontWeight: 800,
+            color: "#FFFFFF",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          }}
+        >
+          <BookmarkCheck size={20} color="#FBBF24" />
+          <span>Bookmarked Itineraries ({savedTripsList.length})</span>
+        </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+            gap: "20px",
+          }}
+        >
           {savedTripsList.map((trip) => (
             <div
               key={trip.id}
-              className="group relative flex flex-col rounded-2xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-5 hover:border-amber-500/40 transition-all hover:shadow-xl hover:shadow-amber-500/5"
+              style={{
+                borderRadius: "18px",
+                border: "1px solid rgba(255, 255, 255, 0.10)",
+                background: "rgba(15, 23, 42, 0.70)",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "14px",
+              }}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                  gap: "10px",
+                }}
+              >
                 <div>
-                  <div className="flex items-center gap-1.5 text-xs text-amber-400 font-semibold mb-1">
-                    <MapPin className="w-3.5 h-3.5" />
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontSize: "0.8rem",
+                      color: "#FBBF24",
+                      fontWeight: 600,
+                      marginBottom: "4px",
+                    }}
+                  >
+                    <MapPin size={13} />
                     <span>{trip.destination}</span>
                   </div>
-                  <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                  <h3
+                    style={{
+                      fontSize: "1.05rem",
+                      fontWeight: 700,
+                      color: "#FFFFFF",
+                    }}
+                  >
                     {trip.trip_title || `${trip.destination} Adventure`}
                   </h3>
                 </div>
 
                 {onDeleteSavedTrip && (
                   <button
+                    type="button"
                     onClick={() => onDeleteSavedTrip(trip.id)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    style={{
+                      background: "transparent",
+                      border: "none",
+                      color: "#EF4444",
+                      cursor: "pointer",
+                      padding: "4px",
+                    }}
                     title="Delete Saved Trip"
                   >
-                    <Trash2 className="w-4 h-4" />
+                    <Trash2 size={15} />
                   </button>
                 )}
               </div>
 
-              <div className="flex items-center gap-3 my-4 text-xs text-slate-300">
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-white/5 flex items-center gap-1">
-                  <Calendar className="w-3 h-3 text-sky-400" />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  fontSize: "0.78rem",
+                }}
+              >
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: "999px",
+                    background: "rgba(30, 41, 59, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    color: "#E2E8F0",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                  }}
+                >
+                  <Calendar size={12} color="#38BDF8" />
                   {trip.duration_days} Days
                 </span>
-                <span className="px-2.5 py-1 rounded-full bg-slate-800 border border-white/5 flex items-center gap-1">
-                  <IndianRupee className="w-3 h-3 text-emerald-400" />
+                <span
+                  style={{
+                    padding: "3px 10px",
+                    borderRadius: "999px",
+                    background: "rgba(30, 41, 59, 0.8)",
+                    border: "1px solid rgba(255, 255, 255, 0.08)",
+                    color: "#34D399",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "2px",
+                  }}
+                >
+                  <IndianRupee size={12} />
                   ₹{Number(trip.budget).toLocaleString("en-IN")}
                 </span>
               </div>
 
               <button
+                type="button"
                 onClick={() => {
-                  localStorage.setItem("tripgenius_generated_trip", JSON.stringify(trip));
+                  localStorage.setItem(
+                    "tripgenius_generated_trip",
+                    JSON.stringify(trip),
+                  );
                   router.push("/trip/generated");
                 }}
-                className="mt-auto w-full py-2 px-4 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/15 text-white border border-white/10 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "10px",
+                  fontSize: "0.82rem",
+                  fontWeight: 600,
+                  background: "rgba(255, 255, 255, 0.08)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  color: "#FFFFFF",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
               >
                 <span>View Full Itinerary</span>
-                <ExternalLink className="w-3.5 h-3.5" />
+                <ExternalLink size={13} />
               </button>
             </div>
           ))}
@@ -358,61 +735,157 @@ export default function ProfileGrid({
     );
   };
 
-  // Render Achievements Tab
+  // 3. Achievements Tab
   const renderAchievementsTab = () => {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Award className="w-5 h-5 text-amber-400" />
-              <span>Traveler Badges & Milestones</span>
-            </h2>
-            <p className="text-sm text-slate-400 mt-0.5">
-              Unlock achievements as you plan sustainable journeys and explore new destinations.
-            </p>
-          </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+        <div>
+          <h2
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              color: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <Award size={20} color="#FBBF24" />
+            <span>Traveler Badges & Milestones</span>
+          </h2>
+          <p style={{ fontSize: "0.88rem", color: "#94A3B8", marginTop: "4px" }}>
+            Unlock achievements as you plan sustainable journeys and explore new destinations.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "20px",
+          }}
+        >
           {achievements.map((ach) => (
             <div
               key={ach.id}
-              className={`relative p-6 rounded-2xl border transition-all ${
-                ach.unlocked
-                  ? "bg-gradient-to-br from-slate-900/90 to-sky-950/40 border-sky-500/30 shadow-lg shadow-sky-500/5"
-                  : "bg-slate-900/40 border-white/5 opacity-70"
-              }`}
+              style={{
+                borderRadius: "18px",
+                border: ach.unlocked
+                  ? "1px solid rgba(14, 165, 233, 0.35)"
+                  : "1px solid rgba(255, 255, 255, 0.08)",
+                background: ach.unlocked
+                  ? "linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(14, 165, 233, 0.12) 100%)"
+                  : "rgba(15, 23, 42, 0.45)",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "space-between",
+                gap: "12px",
+              }}
             >
-              <div className="flex items-start justify-between">
-                <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-2xl mb-4">
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "flex-start",
+                  justifyContent: "space-between",
+                }}
+              >
+                <div
+                  style={{
+                    width: "48px",
+                    height: "48px",
+                    borderRadius: "14px",
+                    background: "rgba(255, 255, 255, 0.06)",
+                    border: "1px solid rgba(255, 255, 255, 0.12)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "1.5rem",
+                  }}
+                >
                   {ach.icon}
                 </div>
 
                 {ach.unlocked ? (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
-                    <CheckCircle2 className="w-3 h-3" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "3px 9px",
+                      borderRadius: "999px",
+                      fontSize: "0.72rem",
+                      fontWeight: 700,
+                      background: "rgba(16, 185, 129, 0.15)",
+                      color: "#34D399",
+                      border: "1px solid rgba(16, 185, 129, 0.35)",
+                    }}
+                  >
+                    <CheckCircle2 size={12} />
                     Unlocked
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-medium bg-slate-800 text-slate-400 border border-white/5">
-                    <Lock className="w-3 h-3" />
+                  <span
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      padding: "3px 9px",
+                      borderRadius: "999px",
+                      fontSize: "0.72rem",
+                      fontWeight: 600,
+                      background: "rgba(30, 41, 59, 0.8)",
+                      color: "#94A3B8",
+                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
+                    <Lock size={12} />
                     In Progress
                   </span>
                 )}
               </div>
 
-              <h3 className="text-base font-bold text-white mb-1">{ach.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed mb-4">{ach.description}</p>
+              <div>
+                <h3
+                  style={{
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    color: "#FFFFFF",
+                    marginBottom: "4px",
+                  }}
+                >
+                  {ach.title}
+                </h3>
+                <p
+                  style={{
+                    fontSize: "0.8rem",
+                    color: "#94A3B8",
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {ach.description}
+                </p>
+              </div>
 
-              {/* Status bar */}
-              <div className="w-full bg-slate-800/80 rounded-full h-1.5 overflow-hidden">
+              {/* Progress bar */}
+              <div
+                style={{
+                  width: "100%",
+                  height: "5px",
+                  borderRadius: "999px",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  overflow: "hidden",
+                }}
+              >
                 <div
-                  className={`h-full rounded-full ${
-                    ach.unlocked
-                      ? "bg-gradient-to-r from-sky-400 to-teal-400 w-full"
-                      : "bg-slate-600 w-1/3"
-                  }`}
+                  style={{
+                    height: "100%",
+                    width: ach.unlocked ? "100%" : "35%",
+                    borderRadius: "999px",
+                    background: ach.unlocked
+                      ? "linear-gradient(90deg, #0EA5E9, #10B981)"
+                      : "#475569",
+                  }}
                 />
               </div>
             </div>
@@ -422,21 +895,43 @@ export default function ProfileGrid({
     );
   };
 
-  // Render Preferences Tab
+  // 4. Preferences Tab
   const renderPreferencesTab = () => {
     return (
-      <div className="max-w-3xl mx-auto rounded-3xl border border-white/10 bg-slate-900/60 backdrop-blur-xl p-6 sm:p-8 space-y-6">
+      <div
+        style={{
+          maxWidth: "750px",
+          margin: "0 auto",
+          borderRadius: "24px",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
+          background: "rgba(15, 23, 42, 0.70)",
+          backdropFilter: "blur(16px)",
+          padding: "28px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "20px",
+        }}
+      >
         <div>
-          <h2 className="text-xl font-bold text-white flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-sky-400" />
+          <h2
+            style={{
+              fontSize: "1.25rem",
+              fontWeight: 800,
+              color: "#FFFFFF",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+          >
+            <Sparkles size={20} color="#38BDF8" />
             <span>Customize Travel Interests & Vibe</span>
           </h2>
-          <p className="text-sm text-slate-400 mt-1">
-            TripGenius AI incorporates your selected travel preferences to personalize recommended activities, hotels, and itineraries.
+          <p style={{ fontSize: "0.88rem", color: "#94A3B8", marginTop: "4px" }}>
+            TripGenius AI incorporates your selected travel styles to personalize recommended activities, stays, and packing essentials.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-2.5 pt-2">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
           {PREFERENCE_OPTIONS.map((option) => {
             const isSelected = selectedPrefs.includes(option);
 
@@ -445,40 +940,72 @@ export default function ProfileGrid({
                 key={option}
                 type="button"
                 onClick={() => togglePreference(option)}
-                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all cursor-pointer ${
-                  isSelected
-                    ? "bg-sky-500/20 text-sky-300 border border-sky-400/50 shadow-sm shadow-sky-500/20"
-                    : "bg-slate-800/60 hover:bg-slate-800 text-slate-300 border border-white/5"
-                }`}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "12px",
+                  fontSize: "0.82rem",
+                  fontWeight: isSelected ? 700 : 500,
+                  cursor: "pointer",
+                  background: isSelected
+                    ? "rgba(14, 165, 233, 0.20)"
+                    : "rgba(255, 255, 255, 0.05)",
+                  color: isSelected ? "#38BDF8" : "#CBD5E1",
+                  border: isSelected
+                    ? "1px solid rgba(14, 165, 233, 0.50)"
+                    : "1px solid rgba(255, 255, 255, 0.08)",
+                  transition: "all 0.15s ease",
+                }}
               >
-                {isSelected && <Check className="w-3.5 h-3.5 text-sky-400" />}
+                {isSelected && <Check size={14} color="#38BDF8" />}
                 <span>{option}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="pt-4 border-t border-white/10 flex items-center justify-between">
-          <span className="text-xs text-slate-400">
-            {selectedPrefs.length} preference{selectedPrefs.length === 1 ? "" : "s"} selected
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            paddingTop: "16px",
+            borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+          }}
+        >
+          <span style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
+            {selectedPrefs.length} style{selectedPrefs.length === 1 ? "" : "s"} active
           </span>
 
           <button
+            type="button"
             onClick={handleSavePreferences}
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all transform hover:scale-[1.02] active:scale-98 cursor-pointer"
             style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "10px 20px",
+              borderRadius: "12px",
+              fontSize: "0.85rem",
+              fontWeight: 700,
               background: "linear-gradient(135deg, #0EA5E9 0%, #14B8A6 100%)",
+              border: "none",
+              color: "#FFFFFF",
+              cursor: "pointer",
+              boxShadow: "0 4px 14px rgba(14, 165, 233, 0.35)",
             }}
           >
             {prefsSaved ? (
               <>
-                <Check className="w-4 h-4 text-emerald-300" />
+                <Check size={16} color="#34D399" />
                 <span>Saved Successfully!</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Save Travel Preferences</span>
+                <Sparkles size={16} color="#FDE047" />
+                <span>Save Preferences</span>
               </>
             )}
           </button>
@@ -488,7 +1015,7 @@ export default function ProfileGrid({
   };
 
   return (
-    <section className="w-full max-w-6xl mx-auto px-4">
+    <section style={{ width: "100%", maxWidth: "1200px", margin: "0 auto", padding: "0 8px" }}>
       {activeTab === "trips" && renderTripsTab()}
       {activeTab === "saved" && renderSavedTab()}
       {activeTab === "achievements" && renderAchievementsTab()}

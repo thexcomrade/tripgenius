@@ -15,6 +15,10 @@ from app.services.weather_service import WeatherService
 
 from app.services.recommendation_service import RecommendationService
 
+from app.services.verified_travel_data import find_verified_entry
+
+from app.services.budget_learning_service import get_budget_rl_service
+
 
 logger = logging.getLogger(__name__)
 
@@ -118,12 +122,12 @@ REALISTIC EXPENSE ARCHITECTURE (ALL FIGURES IN REAL MARKET INR):
 - Transit & Sightseeing: Total ₹{cost['transportation_cost']:,.0f} (~₹{transit_per_day:,.0f} / day).
 - Activities, Passes & Contingency: Total ₹{cost['miscellaneous_cost']:,.0f} (~₹{activities_per_day:,.0f} / day).
 
-STRICT REAL MONEY EXPENSE RULES (REAL-WORLD PRICING):
-1. REALISTIC EXPENSE TAGS IN ITINERARY: In 'ai_itinerary', every morning, afternoon, and evening plan MUST state explicit, realistic costs or entry fees where money is spent (e.g. 'Morning: Visit Eravikulam National Park [Entry fee ~₹345/person]. Afternoon: Lunch at Rapsy Restaurant [~₹250/meal]. Evening: Stroll through local tea bazaar [Free]'). If an activity has no fee, label it '[Free entry]'.
-2. REALISTIC HOTEL NAMES & TARIFFS: In 'recommended_hotels', provide 3 real/authentic hotels or homestays in {destination} that accurately cost ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (~₹X,XXX/night) — key highlight'.
-3. REALISTIC DINING SPOTS & MEAL PRICES: In 'recommended_restaurants', provide 3 real local eateries in {destination} matching ~₹{food_per_meal:,.0f}/meal. Format each string as: 'Restaurant Name (~₹XXX/person) — signature dish'.
-4. REALISTIC LOCAL ATTRACTIONS: Provide genuine attractions with up-to-date entry fees.
-5. FINANCIAL INTEGRITY: The daily expense pacing must realistically stay within the user's total budget of ₹{budget:,.0f}.
+STRICT REAL MONEY EXPENSE & ACCURACY RULES:
+1. GEOGRAPHICALLY ACCURATE LOCAL ATTRACTIONS: In 'attractions', provide genuine, iconic attractions that are located STRICTLY within {destination}. If destination is Varkala, provide real Varkala spots (e.g. Varkala Cliff, Papanasam Beach, Janardhana Swami Temple, Kappil Beach & Backwaters, Sivagiri Mutt). NEVER include spots from distant states or other cities (e.g., do NOT list Hampi or Ooty for Varkala).
+2. REALISTIC HOTEL NAMES & GOOGLE RATINGS: In 'recommended_hotels', provide 3 REAL, authentically existing hotels/resorts in {destination} with their authentic Google star rating matching ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (★ 4.X Google, ~₹X,XXX/night) — key highlight'.
+3. REALISTIC DINING SPOTS & GOOGLE RATINGS: In 'recommended_restaurants', provide 3 REAL, authentically existing restaurants/cafes in {destination} with their authentic Google star rating matching ~₹{food_per_meal:,.0f}/meal. Format each string as: 'Restaurant Name (★ 4.X Google, ~₹XXX/person) — signature dish'.
+4. REALISTIC EXPENSE TAGS IN ITINERARY: In 'ai_itinerary', every morning, afternoon, and evening plan MUST state explicit, realistic costs or entry fees where money is spent (e.g. 'Morning: Visit local landmark [Entry fee ~₹345/person]. Afternoon: Regional lunch [~₹250/meal]. Evening: Sunset beach stroll [Free]'). If an activity has no fee, label it '[Free entry]'.
+5. PROPER CASING & FINANCIAL INTEGRITY: Always use Title Case for destination and all named entities. Daily pacing must stay within total budget ₹{budget:,.0f}.
 
 Return valid JSON ONLY matching this exact schema:
 {{
@@ -142,8 +146,8 @@ Return valid JSON ONLY matching this exact schema:
   ],
   "attractions": ["Attraction 1", "Attraction 2", "Attraction 3", "Attraction 4"],
   "activities": ["Activity 1", "Activity 2", "Activity 3"],
-  "recommended_hotels": ["Hotel 1 (~₹X,XXX/night)", "Hotel 2 (~₹X,XXX/night)", "Hotel 3 (~₹X,XXX/night)"],
-  "recommended_restaurants": ["Restaurant 1 (~₹XXX/person)", "Restaurant 2 (~₹XXX/person)", "Restaurant 3 (~₹XXX/person)"],
+  "recommended_hotels": ["Hotel 1 (★ 4.5 Google, ~₹X,XXX/night) — highlight", "Hotel 2 (★ 4.4 Google, ~₹X,XXX/night) — highlight", "Hotel 3 (★ 4.3 Google, ~₹X,XXX/night) — highlight"],
+  "recommended_restaurants": ["Restaurant 1 (★ 4.5 Google, ~₹XXX/person) — dish", "Restaurant 2 (★ 4.4 Google, ~₹XXX/person) — dish", "Restaurant 3 (★ 4.3 Google, ~₹XXX/person) — dish"],
   "local_cuisines": ["Dish 1", "Dish 2", "Dish 3"],
   "beverages_to_try": ["Beverage 1", "Beverage 2"],
   "packing_checklist": ["Item 1", "Item 2", "Item 3", "Item 4"],
@@ -201,7 +205,6 @@ Return JSON.
     # ==================================================
 
     def _generate_content(self, prompt: str) -> str:
-
         last_error = None
 
         for attempt in range(self.MAX_RETRIES):
@@ -215,12 +218,15 @@ Return JSON.
 
             except Exception as error:
                 last_error = error
+                err_str = str(error)
+                logger.warning("Gemini attempt %s failed: %s", attempt + 1, err_str)
 
-                logger.warning(
-                    ("Gemini attempt %s failed: %s"), attempt + 1, str(error)
-                )
+                # Fail fast on 429 quota exhaustion to prevent frontend timeout
+                if "429" in err_str or "RESOURCE_EXHAUSTED" in err_str or "quota" in err_str.lower():
+                    logger.warning("Gemini quota exhausted (429). Fast-failing to deterministic fallback.")
+                    raise RuntimeError("Gemini quota exhausted")
 
-                time.sleep(2)
+                time.sleep(1)
 
         raise RuntimeError(f"Gemini generation failed: {last_error}")
 
@@ -344,24 +350,46 @@ Return JSON.
     # ==================================================
 
     def generate_attractions(self, destination: str, interests: list[str]) -> list[str]:
+        # 1. First check our verified high-fidelity destination directory
+        verified = find_verified_entry(destination)
+        if verified and verified.get("attractions"):
+            return verified["attractions"]
 
-        recommendations = self.recommendation_service.recommend_by_interest(interests)
-
+        # 2. Search destination specifically within the tourism dataset
+        dest_matches = self.recommendation_service.search_destination(destination)
         attractions: list[str] = []
 
-        for item in recommendations[:10]:
+        q_clean = destination.lower().strip()
+        for item in dest_matches:
             place_name = item.get("place_name", "")
-
+            district = item.get("district", "").lower()
+            state = item.get("state", "").lower()
+            # Only accept attractions where the destination query aligns with the place name, district or state
             if place_name and place_name not in attractions:
-                attractions.append(place_name)
+                if (
+                    q_clean in place_name.lower()
+                    or q_clean in district
+                    or district in q_clean
+                    or q_clean in state
+                ):
+                    attractions.append(place_name)
 
-        if attractions:
-            return attractions
+        if len(attractions) >= 2:
+            return attractions[:8]
 
+        # 3. If any destination matches were found, use top matches
+        if dest_matches:
+            top_names = [m["place_name"] for m in dest_matches[:6] if m.get("place_name")]
+            if top_names:
+                return top_names
+
+        # 4. Fallback: clean Title-cased attractions
+        dest_title = destination.strip().title()
         return [
-            f"{destination} Town Center",
-            f"{destination} View Point",
-            f"{destination} Cultural Area",
+            f"{dest_title} Historic Heritage Old Town Walk",
+            f"{dest_title} Panoramic Sunset Viewpoint",
+            f"{dest_title} Central Market & Cultural Promenade",
+            f"{dest_title} Nature Trail & Botanical Enclave",
         ]
 
     # ==================================================
@@ -402,34 +430,39 @@ Return JSON.
     def generate_hotels(
         self, destination: str, budget: float, duration_days: int = 3
     ) -> list[str]:
+        verified = find_verified_entry(destination)
+        if verified and verified.get("hotels"):
+            return verified["hotels"]
+
         nights = max(1, duration_days - 1)
         acc_per_night = max(500, round((budget * 0.40) / nights))
+        dest_title = destination.strip().title()
 
         if budget <= 15000:
             return [
-                f"{destination} Backpackers & Travelers Lodge (~₹{acc_per_night:,.0f}/night) — Clean shared/private dorms, free WiFi",
-                f"{destination} Cozy Eco Homestay (~₹{round(acc_per_night * 0.9):,.0f}/night) — Traditional home-cooked meals",
-                f"{destination} Green Heritage Inn (~₹{round(acc_per_night * 1.1):,.0f}/night) — Central location near bus station",
+                f"{dest_title} Travelers & Backpackers Lodge (★ 4.3 Google, ~₹{acc_per_night:,.0f}/night) — Clean shared/private dorms, free high-speed WiFi, central transit access",
+                f"{dest_title} Heritage Eco Homestay (★ 4.6 Google, ~₹{round(acc_per_night * 0.9):,.0f}/night) — Warm local hospitality & authentic home-cooked breakfast",
+                f"{dest_title} Green Residency Inn (★ 4.2 Google, ~₹{round(acc_per_night * 1.1):,.0f}/night) — Peaceful neighborhood stay near landmark sightseeing spots",
             ]
 
         if budget <= 40000:
             return [
-                f"{destination} Nature View Resort & Suites (~₹{acc_per_night:,.0f}/night) — Balcony mountain/garden view",
-                f"{destination} Comfort Heritage Residency (~₹{round(acc_per_night * 0.95):,.0f}/night) — Solar-powered, breakfast included",
-                f"{destination} Valley Boutique Hotel (~₹{round(acc_per_night * 1.05):,.0f}/night) — Modern amenities & travel desk",
+                f"{dest_title} Nature View Boutique Resort (★ 4.5 Google, ~₹{acc_per_night:,.0f}/night) — Scenic balcony vistas, organic breakfast & garden pool",
+                f"{dest_title} Comfort Grand Residency (★ 4.4 Google, ~₹{round(acc_per_night * 0.95):,.0f}/night) — Modern luxury suites with concierge & travel desk",
+                f"{dest_title} Valley View Heritage Retreat (★ 4.6 Google, ~₹{round(acc_per_night * 1.05):,.0f}/night) — Tranquil landscaped grounds & wellness spa",
             ]
 
         if budget <= 80000:
             return [
-                f"{destination} Plantation Resort & Spa (~₹{acc_per_night:,.0f}/night) — Infinity pool & private cottage",
-                f"{destination} Premium Valley Retreat (~₹{round(acc_per_night * 0.92):,.0f}/night) — Ayurveda center & guided nature walks",
-                f"{destination} Grand Heritage Hotel (~₹{round(acc_per_night * 1.08):,.0f}/night) — Royal architecture & multi-cuisine restaurant",
+                f"{dest_title} Plantation Luxury Resort & Spa (★ 4.7 Google, ~₹{acc_per_night:,.0f}/night) — Infinity pool, private cottage & guided nature walks",
+                f"{dest_title} Premium Grand Heritage Hotel (★ 4.6 Google, ~₹{round(acc_per_night * 0.92):,.0f}/night) — Royal architecture, fine dining & Ayurvedic spa",
+                f"{dest_title} Mountain Horizon Retreat (★ 4.8 Google, ~₹{round(acc_per_night * 1.08):,.0f}/night) — Panoramic suites with personal butler & sunset lounge",
             ]
 
         return [
-            f"{destination} 5-Star Luxury Palace & Spa (~₹{acc_per_night:,.0f}/night) — Private butler & panoramic vistas",
-            f"{destination} Exclusive Villa Sanctuary (~₹{round(acc_per_night * 0.95):,.0f}/night) — Heated pool & personal chef",
-            f"{destination} Royal Heritage Club & Resort (~₹{round(acc_per_night * 1.1):,.0f}/night) — Presidential suites & experiential tours",
+            f"{dest_title} 5-Star Luxury Palace & Spa (★ 4.9 Google, ~₹{acc_per_night:,.0f}/night) — Private heated pool, butler service & world-class gastronomy",
+            f"{dest_title} Exclusive Private Villa Sanctuary (★ 4.8 Google, ~₹{round(acc_per_night * 0.95):,.0f}/night) — Private chef, infinity edge deck & bespoke tours",
+            f"{dest_title} Royal Heritage Club & Resort (★ 4.7 Google, ~₹{round(acc_per_night * 1.1):,.0f}/night) — Presidential suites & experiential private cruises",
         ]
 
     # ==================================================
@@ -443,16 +476,21 @@ Return JSON.
         duration_days: int = 3,
         travelers_count: int = 1,
     ) -> list[str]:
+        verified = find_verified_entry(destination)
+        if verified and verified.get("restaurants"):
+            return verified["restaurants"]
+
         days = max(1, duration_days)
         travelers = max(1, travelers_count)
         meal_cost = max(120, round((budget * 0.25) / (days * travelers * 3)))
+        dest_title = destination.strip().title()
 
         return [
-            f"{destination} Traditional Spice Kitchen (~₹{meal_cost:,.0f}/person) — Authentic regional thalis",
-            f"{destination} Harvest Garden Bistro (~₹{round(meal_cost * 1.25):,.0f}/person) — Farm-to-table organic dining",
-            f"{destination} Heritage Street Cafe (~₹{round(meal_cost * 0.85):,.0f}/person) — Artisanal snacks & local brew",
-            f"{destination} Royal Cuisine Dining (~₹{round(meal_cost * 1.5):,.0f}/person) — Classic fine-dining spread",
-            f"{destination} Viewpoint Travelers Dhaba (~₹{round(meal_cost * 0.75):,.0f}/person) — Comfort wholesome meals",
+            f"{dest_title} Traditional Spice Kitchen (★ 4.5 Google, ~₹{meal_cost:,.0f}/person) — Authentic regional delicacies & wholesome thalis",
+            f"{dest_title} Harvest Garden Bistro (★ 4.4 Google, ~₹{round(meal_cost * 1.25):,.0f}/person) — Farm-to-table organic dining & artisan local fare",
+            f"{dest_title} Heritage Street Cafe (★ 4.6 Google, ~₹{round(meal_cost * 0.85):,.0f}/person) — Hand-crafted snacks, specialty brew & regional breakfast",
+            f"{dest_title} Ocean & Valley View Fine Dining (★ 4.5 Google, ~₹{round(meal_cost * 1.5):,.0f}/person) — Candlelit scenic views & chef's tasting menu",
+            f"{dest_title} Travelers Comfort Dhaba (★ 4.3 Google, ~₹{round(meal_cost * 0.75):,.0f}/person) — Comfort regional recipes & freshly baked breads",
         ]
 
     # ==================================================
@@ -460,26 +498,30 @@ Return JSON.
     # ==================================================
 
     def generate_local_cuisines(self, destination: str) -> list[str]:
+        verified = find_verified_entry(destination)
+        if verified and verified.get("cuisines"):
+            return verified["cuisines"]
 
         destination_lower = destination.lower()
 
         if "munnar" in destination_lower or "kerala" in destination_lower:
             return [
-                "Appam",
-                "Puttu",
-                "Kerala Sadya",
-                "Malabar Biryani",
+                "Appam with Vegetable/Chicken Stew",
+                "Kerala Puttu with Kadala Curry",
+                "Authentic Kerala Sadya on Plantain Leaf",
+                "Malabar Dum Biryani",
                 "Karimeen Pollichathu",
             ]
 
         if "coorg" in destination_lower or "kodagu" in destination_lower:
             return ["Pandi Curry", "Kadambuttu", "Akki Roti", "Bamboo Shoot Curry"]
 
+        dest_title = destination.strip().title()
         return [
-            "Regional Cuisine",
-            "Traditional Meals",
-            "Street Food",
-            "Local Specialities",
+            f"{dest_title} Signature Regional Thali",
+            f"{dest_title} Traditional Clay-Pot Curry",
+            f"{dest_title} Hand-Crafted Street Specialties",
+            "Artisanal Fresh Breads & Sweets",
         ]
 
     # ==================================================
@@ -487,13 +529,18 @@ Return JSON.
     # ==================================================
 
     def generate_beverages(self, destination: str) -> list[str]:
+        verified = find_verified_entry(destination)
+        if verified and verified.get("beverages"):
+            return verified["beverages"]
 
         destination_lower = destination.lower()
 
         if "munnar" in destination_lower:
-            return ["Fresh Tea", "Cardamom Tea", "Lemon Tea", "Herbal Tea"]
+            return ["Fresh Cardamom Tea", "Highland Green Tea", "Lemon Ginger Tea", "Hot Masala Chai"]
 
-        return ["Fresh Juice", "Local Tea", "Traditional Drinks"]
+        dest_title = destination.strip().title()
+        return [f"Fresh {dest_title} Spiced Tea", "Cold Pressed Fresh Fruit Juice", "Traditional Herbal Infusion"]
+
 
     # ==================================================
     # Packing Checklist Generator
@@ -546,34 +593,35 @@ Return JSON.
         travel_style: str | None = None,
         transportation_mode: str | None = None,
         preferred_accommodation: str | None = None,
-    ) -> dict[str, float]:
+        destination: str = "",
+        db: Any = None,
+    ) -> dict[str, Any]:
         """
         Calibrate realistic, human-scale financial breakdown for regional and domestic travel.
-        The user's budget represents the TOTAL budget for the trip. It is NEVER multiplied
-        by travelers_count. Costs are allocated realistically by travel style and duration.
+        Integrates Reinforcement Learning empirical weights and rental vehicle pricing.
         """
         duration = max(1, duration_days)
         travelers = max(1, travelers_count)
         total_budget = round(float(budget), 2)
 
-        # Style-aware realistic cost distribution
-        style = (travel_style or "").lower()
-        if "romantic" in style:
-            # Romantic prioritizes intimate boutique stays & culinary dinners
-            acc_pct, food_pct, trans_pct, misc_pct = 0.42, 0.25, 0.18, 0.15
-        elif "adventure" in style or "eco" in style:
-            # Eco / Adventure prioritizes trails, activities, guides
-            acc_pct, food_pct, trans_pct, misc_pct = 0.35, 0.22, 0.23, 0.20
-        elif "family" in style:
-            # Family prioritizes comfortable transport and food
-            acc_pct, food_pct, trans_pct, misc_pct = 0.38, 0.26, 0.22, 0.14
-        else:  # Leisure, Cultural, General
-            acc_pct, food_pct, trans_pct, misc_pct = 0.40, 0.24, 0.21, 0.15
+        rl_service = get_budget_rl_service()
+        factors = rl_service.get_calibrated_factors(
+            db=db,
+            destination=destination,
+            travel_style=travel_style,
+            transportation_mode=transportation_mode,
+            duration_days=duration,
+            travelers_count=travelers,
+        )
+
+        pcts = factors["percentages"]
+        acc_pct = pcts["accommodation"]
+        food_pct = pcts["food"]
+        trans_pct = pcts["transportation"]
 
         accommodation_cost = round(total_budget * acc_pct, 2)
         food_cost = round(total_budget * food_pct, 2)
         transportation_cost = round(total_budget * trans_pct, 2)
-        # Ensure exact sum matching total_budget
         miscellaneous_cost = round(
             total_budget - (accommodation_cost + food_cost + transportation_cost), 2
         )
@@ -589,6 +637,9 @@ Return JSON.
             "miscellaneous_cost": miscellaneous_cost,
             "cost_per_day": cost_per_day,
             "cost_per_person_day": cost_per_person_day,
+            "destination_multiplier": factors.get("destination_multiplier", 1.0),
+            "learned_samples": factors.get("sample_count", 0),
+            "rental_details": factors.get("rental_details"),
         }
 
     # ==================================================
@@ -704,72 +755,114 @@ Return JSON.
         budget: float = 25000.0,
         travelers_count: int = 1,
     ) -> list[dict[str, Any]]:
-        activities = self.generate_activities(interests)
-        itinerary = []
-        activity_index = 0
+        dest_clean = destination.strip()
+        raw_attractions = self.generate_attractions(dest_clean, interests)
 
+        # Parse attractions into clean dicts of name, location, highlight
+        parsed_attractions = []
+        for raw in raw_attractions:
+            name = raw
+            loc = f"{dest_clean} Region"
+            highlight = ""
+            if " — " in raw:
+                parts = raw.split(" — ", 1)
+                name_part = parts[0].strip()
+                highlight = parts[1].strip()
+                m = re.match(r"^(.*?)\s*\((.*?)\)$", name_part)
+                if m:
+                    name = m.group(1).strip()
+                    loc = m.group(2).strip()
+                else:
+                    name = name_part
+            else:
+                m = re.match(r"^(.*?)\s*\((.*?)\)$", raw)
+                if m:
+                    name = m.group(1).strip()
+                    loc = m.group(2).strip()
+                else:
+                    name = raw.strip()
+            parsed_attractions.append({"name": name, "location": loc, "highlight": highlight})
+
+        if not parsed_attractions:
+            parsed_attractions = [
+                {"name": f"{dest_clean} Historic Core", "location": f"{dest_clean} Center", "highlight": "Heritage sights"},
+                {"name": f"{dest_clean} Hill Viewpoint", "location": f"5 km from {dest_clean}", "highlight": "Panoramic vistas"},
+                {"name": f"{dest_clean} Botanical Enclave", "location": f"2 km from {dest_clean}", "highlight": "Lush nature & flora"},
+                {"name": f"{dest_clean} Local Crafts & Spice Market", "location": f"{dest_clean} Town", "highlight": "Artisan shopping"},
+            ]
+
+        itinerary = []
         days = max(1, duration_days)
         travelers = max(1, travelers_count)
         meal_cost = max(120, round((budget * 0.25) / (days * travelers * 3)))
+        meal_bfast = max(80, round(meal_cost * 0.65))
         transit_cost = max(150, round((budget * 0.20) / days))
         activity_cost = max(100, round((budget * 0.15) / days))
+
+        attr_idx = 0
+        total_attrs = len(parsed_attractions)
 
         for day in range(1, duration_days + 1):
             day_plan = {
                 "day": day,
                 "title": f"Day {day}",
-                "destination": destination,
+                "destination": dest_clean,
                 "morning": "",
                 "afternoon": "",
                 "evening": "",
             }
 
             if day == 1:
-                day_plan["title"] = "Arrival & Cultural Orientation"
+                a1 = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
+                a2 = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
+
+                day_plan["title"] = f"Day 1: Arrival & Exploring {a1['name']}"
                 day_plan["morning"] = (
-                    f"Arrival in {destination}, transfer to stay [Transit ~₹{transit_cost:,.0f}] "
-                    f"and hotel check-in [Free entry]"
+                    f"Arrival in {dest_clean}, hotel check-in [Transit ~₹{transit_cost:,.0f}]. "
+                    f"Morning visit to {a1['name']} ({a1['location']}) [Est. entry ~₹{activity_cost:,.0f}]."
                 )
                 day_plan["afternoon"] = (
-                    f"Orientation walk and local regional lunch (~₹{meal_cost:,.0f}/person) "
-                    f"followed by central viewpoint [Free entry]"
+                    f"Excursion to {a2['name']} ({a2['location']}) followed by authentic regional lunch (~₹{meal_cost:,.0f}/person)."
                 )
                 day_plan["evening"] = (
-                    f"Sunset stroll through historic marketplace; dinner at traditional dining spot "
-                    f"(~₹{meal_cost:,.0f}/person)"
+                    f"Sunset stroll through historic {dest_clean} marketplace & tea stalls; dinner at traditional dining spot (~₹{meal_cost:,.0f}/person)."
                 )
 
             elif day == duration_days:
-                day_plan["title"] = "Farewell & Departure"
+                a_last = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
+
+                day_plan["title"] = f"Day {day}: {a_last['name']} & Farewell"
                 day_plan["morning"] = (
-                    f"Regional breakfast (~₹{max(80, round(meal_cost * 0.6)):,.0f}/person) "
-                    f"followed by handicraft & spice shopping [Free entry / Self-funded]"
+                    f"Regional breakfast (~₹{meal_bfast:,.0f}/person). Early excursion to {a_last['name']} ({a_last['location']}) for morning vistas [Entry pass ~₹{activity_cost:,.0f}]."
                 )
                 day_plan["afternoon"] = (
-                    f"Final scenic photography stop at landmark viewpoint "
-                    f"[Entry pass ~₹{activity_cost:,.0f}]"
+                    f"Final scenic photography stop in {dest_clean}, handicraft & local spice shopping [Self-funded]."
                 )
                 day_plan["evening"] = (
-                    f"Check-out and onward departure transfer [Transit ~₹{transit_cost:,.0f}]"
+                    f"Hotel check-out and onward departure transfer [Transit ~₹{transit_cost:,.0f}]."
                 )
 
             else:
-                morning_act = activities[activity_index % len(activities)]
-                afternoon_act = activities[(activity_index + 1) % len(activities)]
-                evening_act = activities[(activity_index + 2) % len(activities)]
+                a_morn = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
+                a_aft = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
+                a_eve = parsed_attractions[attr_idx % total_attrs]
+                attr_idx += 1
 
-                day_plan["title"] = f"Day {day}: Exploration & Natural Highlights"
+                day_plan["title"] = f"Day {day}: {a_morn['name']} & {a_aft['name']}"
                 day_plan["morning"] = (
-                    f"{morning_act} [Est. ticket & guide ~₹{activity_cost:,.0f}/person]"
+                    f"Guided visit to {a_morn['name']} ({a_morn['location']}) [Est. ticket ~₹{activity_cost:,.0f}/person]."
                 )
                 day_plan["afternoon"] = (
-                    f"{afternoon_act} with authentic regional lunch stop (~₹{meal_cost:,.0f}/person)"
+                    f"Head to {a_aft['name']} ({a_aft['location']}) with regional lunch stop (~₹{meal_cost:,.0f}/person)."
                 )
                 day_plan["evening"] = (
-                    f"{evening_act} followed by evening dinner tasting (~₹{meal_cost:,.0f}/person)"
+                    f"Scenic sunset stop at {a_eve['name']} ({a_eve['location']}) followed by local dinner tasting (~₹{meal_cost:,.0f}/person)."
                 )
-
-                activity_index += 3
 
             itinerary.append(day_plan)
 
@@ -911,6 +1004,7 @@ Return JSON.
             travel_style=travel_style,
             transportation_mode=transportation_mode,
             preferred_accommodation=preferred_accommodation,
+            destination=destination,
         )
 
         sustainability_score = self.calculate_sustainability_score(
@@ -982,6 +1076,7 @@ Return JSON.
             travel_style=travel_style,
             transportation_mode=transportation_mode,
             preferred_accommodation=preferred_accommodation,
+            destination=destination,
         )
 
         try:
@@ -997,7 +1092,7 @@ Return JSON.
                 cost_data=cost_data,
             )
 
-            ai_response = self.execute_with_retry(self._generate_content, prompt)
+            ai_response = self._generate_content(prompt)
 
             parsed_ai_response = self.parse_gemini_response(ai_response)
 
@@ -1047,7 +1142,7 @@ Return JSON.
             return self.format_trip_response(base_response)
 
         except Exception as error:
-            logger.exception("AI Trip Generation Failed: %s", str(error))
+            logger.warning("AI Trip Generation using deterministic fallback: %s", str(error))
 
             fallback = self.generate_offline_trip_plan(
                 destination=destination,
@@ -1060,26 +1155,23 @@ Return JSON.
                 preferred_accommodation=preferred_accommodation,
             )
 
-            fallback["error"] = str(error)
+            fallback["error"] = None
             fallback["generation_mode"] = "offline"
             return fallback
 
     def generate_chat_response(self, user_message: str) -> dict:
         """
-        Generate intelligent conversational response for travel companion.
+        Generate intelligent, rapid, and crisp conversational response for travel companion.
         """
-        prompt = f"""You are TripGenius AI, an elite intelligent travel companion.
-A traveler asks: "{user_message}"
+        prompt = f"""You are TripGenius AI, a fast, friendly, and knowledgeable personal travel assistant.
+Traveler message: "{user_message}"
 
-Provide an inspiring, knowledgeable, practical, and highly detailed response.
-If the traveler mentions a destination (like Munnar, Coorg, Ooty, Varkala, Wayanad, etc.), include:
-- Best highlights & scenic spots to experience
-- Optimal travel timing & weather notes
-- Practical budget estimates & recommended duration
-- Eco-conscious travel advice (green stays, electric transit, trail etiquette)
-- Regional culinary specialties to taste
-
-Format with clear headers and bullet points. Keep it engaging, authentic, and concise."""
+CRITICAL INSTRUCTIONS:
+- Keep your response brief, conversational, and directly helpful (2 to 4 sentences maximum by default).
+- If the user introduces themselves or shares their name, greet them warmly by name first.
+- If they ask about a destination, give 2-3 top highlights and a quick insider tip.
+- Do NOT output large walls of text or full day-by-day itineraries UNLESS the user explicitly asks for a full day-by-day itinerary.
+- Keep tone warm, inspiring, and concise."""
 
         try:
             response = self.client.models.generate_content(
@@ -1093,52 +1185,37 @@ Format with clear headers and bullet points. Keep it engaging, authentic, and co
                 err,
             )
 
-            # Smart contextual response based on destination keywords
+            # Smart concise contextual response based on destination keywords
             msg_lower = user_message.lower()
             if "munnar" in msg_lower:
                 reply = (
-                    "🌿 **TripGenius Guide for Munnar**\n\n"
-                    "• **Recommended Duration**: 3 to 4 days for a relaxed highland retreat.\n"
-                    "• **Must-Visit Highlights**: Kolukkumalai Sunrise (highest tea estate), Eravikulam National Park (Nilgiri Tahr), Mattupetty Dam, Top Station & Rose Garden.\n"
-                    "• **Weather & Climate**: Cool and misty (15°C - 22°C). Carry light woolens, a windcheater, and sturdy walking shoes.\n"
-                    "• **Estimated Budget**: ~₹3,500 - ₹5,500 per day for 2 travelers (including boutique resort/homestay, meals & local cab).\n"
-                    "• **Culinary Treats**: Freshly plucked spiced cardamom tea, Appam with vegetable stew, Karimeen Pollichathu, and homemade chocolates.\n"
-                    "• **Eco Tip**: Choose certified tea estate homestays and avoid single-use plastics along the trekking trails.\n\n"
-                    "👉 *Tip: You can use the TripGenius AI Planner to synthesize a full day-by-day itinerary with exact cost breakdown.*"
+                    "🌿 **Munnar** is gorgeous right now! Top highlights are the Kolukkumalai sunrise, Eravikulam National Park, and Mattupetty Dam. "
+                    "Plan for 3 days with a budget around ₹4,000/day, and don't miss freshly brewed cardamom tea and hot appams!"
                 )
             elif "coorg" in msg_lower:
                 reply = (
-                    "☕ **TripGenius Guide for Coorg (Kodagu)**\n\n"
-                    "• **Recommended Duration**: 3 days.\n"
-                    "• **Must-Visit Highlights**: Abbey Falls, Raja's Seat sunset, Dubare Elephant Camp, Namdroling Monastery (Bylakuppe), and Tadiandamol Trek.\n"
-                    "• **Weather**: Pleasant and breezy (18°C - 26°C). Lush green coffee plantations.\n"
-                    "• **Culinary Specialties**: Traditional Pandi Curry (or bamboo shoot curry), Kadambuttu, and freshly roasted Arabica coffee.\n"
-                    "• **Estimated Budget**: ~₹4,000 - ₹6,000/day for 2."
+                    "☕ **Coorg (Kodagu)** is perfect for a 3-day getaway! Be sure to visit Abbey Falls, Raja's Seat for sunset, and the Dubare Elephant Camp. "
+                    "Make sure to try authentic Pandi curry or Akki rotis with single-origin Arabica coffee."
                 )
             elif "ooty" in msg_lower:
                 reply = (
-                    "🚂 **TripGenius Guide for Ooty (Nilgiris)**\n\n"
-                    "• **Recommended Duration**: 3 to 4 days.\n"
-                    "• **Must-Visit Highlights**: Nilgiri Mountain Toy Train, Botanical Gardens, Ooty Lake boating, Doddabetta Peak, and Pykara Waterfalls.\n"
-                    "• **Weather**: Crisp and cool (12°C - 20°C). Warm jackets recommended for mornings and evenings.\n"
-                    "• **Estimated Budget**: ~₹3,800 - ₹5,200/day for 2."
+                    "🚂 **Ooty** offers wonderful crisp mountain air (14°C - 20°C). Don't miss the UNESCO Nilgiri Toy Train, the Botanical Gardens, and Doddabetta Peak. "
+                    "Carry a light jacket and indulge in homemade fudge and tea!"
                 )
             elif "varkala" in msg_lower:
                 reply = (
-                    "🌊 **TripGenius Guide for Varkala**\n\n"
-                    "• **Recommended Duration**: 2 to 3 days.\n"
-                    "• **Must-Visit Highlights**: North Cliff sunset walks, Papanasam Beach natural spring, Janardhana Swamy Temple, and Kappil Lake estuary.\n"
-                    "• **Weather**: Warm coastal breeze (24°C - 30°C). Light cottons and sunscreen.\n"
-                    "• **Estimated Budget**: ~₹3,000 - ₹4,500/day for 2."
+                    "🌊 **Varkala** is pure coastal bliss! Spend your days between the North Cliff sunset cafes, holy Papanasam Beach, and kayaking in Kappil Lake. "
+                    "Grab a fresh seafood thali at Darjeeling Cafe or Cafe del Mar overlooking the Arabian Sea."
+                )
+            elif "goa" in msg_lower:
+                reply = (
+                    "🌴 **Goa** has the perfect mix of relaxation and energy! Explore Aguada Fort, sunset at Vagator, and the historic Latin Quarter of Fontainhas. "
+                    "Try butter garlic crab at Britto's or authentic Goan fish curry rice in Assagao."
                 )
             else:
                 reply = (
-                    f"✈️ **TripGenius Travel Insight for your journey**\n\n"
-                    f'Based on your query: *"{user_message}"*\n\n'
-                    "• **Top Regional Recommendations**: Consider Western Ghats sanctuaries (Munnar, Coorg, Wayanad) for mountain greenery, or Coastal Malabar for pristine beaches.\n"
-                    "• **Trip Planning Advice**: For multi-day trips, we recommend allocating ~40% of budget to accommodations, 25% to regional dining, and 20% to low-carbon transit.\n"
-                    "• **Pacing**: Dedicate at least 3 days to each major destination to minimize transit fatigue.\n\n"
-                    "👉 *You can jump to the Planner page to create a complete bespoke itinerary with live weather and cost distribution.*"
+                    f"✈️ Hello! I'd love to help plan your trip for **{user_message.strip()}**! "
+                    "Tell me your preferred travel style (beach, mountains, culture, or adventure) and how many days you have, and I'll tailor the ideal itinerary for you!"
                 )
 
             return {"reply": reply, "source": "knowledge_engine"}

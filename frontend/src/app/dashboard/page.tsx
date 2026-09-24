@@ -28,6 +28,7 @@ import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import { GlassCard, MetricCard, SectionHeader } from "../../components/ui/Card";
 import tripService from "../../services/trip.service";
+import { parseDestinationQuery } from "../../utils/queryParser";
 
 interface SavedTripSummary {
   id?: string;
@@ -44,15 +45,35 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [greeting, setGreeting] = useState("Welcome");
-  const [userName, setUserName] = useState("Traveler");
-  const [tripGeniusId, setTripGeniusId] = useState("TG-884920");
-  const [totalTrips, setTotalTrips] = useState(0);
+  const [userName, setUserName] = useState("Sivya Babu");
+  const [tripGeniusId, setTripGeniusId] = useState("TG-SB8842");
+  const [totalTrips, setTotalTrips] = useState(4);
   const [savedTrips, setSavedTrips] = useState(0);
-  const [ecoScore, setEcoScore] = useState(78);
+  const [ecoScore, setEcoScore] = useState(92);
   const [recentTrips, setRecentTrips] = useState<SavedTripSummary[]>([]);
   const [promptInput, setPromptInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [destFilter, setDestFilter] = useState<"all" | "india" | "abroad">("all");
+
+  const [weatherCity, setWeatherCity] = useState("Trivandrum");
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherData, setWeatherData] = useState<{
+    city: string;
+    temperature: number;
+    condition: string;
+    description: string;
+    humidity: number;
+    wind_speed: number;
+    travel_recommendation?: string;
+  }>({
+    city: "Trivandrum (Thiruvananthapuram)",
+    temperature: 29,
+    condition: "Partly Sunny",
+    description: "Pleasant coastal breeze along Shankhumukham and Kovalam",
+    humidity: 74,
+    wind_speed: 14,
+    travel_recommendation: "Great conditions for coastal exploration and sunset photography.",
+  });
 
   useEffect(() => {
     const hour = new Date().getHours();
@@ -66,7 +87,11 @@ export default function DashboardPage() {
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-        if (user.full_name) setUserName(user.full_name);
+        if (user.full_name && user.full_name !== "Traveler") {
+          setUserName(user.full_name);
+        } else {
+          setUserName("Sivya Babu");
+        }
         if (user.tripgenius_id) setTripGeniusId(user.tripgenius_id);
         if (user.eco_score !== undefined) setEcoScore(user.eco_score);
       } catch {
@@ -117,11 +142,51 @@ export default function DashboardPage() {
     loadDashboardData();
   }, []);
 
-  const handlePromptSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (promptInput.trim()) {
+  // Fetch live weather data for selected city
+  useEffect(() => {
+    const fetchWeather = async () => {
+      setWeatherLoading(true);
+      try {
+        const res = await fetch(
+          `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(weatherCity)}`,
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.temperature !== undefined) {
+            setWeatherData({
+              city: data.city || weatherCity,
+              temperature: Math.round(data.temperature),
+              condition: data.condition || "Pleasant",
+              description: data.description || "Clear skies with light breeze",
+              humidity: data.humidity || 70,
+              wind_speed: Math.round(data.wind_speed || 12),
+              travel_recommendation: data.travel_recommendation,
+            });
+          }
+        }
+      } catch {
+        // keep fallback
+      } finally {
+        setWeatherLoading(false);
+      }
+    };
+    fetchWeather();
+  }, [weatherCity]);
+
+  const handlePromptSubmit = (
+    e?: React.FormEvent,
+    customDest?: string,
+    customDuration?: number,
+  ) => {
+    if (e) e.preventDefault();
+    const query = customDest || promptInput;
+    if (query.trim()) {
+      const parsed = parseDestinationQuery(query);
+      const dest = customDest || parsed.destination || query.trim();
+      const dur =
+        customDuration !== undefined ? customDuration : parsed.duration;
       router.push(
-        `/planner?destination=${encodeURIComponent(promptInput.trim())}`,
+        `/planner?destination=${encodeURIComponent(dest)}&duration=${dur}`,
       );
     } else {
       router.push("/planner");
@@ -295,7 +360,7 @@ export default function DashboardPage() {
 
         {/* AI PROMPT LAUNCH BAR */}
         <form
-          onSubmit={handlePromptSubmit}
+          onSubmit={(e) => handlePromptSubmit(e)}
           style={{
             display: "flex",
             alignItems: "center",
@@ -313,7 +378,7 @@ export default function DashboardPage() {
             type="text"
             value={promptInput}
             onChange={(e) => setPromptInput(e.target.value)}
-            placeholder="Ask AI: 'Plan a 3-day eco-friendly trip to Munnar under ₹15,000'..."
+            placeholder="Type any trip: '3 days goa', '5 days munnar', 'varkala', 'coorg'..."
             style={{
               flex: 1,
               background: "transparent",
@@ -332,6 +397,124 @@ export default function DashboardPage() {
             Generate
           </Button>
         </form>
+
+        {/* LIVE QUERY AUTO-DETECTION PILL */}
+        {(() => {
+          const parsed = parseDestinationQuery(promptInput);
+          if (promptInput.trim().length >= 2 && parsed.destination) {
+            return (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginTop: "12px",
+                  padding: "8px 14px",
+                  borderRadius: "12px",
+                  background: "rgba(14, 165, 233, 0.15)",
+                  border: "1px solid rgba(14, 165, 233, 0.35)",
+                  fontSize: "0.85rem",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <Sparkles size={14} color="#38BDF8" />
+                  <span style={{ color: "#E2E8F0" }}>
+                    Detected Destination:{" "}
+                    <strong style={{ color: "#38BDF8" }}>
+                      {parsed.destination}
+                    </strong>{" "}
+                    • Duration:{" "}
+                    <strong style={{ color: "#34D399" }}>
+                      {parsed.duration} Days
+                    </strong>
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handlePromptSubmit(
+                      undefined,
+                      parsed.destination,
+                      parsed.duration,
+                    )
+                  }
+                  style={{
+                    background:
+                      "linear-gradient(135deg, #0EA5E9 0%, #10B981 100%)",
+                    border: "none",
+                    borderRadius: "8px",
+                    padding: "5px 12px",
+                    color: "#FFFFFF",
+                    fontSize: "0.78rem",
+                    fontWeight: 700,
+                    cursor: "pointer",
+                    boxShadow: "0 2px 8px rgba(14, 165, 233, 0.35)",
+                  }}
+                >
+                  Select & Plan →
+                </button>
+              </div>
+            );
+          }
+          return null;
+        })()}
+
+        {/* QUICK SUGGESTION CHIPS */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            marginTop: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <span style={{ fontSize: "0.78rem", color: "#94A3B8", fontWeight: 500 }}>
+            Quick Select:
+          </span>
+          {[
+            { dest: "Goa", days: 3 },
+            { dest: "Varkala", days: 3 },
+            { dest: "Munnar", days: 4 },
+            { dest: "Coorg", days: 3 },
+            { dest: "Hampi", days: 3 },
+            { dest: "Kovalam", days: 3 },
+            { dest: "Paris", days: 5 },
+          ].map((chip) => (
+            <button
+              key={chip.dest}
+              type="button"
+              onClick={() => {
+                setPromptInput(`${chip.days} days ${chip.dest}`);
+                handlePromptSubmit(undefined, chip.dest, chip.days);
+              }}
+              style={{
+                background: "rgba(255, 255, 255, 0.05)",
+                border: "1px solid rgba(255, 255, 255, 0.10)",
+                borderRadius: "999px",
+                padding: "4px 11px",
+                color: "#CBD5E1",
+                fontSize: "0.78rem",
+                cursor: "pointer",
+                transition: "all 0.15s ease",
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.background = "rgba(14, 165, 233, 0.20)";
+                e.currentTarget.style.borderColor = "rgba(14, 165, 233, 0.40)";
+                e.currentTarget.style.color = "#FFFFFF";
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.10)";
+                e.currentTarget.style.color = "#CBD5E1";
+              }}
+            >
+              🌴 {chip.dest} ({chip.days} Days)
+            </button>
+          ))}
+        </div>
       </section>
 
       {/* KEY METRICS GRID */}
@@ -389,68 +572,124 @@ export default function DashboardPage() {
             display: "flex",
             flexDirection: "column",
             justifyContent: "space-between",
+            gap: "16px",
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              marginBottom: "16px",
-            }}
-          >
-            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-              <CloudSun size={20} color="#FBBF24" />
-              <h3
-                style={{
-                  fontSize: "1.1rem",
-                  fontWeight: 700,
-                  color: "#FFFFFF",
-                }}
-              >
-                Live Weather Intelligence
-              </h3>
-            </div>
-            <Badge variant="amber" size="sm">
-              Spotlight
-            </Badge>
-          </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "baseline",
-              justifyContent: "space-between",
-              marginBottom: "16px",
-            }}
-          >
-            <div>
-              <span
-                style={{
-                  fontSize: "2.6rem",
-                  fontWeight: 800,
-                  color: "#FFFFFF",
-                }}
-              >
-                19°C
-              </span>
-              <p style={{ color: "#94A3B8", fontSize: "0.9rem" }}>
-                Munnar Hills • Mist & Clear Skies
-              </p>
-            </div>
+          <div>
             <div
               style={{
-                textAlign: "right",
-                fontSize: "0.85rem",
-                color: "#CBD5E1",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "14px",
+                flexWrap: "wrap",
+                gap: "8px",
               }}
             >
-              <p>
-                Humidity: <strong>68%</strong>
-              </p>
-              <p>
-                Wind: <strong>12 km/h</strong>
-              </p>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <CloudSun size={20} color="#FBBF24" />
+                <h3
+                  style={{
+                    fontSize: "1.1rem",
+                    fontWeight: 700,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  Live Weather Intelligence
+                </h3>
+              </div>
+              <Badge variant="amber" size="sm">
+                {weatherLoading ? "Updating..." : "Real-time"}
+              </Badge>
+            </div>
+
+            {/* QUICK CITY SWITCHER TABS */}
+            <div
+              style={{
+                display: "flex",
+                gap: "6px",
+                marginBottom: "16px",
+                overflowX: "auto",
+                paddingBottom: "4px",
+              }}
+            >
+              {[
+                { label: "Trivandrum", city: "Thiruvananthapuram" },
+                { label: "Varkala", city: "Varkala" },
+                { label: "Munnar", city: "Munnar" },
+                { label: "Goa", city: "Goa" },
+                { label: "Kochi", city: "Kochi" },
+              ].map((loc) => {
+                const isActive =
+                  weatherCity.toLowerCase() === loc.city.toLowerCase() ||
+                  weatherCity.toLowerCase() === loc.label.toLowerCase();
+                return (
+                  <button
+                    key={loc.label}
+                    type="button"
+                    onClick={() => setWeatherCity(loc.city)}
+                    style={{
+                      background: isActive
+                        ? "rgba(14, 165, 233, 0.25)"
+                        : "rgba(255, 255, 255, 0.05)",
+                      border: isActive
+                        ? "1px solid rgba(14, 165, 233, 0.50)"
+                        : "1px solid rgba(255, 255, 255, 0.08)",
+                      borderRadius: "8px",
+                      padding: "4px 10px",
+                      color: isActive ? "#38BDF8" : "#94A3B8",
+                      fontSize: "0.78rem",
+                      fontWeight: isActive ? 700 : 500,
+                      cursor: "pointer",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    {loc.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                alignItems: "baseline",
+                justifyContent: "space-between",
+                marginBottom: "14px",
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontSize: "2.6rem",
+                    fontWeight: 800,
+                    color: "#FFFFFF",
+                  }}
+                >
+                  {weatherData.temperature}°C
+                </span>
+                <p style={{ color: "#94A3B8", fontSize: "0.9rem", marginTop: "2px" }}>
+                  {weatherData.city} • {weatherData.condition}
+                </p>
+                <p style={{ color: "#64748B", fontSize: "0.8rem" }}>
+                  {weatherData.description}
+                </p>
+              </div>
+              <div
+                style={{
+                  textAlign: "right",
+                  fontSize: "0.85rem",
+                  color: "#CBD5E1",
+                }}
+              >
+                <p>
+                  Humidity: <strong>{weatherData.humidity}%</strong>
+                </p>
+                <p>
+                  Wind: <strong>{weatherData.wind_speed} km/h</strong>
+                </p>
+              </div>
             </div>
           </div>
 
@@ -465,8 +704,8 @@ export default function DashboardPage() {
             <p
               style={{ color: "#38BDF8", fontSize: "0.85rem", fontWeight: 500 }}
             >
-              💡 Ideal conditions for tea garden walks and hilltop photography
-              this week.
+              💡 {weatherData.travel_recommendation ||
+                "Favorable weather conditions for travel exploration and outdoor activities."}
             </p>
           </div>
         </GlassCard>
@@ -548,7 +787,7 @@ export default function DashboardPage() {
         <SectionHeader
           badge="Handpicked for You"
           title="Curated Travel Escapes"
-          subtitle="Popular regional destinations with optimal travel windows and eco ratings."
+          subtitle="Handpicked regional and international destinations with optimal travel windows and eco ratings."
           action={
             <Link href="/explore" style={{ textDecoration: "none" }}>
               <Button
@@ -556,11 +795,55 @@ export default function DashboardPage() {
                 size="sm"
                 rightIcon={<ChevronRight size={14} />}
               >
-                View All (700+)
+                View All (1,300+)
               </Button>
             </Link>
           }
         />
+
+        {/* REGION FILTER PILLS */}
+        <div
+          style={{
+            display: "flex",
+            gap: "8px",
+            marginBottom: "18px",
+            overflowX: "auto",
+            paddingBottom: "4px",
+          }}
+        >
+          {[
+            { id: "all", label: "All Destinations" },
+            { id: "india", label: "India & Regional" },
+            { id: "abroad", label: "International / Abroad" },
+          ].map((pill) => {
+            const isActive = destFilter === pill.id;
+            return (
+              <button
+                key={pill.id}
+                type="button"
+                onClick={() => setDestFilter(pill.id as any)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "999px",
+                  background: isActive
+                    ? "linear-gradient(135deg, #0EA5E9, #14B8A6)"
+                    : "rgba(255, 255, 255, 0.05)",
+                  border: isActive
+                    ? "1px solid rgba(14, 165, 233, 0.5)"
+                    : "1px solid rgba(255, 255, 255, 0.08)",
+                  color: isActive ? "#FFFFFF" : "#94A3B8",
+                  fontSize: "0.85rem",
+                  fontWeight: isActive ? 700 : 500,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {pill.label}
+              </button>
+            );
+          })}
+        </div>
 
         <div
           style={{
@@ -569,7 +852,9 @@ export default function DashboardPage() {
             gap: "20px",
           }}
         >
-          {curatedDestinations.map((dest) => (
+          {curatedDestinations
+            .filter((d) => destFilter === "all" || d.region === destFilter)
+            .map((dest) => (
             <div
               key={dest.name}
               className="glass-card-interactive"

@@ -121,7 +121,7 @@ class AITripGenerationRequest(BaseModel):
 
     budget: float = Field(gt=0)
 
-    travelers_count: int = Field(default=1, ge=1, le=20)
+    travelers_count: int = Field(default=1, ge=1, le=500)
 
     travel_style: str | None = None
 
@@ -157,7 +157,7 @@ class TripCreateRequest(BaseModel):
 
     budget: float = Field(gt=0)
 
-    travelers_count: int = Field(default=1, ge=1, le=20)
+    travelers_count: int = Field(default=1, ge=1, le=500)
 
     travel_style: str | None = None
 
@@ -182,7 +182,7 @@ class TripUpdateRequest(BaseModel):
 
     budget: float | None = Field(default=None, gt=0)
 
-    travelers_count: int | None = Field(default=None, ge=1, le=20)
+    travelers_count: int | None = Field(default=None, ge=1, le=500)
 
     travel_style: str | None = None
 

@@ -64,7 +64,12 @@ export default function EditProfileModal({
 
       username: initialUser.username ?? "",
 
-      bio: initialUser.bio ?? "",
+      bio:
+        initialUser.bio &&
+        !initialUser.bio.includes("Healthcare Professional") &&
+        !initialUser.bio.includes("Dr. Sivya Menon")
+          ? initialUser.bio
+          : "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries.",
 
       country: initialUser.country ?? "India",
 

@@ -56,7 +56,7 @@ export default function AIChatPage() {
         id: "welcome-msg",
         role: "assistant",
         content:
-          "👋 Welcome! I am your TripGenius AI Travel Companion.\n\nI can help you analyze seasonal weather, estimate travel budgets, suggest eco-certified sanctuaries, and draft day-by-day itineraries across the Western Ghats and worldwide.\n\nWhere would you like to explore?",
+          "👋 Hello! I'm TripGenius AI, your personal travel companion. What's your name, and where are you dreaming of traveling next?",
         timestamp: new Date().toISOString(),
       };
       setMessages([welcome]);
@@ -74,7 +74,8 @@ export default function AIChatPage() {
     const welcome: ChatMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
-      content: "👋 Chat refreshed. Where can I help plan your next adventure?",
+      content:
+        "👋 Chat refreshed! What's your name, and where are you dreaming of traveling next?",
       timestamp: new Date().toISOString(),
     };
     setMessages([welcome]);

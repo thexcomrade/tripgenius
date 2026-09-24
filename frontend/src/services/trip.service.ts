@@ -42,7 +42,7 @@ class TripService {
   constructor() {
     this.api = axios.create({
       baseURL: API_BASE_URL,
-      timeout: 60000,
+      timeout: 90000,
       headers: {
         "Content-Type": "application/json",
       },
@@ -147,6 +147,66 @@ class TripService {
     try {
       const response = await this.api.post(`/api/trips/${tripId}/unfavorite`);
 
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async exportTripPDF(
+    payload: any,
+    userName?: string,
+  ): Promise<{ blob: Blob; filename: string }> {
+    try {
+      const fullPayload = {
+        ...payload,
+        user_name: userName,
+      };
+      const response = await this.api.post(
+        "/api/trips/export-pdf",
+        fullPayload,
+        {
+          responseType: "blob",
+        },
+      );
+
+      let filename = "trip_itinerary.pdf";
+      const disposition = response.headers["content-disposition"];
+      if (disposition) {
+        const match = disposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      } else {
+        const rawUser = (userName || "trip").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        const prefix = (rawUser.slice(0, 4) || "trip").padEnd(4, "x");
+        const dest = (payload.destination || "itinerary").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        filename = `${prefix}_${dest}.pdf`;
+      }
+
+      return { blob: response.data, filename };
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async recordTripExpense(tripId: string, payload: any): Promise<any> {
+    try {
+      const response = await this.api.post(
+        `/api/trips/${tripId}/record-expense`,
+        payload,
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async getDestinationLearningInsights(destination: string): Promise<any> {
+    try {
+      const response = await this.api.get(
+        `/api/trips/learning-insights/${encodeURIComponent(destination)}`,
+      );
       return response.data;
     } catch (error) {
       throw this.handleError(error);

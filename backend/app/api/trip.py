@@ -1,10 +1,7 @@
-from typing import Annotated
+from typing import Annotated, Any
 
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import Header
-from fastapi import HTTPException
-from fastapi import status
+from fastapi import APIRouter, Depends, Header, HTTPException, Response, status
+from pydantic import BaseModel, Field
 
 import logging
 
@@ -34,6 +31,14 @@ from app.schemas.trip_schema import (
     AITripGenerationRequest,
     AITripGenerationResponse,
 )
+from app.services.pdf_service import get_pdf_generator, compute_pdf_filename
+from app.services.budget_learning_service import get_budget_rl_service
+
+
+class RecordExpenseRequest(BaseModel):
+    actual_spent_total: float = Field(gt=0)
+    category_actuals: dict[str, float] = Field(default_factory=dict)
+    user_notes: str | None = None
 
 
 router = APIRouter(prefix="/api/trips", tags=["Trips"])
@@ -396,3 +401,100 @@ def unfavorite_trip(
     trip_service.unfavorite_trip(trip_id)
 
     return {"message": "Trip removed from favorites"}
+
+
+# =====================================================
+# Export Trip PDF (ReportLab & Pillow)
+# =====================================================
+
+
+@router.post("/export-pdf")
+def export_trip_pdf(
+    payload: dict[str, Any],
+    authorization: Annotated[str | None, Header()] = None,
+    auth_service: AuthService = Depends(get_auth_service),
+):
+    """
+    Generates a structured, publication-grade vector PDF of the itinerary
+    using ReportLab and Pillow across the 5 core sections.
+    Automatically names the file based on the user's first 4 letters + destination,
+    e.g. deva_munnar.pdf.
+    """
+    user_name = payload.get("user_name") or payload.get("traveler_name")
+    if not user_name and authorization and authorization.startswith("Bearer "):
+        try:
+            token = authorization.replace("Bearer ", "")
+            user_id = get_token_subject(token)
+            user = auth_service.get_user_by_id(user_id)
+            if user and user.full_name:
+                user_name = user.full_name
+        except Exception:
+            pass
+
+    generator = get_pdf_generator()
+    pdf_bytes = generator.build_pdf(payload)
+
+    dest = payload.get("destination", "itinerary")
+    filename = compute_pdf_filename(user_name, dest)
+
+    return Response(
+        content=pdf_bytes,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Access-Control-Expose-Headers": "Content-Disposition",
+        },
+    )
+
+
+# =====================================================
+# Record Actual Trip Expense (RL Human Feedback Learning)
+# =====================================================
+
+
+@router.post("/{trip_id}/record-expense")
+def record_trip_expense(
+    trip_id: str,
+    payload: RecordExpenseRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Logs actual traveler spending (chelavakkiya budget) against an AI generated trip.
+    Updates the database and triggers the Reinforcement Learning / Contextual Bandit
+    engine to calibrate future predictions.
+    """
+    rl_service = get_budget_rl_service()
+    try:
+        result = rl_service.record_trip_expense(
+            db=db,
+            trip_id=trip_id,
+            user_id=current_user.id,
+            actual_total=payload.actual_spent_total,
+            category_actuals=payload.category_actuals,
+            user_notes=payload.user_notes,
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        logger = logging.getLogger(__name__)
+        logger.exception("Error recording trip expense: %s", e)
+        raise HTTPException(status_code=500, detail="Failed to record expense feedback.")
+
+
+# =====================================================
+# Destination Learning Insights
+# =====================================================
+
+
+@router.get("/learning-insights/{destination}")
+def get_destination_learning_insights(
+    destination: str,
+    db: Session = Depends(get_db),
+):
+    """
+    Returns empirical accuracy rates and learned budget indices for a given destination.
+    """
+    rl_service = get_budget_rl_service()
+    return rl_service.get_destination_insights(db, destination)

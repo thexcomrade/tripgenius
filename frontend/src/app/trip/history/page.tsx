@@ -50,6 +50,16 @@ const DESTINATION_IMAGES: Record<string, string> = {
   Kodaikanal: "/destinations/kodaikanal.jpg",
   Mysore: "/destinations/mysore.jpg",
   Coorg: "/destinations/coorg.jpg",
+  Hampi: "/destinations/hampi.jpg",
+  Gokarna: "/destinations/gokarna.jpg",
+  Thekkady: "/destinations/thekkady.jpg",
+  Kovalam: "/destinations/kovalam.jpg",
+  Alleppey: "/destinations/alleppey.jpg",
+  Wayanad: "/destinations/wayanad.jpg",
+  Paris: "/destinations/paris.jpg",
+  Tokyo: "/destinations/tokyo.jpg",
+  Bali: "/destinations/bali.jpg",
+  Dubai: "/destinations/dubai.jpg",
 };
 
 export default function TripHistoryPage() {

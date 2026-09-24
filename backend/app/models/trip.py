@@ -118,6 +118,15 @@ class Trip(Base):
 
     status: Mapped[str] = mapped_column(String(50), default="draft", nullable=False)
 
+    is_completed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Actual user spent expense tracking & RL calibration
+    actual_expense_total: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+    actual_expense_breakdown: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+
+    expense_variance: Mapped[float | None] = mapped_column(Float, nullable=True)
+
     generated_by_ai: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     generation_model: Mapped[str | None] = mapped_column(String(100), nullable=True)

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, ChangeEvent } from "react";
+import { useEffect, useState } from "react";
 import ProfileHeader from "../../components/profile/ProfileHeader";
 import ProfileTabs from "../../components/profile/ProfileTabs";
 import ProfileGrid from "../../components/profile/ProfileGrid";
@@ -94,8 +94,6 @@ function generateUID() {
 }
 
 export default function ProfilePage() {
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("trips");
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -107,24 +105,25 @@ export default function ProfilePage() {
 
   const [user, setUser] = useState<UserProfile>({
     uid: generateUID(),
-    tripgenius_id: generateTripGeniusId(),
-    full_name: "Traveler",
-    username: "voyager",
-    email: "traveler@tripgenius.com",
-    bio: "Passionate globetrotter seeking sustainable routes, hidden mountain viewpoints, and authentic regional culinary traditions.",
-    country: "India",
+    tripgenius_id: "TG-SB8842",
+    full_name: "Sivya Babu",
+    username: "sivyababu",
+    email: "sivya.babu@tripgenius.com",
+    bio: "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries.",
+    country: "Trivandrum, Kerala, India",
     profile_image: "",
-    total_trips: 3,
+    total_trips: 4,
     saved_trips: 0,
-    eco_score: 84,
-    countries_visited: 2,
+    eco_score: 92,
+    countries_visited: 3,
     is_verified: true,
     created_at: new Date().toISOString(),
     travel_preferences: [
       "Scenic Highlands & Tea Hills",
+      "Coastal & Beach Escapes",
       "Eco Tourism & Sustainable",
       "Local Food & Street Dining",
-      "Photography & Drone Spots",
+      "Peaceful Wellness Retreats",
     ],
   });
 
@@ -156,7 +155,8 @@ export default function ProfilePage() {
         setIsLoggedIn(true);
 
         // Fetch statistics if available
-        let liveTotalTrips = parsed.total_trips ?? (parsedSaved.length > 0 ? parsedSaved.length : 3);
+        let liveTotalTrips =
+          parsed.total_trips ?? (parsedSaved.length > 0 ? parsedSaved.length : 4);
         try {
           const stats = await tripService.getStatistics();
           if (stats && typeof stats.total_trips === "number") {
@@ -166,21 +166,32 @@ export default function ProfilePage() {
           // Keep local fallback
         }
 
+        const name =
+          parsed.full_name && parsed.full_name !== "Traveler"
+            ? parsed.full_name
+            : "Sivya Babu";
+
         setUser({
           uid: parsed.uid ?? generateUID(),
-          tripgenius_id: parsed.tripgenius_id ?? generateTripGeniusId(),
-          full_name: parsed.full_name || "Traveler",
-          username: parsed.username || "voyager",
-          email: parsed.email || "",
+          tripgenius_id: parsed.tripgenius_id ?? "TG-SB8842",
+          full_name: name,
+          username: parsed.username && parsed.username !== "voyager" ? parsed.username : "sivyababu",
+          email: parsed.email || "sivya.babu@tripgenius.com",
           bio:
-            parsed.bio ||
-            "Passionate globetrotter seeking sustainable routes, hidden mountain viewpoints, and authentic regional culinary traditions.",
-          country: parsed.country || "India",
+            parsed.bio &&
+            !parsed.bio.includes("Dr. Sivya Menon") &&
+            !parsed.bio.includes("Healthcare Professional")
+              ? parsed.bio
+              : "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries.",
+          country:
+            parsed.country && parsed.country !== "India"
+              ? parsed.country
+              : "Trivandrum, Kerala, India",
           profile_image: image || parsed.profile_image || "",
           total_trips: liveTotalTrips,
           saved_trips: parsedSaved.length,
-          eco_score: parsed.eco_score ?? 84,
-          countries_visited: parsed.countries_visited ?? 2,
+          eco_score: parsed.eco_score ?? 92,
+          countries_visited: parsed.countries_visited ?? 3,
           is_verified: parsed.is_verified ?? true,
           created_at: parsed.created_at ?? new Date().toISOString(),
           travel_preferences:
@@ -188,18 +199,25 @@ export default function ProfilePage() {
               ? parsed.travel_preferences
               : [
                   "Scenic Highlands & Tea Hills",
+                  "Coastal & Beach Escapes",
                   "Eco Tourism & Sustainable",
                   "Local Food & Street Dining",
-                  "Photography & Drone Spots",
+                  "Peaceful Wellness Retreats",
                 ],
         });
       } else {
-        // Fallback for non-logged-in guest visitor viewing their local profile
+        // Fallback for guest visitor
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
+          const name =
+            parsed.full_name && parsed.full_name !== "Traveler"
+              ? parsed.full_name
+              : "Sivya Babu";
+
           setUser((prev) => ({
             ...prev,
             ...parsed,
+            full_name: name,
             saved_trips: parsedSaved.length,
           }));
         } else {
@@ -214,26 +232,6 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  }
-
-  function openPhotoPicker() {
-    fileInputRef.current?.click();
-  }
-
-  function handlePhotoUpload(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const image = e.target?.result as string;
-      setUser((previous) => ({
-        ...previous,
-        profile_image: image,
-      }));
-      localStorage.setItem("tripgenius_profile_image", image);
-    };
-    reader.readAsDataURL(file);
   }
 
   function handleProfileSave(updatedProfile: Partial<UserProfile>) {
@@ -277,7 +275,6 @@ export default function ProfilePage() {
           user={user}
           onSettingsClick={() => setSettingsOpen(true)}
           onEditProfileClick={() => setEditProfileOpen(true)}
-          onPhotoClick={openPhotoPicker}
         />
 
         <ProfileTabs
@@ -298,21 +295,15 @@ export default function ProfilePage() {
           userPreferences={user.travel_preferences}
           onSavePreferences={handleSavePreferences}
         />
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handlePhotoUpload}
-          className="hidden"
-        />
       </main>
 
       <ProfileSettingsModal
         isOpen={settingsOpen}
         isLoggedIn={isLoggedIn}
         onClose={() => setSettingsOpen(false)}
-        onChangePhoto={openPhotoPicker}
+        onPhotoUpdated={(img) =>
+          setUser((prev) => ({ ...prev, profile_image: img }))
+        }
       />
 
       <EditProfileModal

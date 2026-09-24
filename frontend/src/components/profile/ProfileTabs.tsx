@@ -53,13 +53,20 @@ export default function ProfileTabs({
   };
 
   return (
-    <section className="max-w-6xl mx-auto mb-8 px-2">
+    <section style={{ maxWidth: "1200px", margin: "0 auto 28px", padding: "0 8px" }}>
       <div
-        className="flex items-center justify-start sm:justify-center gap-2 p-1.5 rounded-2xl border border-white/10 overflow-x-auto no-scrollbar"
         style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: "8px",
+          padding: "6px",
+          borderRadius: "16px",
+          border: "1px solid rgba(255, 255, 255, 0.10)",
           background: "rgba(15, 23, 42, 0.70)",
           backdropFilter: "blur(16px)",
           WebkitBackdropFilter: "blur(16px)",
+          overflowX: "auto",
         }}
       >
         {TABS.map((tab) => {
@@ -70,35 +77,47 @@ export default function ProfileTabs({
           return (
             <button
               key={tab.id}
+              type="button"
               onClick={() => onTabChange(tab.id)}
-              className={`flex items-center gap-2.5 px-4 sm:px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all whitespace-nowrap cursor-pointer ${
-                isActive
-                  ? "text-white shadow-lg font-semibold"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/5"
-              }`}
               style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px",
+                padding: "8px 18px",
+                borderRadius: "12px",
+                fontSize: "0.88rem",
+                fontWeight: isActive ? 700 : 500,
+                color: isActive ? "#FFFFFF" : "#94A3B8",
                 background: isActive
                   ? "linear-gradient(135deg, rgba(14, 165, 233, 0.3) 0%, rgba(20, 184, 166, 0.3) 100%)"
                   : "transparent",
                 border: isActive
                   ? "1px solid rgba(14, 165, 233, 0.45)"
                   : "1px solid transparent",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease",
               }}
             >
-              <Icon
-                className={`w-4 h-4 ${
-                  isActive ? "text-sky-400" : "text-slate-400"
-                }`}
-              />
+              <Icon size={16} color={isActive ? "#38BDF8" : "#94A3B8"} />
               <span>{tab.label}</span>
 
               {typeof count === "number" && (
                 <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono ${
-                    isActive
-                      ? "bg-sky-500/20 text-sky-300 border border-sky-400/30"
-                      : "bg-white/10 text-slate-400"
-                  }`}
+                  style={{
+                    fontSize: "0.72rem",
+                    padding: "2px 7px",
+                    borderRadius: "999px",
+                    fontFamily: "monospace",
+                    fontWeight: 700,
+                    background: isActive
+                      ? "rgba(14, 165, 233, 0.25)"
+                      : "rgba(255, 255, 255, 0.08)",
+                    color: isActive ? "#38BDF8" : "#94A3B8",
+                    border: isActive
+                      ? "1px solid rgba(14, 165, 233, 0.35)"
+                      : "1px solid transparent",
+                  }}
                 >
                   {count}
                 </span>
