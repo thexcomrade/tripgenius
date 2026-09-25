@@ -1,6 +1,13 @@
 import axios, { AxiosError, AxiosInstance } from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+const getApiBaseUrl = (): string => {
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    const protocol = window.location.protocol;
+    return `${protocol}//${host}:8000`;
+  }
+  return process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
+};
 
 export interface RegisterRequest {
   full_name: string;
@@ -46,7 +53,7 @@ class AuthService {
 
   constructor() {
     this.api = axios.create({
-      baseURL: API_BASE_URL,
+      baseURL: getApiBaseUrl(),
       timeout: 30000,
       headers: {
         "Content-Type": "application/json",
@@ -54,6 +61,7 @@ class AuthService {
     });
 
     this.api.interceptors.request.use((config) => {
+      config.baseURL = getApiBaseUrl();
       const token = this.getAccessToken();
 
       if (token && config.headers) {

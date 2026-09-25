@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   Sparkles,
   Compass,
@@ -20,6 +21,9 @@ import {
   Utensils,
   Hotel,
   CloudSun,
+  X,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
@@ -154,7 +158,7 @@ export default function HomePage() {
     },
   ];
 
-  const testimonials = [
+  const initialTestimonials = [
     {
       name: "Arjun Nair",
       location: "Bangalore",
@@ -177,6 +181,88 @@ export default function HomePage() {
       rating: 5,
     },
   ];
+
+  const [reviewsList, setReviewsList] = useState(initialTestimonials);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewProfession, setReviewProfession] = useState("Family Vacationer");
+  const [reviewPlace, setReviewPlace] = useState("Chennai");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [hoveredStar, setHoveredStar] = useState<number | null>(null);
+  const [reviewDescription, setReviewDescription] = useState("");
+
+  useEffect(() => {
+    const saved = localStorage.getItem("tripgenius_user_reviews");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setReviewsList([...parsed, ...initialTestimonials]);
+        }
+      } catch {
+        // ignore
+      }
+    }
+
+    const storedUser = localStorage.getItem("tripgenius_user");
+    if (storedUser) {
+      try {
+        const u = JSON.parse(storedUser);
+        if (u.full_name) setReviewName(u.full_name);
+        if (u.location || u.city) setReviewPlace(u.location || u.city);
+      } catch {
+        // ignore
+      }
+    }
+  }, []);
+
+  const handleReviewSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewName.trim()) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!reviewDescription.trim()) {
+      toast.error("Please enter your review description.");
+      return;
+    }
+
+    const newRev = {
+      name: reviewName.trim(),
+      role: reviewProfession.trim() || "Traveler",
+      location: reviewPlace.trim() || "India",
+      rating: reviewRating,
+      text: reviewDescription.trim(),
+    };
+
+    const updated = [newRev, ...reviewsList];
+    setReviewsList(updated);
+
+    const existing = JSON.parse(
+      localStorage.getItem("tripgenius_user_reviews") || "[]",
+    );
+    existing.unshift(newRev);
+    localStorage.setItem("tripgenius_user_reviews", JSON.stringify(existing));
+
+    toast.success("Thank you! Your travel review has been published.");
+    setIsReviewModalOpen(false);
+    setReviewDescription("");
+  };
+
+  const [showAllReviews, setShowAllReviews] = useState(false);
+
+  // Priority sorting: 5-star reviews first, verified travelers, sorted by highest rating & detail
+  const prioritySortedReviews = [...reviewsList].sort((a, b) => {
+    // 1. Higher rating first (5 stars before 4 stars, etc.)
+    if (b.rating !== a.rating) return b.rating - a.rating;
+    // 2. Longer and more informative descriptions get higher priority
+    return (b.text?.length || 0) - (a.text?.length || 0);
+  });
+
+  const MAX_DEFAULT_REVIEWS = 4;
+  const displayedReviews = showAllReviews
+    ? prioritySortedReviews
+    : prioritySortedReviews.slice(0, MAX_DEFAULT_REVIEWS);
 
   return (
     <div style={{ position: "relative", overflow: "hidden" }}>
@@ -536,43 +622,139 @@ export default function HomePage() {
           padding: "40px 24px",
         }}
       >
-        <SectionHeader
-          badge="Verified Travelers"
-          title="Real Travelers. Sustainable Journeys."
-          subtitle="See how TripGenius changes the vacation planning paradigm."
-        />
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-end",
+            flexWrap: "wrap",
+            gap: "16px",
+            marginBottom: "32px",
+          }}
+        >
+          <div>
+            <div style={{ display: "inline-flex", marginBottom: "8px" }}>
+              <Badge
+                variant="neutral"
+                size="sm"
+                icon={<Star size={12} fill="#FBBF24" color="#FBBF24" />}
+              >
+                Verified Travelers
+              </Badge>
+            </div>
+            <h2
+              style={{
+                fontSize: "clamp(1.8rem, 3vw, 2.5rem)",
+                fontWeight: 800,
+                color: "#FFFFFF",
+                marginTop: "4px",
+              }}
+            >
+              Real Travelers. Sustainable Journeys.
+            </h2>
+            <p
+              style={{
+                color: "#94A3B8",
+                fontSize: "0.95rem",
+                marginTop: "4px",
+              }}
+            >
+              Top experiences and authentic feedback from travelers around the world.
+            </p>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              background: "rgba(15, 23, 42, 0.6)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
+              padding: "8px 16px",
+              borderRadius: "999px",
+            }}
+          >
+            <div style={{ display: "flex", gap: "2px" }}>
+              {[...Array(5)].map((_, i) => (
+                <Star key={i} size={14} fill="#FBBF24" color="#FBBF24" />
+              ))}
+            </div>
+            <span
+              style={{
+                fontSize: "0.88rem",
+                fontWeight: 700,
+                color: "#FFFFFF",
+              }}
+            >
+              4.9/5
+            </span>
+            <span style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
+              ({prioritySortedReviews.length} verified reviews)
+            </span>
+          </div>
+        </div>
 
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
+            gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
             gap: "24px",
           }}
         >
-          {testimonials.map((t, idx) => (
+          {displayedReviews.map((t, idx) => (
             <GlassCard
               key={idx}
               style={{
-                padding: "30px",
+                padding: "28px",
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "space-between",
-                gap: "20px",
+                gap: "18px",
+                border:
+                  idx === 0
+                    ? "1px solid rgba(14, 165, 233, 0.35)"
+                    : "1px solid rgba(255, 255, 255, 0.08)",
+                background:
+                  idx === 0
+                    ? "linear-gradient(135deg, rgba(14, 165, 233, 0.08), rgba(15, 23, 42, 0.75))"
+                    : "rgba(15, 23, 42, 0.60)",
               }}
             >
               <div>
                 <div
-                  style={{ display: "flex", gap: "4px", marginBottom: "14px" }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    marginBottom: "14px",
+                  }}
                 >
-                  {[...Array(t.rating)].map((_, i) => (
-                    <Star key={i} size={16} fill="#FBBF24" color="#FBBF24" />
-                  ))}
+                  <div style={{ display: "flex", gap: "4px" }}>
+                    {[...Array(t.rating)].map((_, i) => (
+                      <Star key={i} size={15} fill="#FBBF24" color="#FBBF24" />
+                    ))}
+                  </div>
+                  {t.rating === 5 && (
+                    <span
+                      style={{
+                        fontSize: "0.72rem",
+                        fontWeight: 700,
+                        color: "#34D399",
+                        background: "rgba(16, 185, 129, 0.12)",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        border: "1px solid rgba(16, 185, 129, 0.25)",
+                      }}
+                    >
+                      ★ Top Review
+                    </span>
+                  )}
                 </div>
                 <p
                   style={{
                     color: "#E2E8F0",
-                    fontSize: "0.98rem",
-                    lineHeight: 1.7,
+                    fontSize: "0.95rem",
+                    lineHeight: 1.65,
                     fontStyle: "italic",
                   }}
                 >
@@ -593,28 +775,43 @@ export default function HomePage() {
                     width: "40px",
                     height: "40px",
                     borderRadius: "50%",
-                    background: "linear-gradient(135deg, #0EA5E9, #14B8A6)",
+                    background:
+                      idx % 2 === 0
+                        ? "linear-gradient(135deg, #0EA5E9, #14B8A6)"
+                        : "linear-gradient(135deg, #8B5CF6, #EC4899)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     fontWeight: 800,
                     color: "#FFFFFF",
-                    fontSize: "1rem",
+                    fontSize: "0.95rem",
+                    flexShrink: 0,
                   }}
                 >
-                  {t.name.charAt(0)}
+                  {t.name.charAt(0).toUpperCase()}
                 </div>
-                <div>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <h4
                     style={{
                       color: "#FFFFFF",
-                      fontSize: "0.95rem",
+                      fontSize: "0.94rem",
                       fontWeight: 700,
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
                     }}
                   >
                     {t.name}
                   </h4>
-                  <p style={{ color: "#94A3B8", fontSize: "0.82rem" }}>
+                  <p
+                    style={{
+                      color: "#94A3B8",
+                      fontSize: "0.82rem",
+                      whiteSpace: "nowrap",
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                    }}
+                  >
                     {t.role} • {t.location}
                   </p>
                 </div>
@@ -622,6 +819,40 @@ export default function HomePage() {
             </GlassCard>
           ))}
         </div>
+
+        {prioritySortedReviews.length > MAX_DEFAULT_REVIEWS && (
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "center",
+              marginTop: "32px",
+            }}
+          >
+            <Button
+              variant="outline"
+              size="md"
+              leftIcon={
+                showAllReviews ? (
+                  <ChevronUp size={16} />
+                ) : (
+                  <ChevronDown size={16} />
+                )
+              }
+              onClick={() => setShowAllReviews(!showAllReviews)}
+              style={{
+                borderColor: "rgba(255, 255, 255, 0.16)",
+                color: "#E2E8F0",
+                background: "rgba(255, 255, 255, 0.05)",
+                padding: "10px 22px",
+                borderRadius: "12px",
+              }}
+            >
+              {showAllReviews
+                ? `Show Top ${MAX_DEFAULT_REVIEWS} Reviews`
+                : `View All Reviews (${prioritySortedReviews.length})`}
+            </Button>
+          </div>
+        )}
       </section>
 
       {/* CALL TO ACTION BANNER */}
@@ -694,9 +925,379 @@ export default function HomePage() {
                 Explore Destinations
               </Button>
             </Link>
+            <Button
+              variant="outline"
+              size="lg"
+              leftIcon={<Star size={18} fill="#FBBF24" color="#FBBF24" />}
+              onClick={() => setIsReviewModalOpen(true)}
+              style={{
+                borderColor: "rgba(251, 191, 36, 0.45)",
+                color: "#FDE68A",
+                background: "rgba(251, 191, 36, 0.10)",
+                fontWeight: 700,
+              }}
+            >
+              Share Your Experience
+            </Button>
           </div>
         </div>
       </section>
+
+      {/* REVIEW SUBMISSION MODAL */}
+      {isReviewModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "20px",
+            background: "rgba(3, 7, 18, 0.80)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setIsReviewModalOpen(false);
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "540px",
+              background:
+                "linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96))",
+              border: "1px solid rgba(255, 255, 255, 0.14)",
+              boxShadow:
+                "0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(14, 165, 233, 0.15)",
+              borderRadius: "24px",
+              padding: "32px",
+              color: "#FFFFFF",
+            }}
+          >
+            {/* Close Button */}
+            <button
+              type="button"
+              onClick={() => setIsReviewModalOpen(false)}
+              style={{
+                position: "absolute",
+                top: "20px",
+                right: "20px",
+                background: "rgba(255, 255, 255, 0.08)",
+                border: "1px solid rgba(255, 255, 255, 0.12)",
+                borderRadius: "50%",
+                width: "36px",
+                height: "36px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#94A3B8",
+                cursor: "pointer",
+                transition: "all 0.2s",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = "#FFFFFF";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.15)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = "#94A3B8";
+                e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+              }}
+            >
+              <X size={18} />
+            </button>
+
+            {/* Modal Header */}
+            <div style={{ marginBottom: "20px" }}>
+              <div style={{ display: "inline-flex", marginBottom: "8px" }}>
+                <Badge
+                  variant="amber"
+                  size="sm"
+                  icon={<Star size={12} fill="#FBBF24" color="#FBBF24" />}
+                >
+                  Traveler Feedback
+                </Badge>
+              </div>
+              <h3
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: 800,
+                  color: "#FFFFFF",
+                  margin: "4px 0",
+                }}
+              >
+                Share Your Experience
+              </h3>
+              <p
+                style={{
+                  color: "#94A3B8",
+                  fontSize: "0.88rem",
+                  lineHeight: 1.5,
+                }}
+              >
+                Share your journey or planning experience with fellow travelers.
+              </p>
+            </div>
+
+            <form onSubmit={handleReviewSubmit}>
+              {/* Star Rating Picker */}
+              <div style={{ marginBottom: "18px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    color: "#CBD5E1",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Rating
+                </label>
+                <div
+                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                >
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const active = (hoveredStar ?? reviewRating) >= star;
+                    return (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewRating(star)}
+                        onMouseEnter={() => setHoveredStar(star)}
+                        onMouseLeave={() => setHoveredStar(null)}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "4px",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          transform: active ? "scale(1.15)" : "scale(1)",
+                          transition: "transform 0.15s ease",
+                        }}
+                      >
+                        <Star
+                          size={28}
+                          fill={active ? "#FBBF24" : "transparent"}
+                          color={active ? "#FBBF24" : "#64748B"}
+                        />
+                      </button>
+                    );
+                  })}
+                  <span
+                    style={{
+                      marginLeft: "8px",
+                      fontSize: "0.9rem",
+                      fontWeight: 700,
+                      color: "#FDE68A",
+                    }}
+                  >
+                    {reviewRating} of 5 Stars
+                  </span>
+                </div>
+              </div>
+
+              {/* Name Input */}
+              <div style={{ marginBottom: "16px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    color: "#CBD5E1",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Your Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Rahul Krishna"
+                  value={reviewName}
+                  onChange={(e) => setReviewName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    borderRadius: "12px",
+                    background: "rgba(15, 23, 42, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.14)",
+                    color: "#FFFFFF",
+                    fontSize: "0.95rem",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* Tag Inputs: Profession & Place */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "12px",
+                  marginBottom: "8px",
+                }}
+              >
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "#CBD5E1",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Role / Profession
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Family Vacationer"
+                    value={reviewProfession}
+                    onChange={(e) => setReviewProfession(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "12px",
+                      background: "rgba(15, 23, 42, 0.7)",
+                      border: "1px solid rgba(255, 255, 255, 0.14)",
+                      color: "#FFFFFF",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+                <div>
+                  <label
+                    style={{
+                      display: "block",
+                      fontSize: "0.85rem",
+                      fontWeight: 600,
+                      color: "#CBD5E1",
+                      marginBottom: "6px",
+                    }}
+                  >
+                    Place / City
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Chennai"
+                    value={reviewPlace}
+                    onChange={(e) => setReviewPlace(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px 14px",
+                      borderRadius: "12px",
+                      background: "rgba(15, 23, 42, 0.7)",
+                      border: "1px solid rgba(255, 255, 255, 0.14)",
+                      color: "#FFFFFF",
+                      fontSize: "0.9rem",
+                      outline: "none",
+                      boxSizing: "border-box",
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Tag Preview */}
+              <div
+                style={{
+                  marginBottom: "16px",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                }}
+              >
+                <span style={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                  Tag Preview:
+                </span>
+                <span
+                  style={{
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    color: "#38BDF8",
+                    background: "rgba(14, 165, 233, 0.12)",
+                    padding: "3px 10px",
+                    borderRadius: "999px",
+                    border: "1px solid rgba(14, 165, 233, 0.3)",
+                  }}
+                >
+                  ({reviewProfession.trim() || "Family Vacationer"} •{" "}
+                  {reviewPlace.trim() || "Chennai"})
+                </span>
+              </div>
+
+              {/* Description Input */}
+              <div style={{ marginBottom: "22px" }}>
+                <label
+                  style={{
+                    display: "block",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    color: "#CBD5E1",
+                    marginBottom: "6px",
+                  }}
+                >
+                  Review Description
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Tell us what you liked about TripGenius, the AI itinerary, eco-recommendations, or hidden places..."
+                  value={reviewDescription}
+                  onChange={(e) => setReviewDescription(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px 14px",
+                    borderRadius: "12px",
+                    background: "rgba(15, 23, 42, 0.7)",
+                    border: "1px solid rgba(255, 255, 255, 0.14)",
+                    color: "#FFFFFF",
+                    fontSize: "0.92rem",
+                    lineHeight: 1.6,
+                    resize: "vertical",
+                    outline: "none",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+
+              {/* Actions */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: "12px",
+                }}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="md"
+                  onClick={() => setIsReviewModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<Star size={16} fill="#FBBF24" color="#FBBF24" />}
+                >
+                  Publish Review
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

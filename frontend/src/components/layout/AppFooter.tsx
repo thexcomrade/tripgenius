@@ -16,16 +16,17 @@ export default function AppFooter() {
     >
       <div
         style={{
-          maxWidth: "1480px",
+          width: "100%",
+          maxWidth: "1680px",
           margin: "0 auto",
-          padding: "60px 24px 30px 24px",
+          padding: "60px clamp(20px, 4vw, 56px) 30px clamp(20px, 4vw, 56px)",
         }}
       >
         <div
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "40px",
+            gap: "clamp(24px, 3vw, 48px)",
             marginBottom: "50px",
           }}
         >
@@ -281,7 +282,28 @@ export default function AppFooter() {
                 marginBottom: "8px",
               }}
             >
-              📧 contact@tripgenius.travel
+              📧{" "}
+              <a
+                href="mailto:devanarayananstackuplearning@gmail.com"
+                style={{ color: "#38BDF8", textDecoration: "none" }}
+              >
+                devanarayananstackuplearning@gmail.com
+              </a>
+            </p>
+            <p
+              style={{
+                color: "#CBD5E1",
+                fontSize: "0.92rem",
+                marginBottom: "8px",
+              }}
+            >
+              📞{" "}
+              <a
+                href="tel:+918078421005"
+                style={{ color: "#CBD5E1", textDecoration: "none" }}
+              >
+                +91 8078421005
+              </a>
             </p>
             <p
               style={{
@@ -313,14 +335,46 @@ export default function AppFooter() {
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: "12px",
+            gap: "14px",
             fontSize: "0.88rem",
           }}
         >
           <p>© 2026 TripGenius AI Platform. All rights reserved.</p>
-          <p style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            Crafted for conscious travelers worldwide
-          </p>
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              flexWrap: "wrap",
+            }}
+          >
+            <span style={{ color: "#94A3B8" }}>
+              developed by{" "}
+              <span
+                style={{
+                  color: "#F8FAFC",
+                  fontWeight: 600,
+                  letterSpacing: "0.2px",
+                }}
+              >
+                thexcomrade
+              </span>
+            </span>
+            <span style={{ color: "rgba(255, 255, 255, 0.25)" }}>•</span>
+            <span
+              style={{
+                color: "#FF7700",
+                fontWeight: 700,
+                letterSpacing: "0.5px",
+                background: "rgba(255, 119, 0, 0.12)",
+                padding: "2px 8px",
+                borderRadius: "6px",
+                border: "1px solid rgba(255, 119, 0, 0.3)",
+              }}
+            >
+              stackup
+            </span>
+          </div>
         </div>
       </div>
     </footer>

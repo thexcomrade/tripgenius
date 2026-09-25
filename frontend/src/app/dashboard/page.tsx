@@ -41,6 +41,107 @@ interface SavedTripSummary {
   created_at?: string;
 }
 
+const CITY_WEATHER_PROFILES: Record<string, {
+  city: string;
+  temperature: number;
+  condition: string;
+  description: string;
+  humidity: number;
+  wind_speed: number;
+  travel_recommendation: string;
+}> = {
+  thiruvananthapuram: {
+    city: "Trivandrum (Thiruvananthapuram)",
+    temperature: 29,
+    condition: "Partly Sunny",
+    description: "Pleasant coastal breeze along Shankhumukham and Kovalam",
+    humidity: 74,
+    wind_speed: 14,
+    travel_recommendation: "Great conditions for coastal exploration and sunset photography.",
+  },
+  trivandrum: {
+    city: "Trivandrum (Thiruvananthapuram)",
+    temperature: 29,
+    condition: "Partly Sunny",
+    description: "Pleasant coastal breeze along Shankhumukham and Kovalam",
+    humidity: 74,
+    wind_speed: 14,
+    travel_recommendation: "Great conditions for coastal exploration and sunset photography.",
+  },
+  munnar: {
+    city: "Munnar Hill Station",
+    temperature: 21,
+    condition: "Light Rain & Mist",
+    description: "Refreshing highland mist over lush green tea hills & waterfalls",
+    humidity: 78,
+    wind_speed: 9,
+    travel_recommendation: "Cool mountain weather; carry light woolens & rain jacket for tea trails.",
+  },
+  varkala: {
+    city: "Varkala Cliff & Coast",
+    temperature: 30,
+    condition: "Coastal Breeze & Clear",
+    description: "Sunny ocean cliff views with balmy Arabian Sea breeze",
+    humidity: 75,
+    wind_speed: 16,
+    travel_recommendation: "Ideal for North Cliff walks, beach sunset dining, and swimming.",
+  },
+  goa: {
+    city: "Goa Coast",
+    temperature: 31,
+    condition: "Tropical Sunshine",
+    description: "Warm coastal sunshine with lively sea breeze",
+    humidity: 71,
+    wind_speed: 15,
+    travel_recommendation: "Prime weather for beach shacks, water activities, and cruising.",
+  },
+  kochi: {
+    city: "Kochi (Cochin)",
+    temperature: 29,
+    condition: "Tropical Harbor Breeze",
+    description: "Warm humid weather with historic Fort Kochi harbor breeze",
+    humidity: 80,
+    wind_speed: 13,
+    travel_recommendation: "Great for heritage walking tours, spice markets, and sunset boat rides.",
+  },
+  ooty: {
+    city: "Ooty (Udhagamandalam)",
+    temperature: 18,
+    condition: "Crisp & Chilly",
+    description: "Fresh mountain chill across Nilgiri pines and botanical gardens",
+    humidity: 70,
+    wind_speed: 10,
+    travel_recommendation: "Invigorating weather; woolens recommended for toy train and lake rides.",
+  },
+  wayanad: {
+    city: "Wayanad Highlands",
+    temperature: 23,
+    condition: "Misty Foothills",
+    description: "Lush green Western Ghats hill weather with cool morning fog",
+    humidity: 82,
+    wind_speed: 10,
+    travel_recommendation: "Perfect for spice plantation visits and waterfall viewpoints.",
+  },
+};
+
+function getCityWeatherProfile(city: string) {
+  const key = (city || "").toLowerCase().trim();
+  for (const [k, prof] of Object.entries(CITY_WEATHER_PROFILES)) {
+    if (key.includes(k) || k.includes(key)) {
+      return prof;
+    }
+  }
+  return {
+    city: city.trim(),
+    temperature: 26,
+    condition: "Pleasant",
+    description: `Comfortable travel climate across ${city}`,
+    humidity: 68,
+    wind_speed: 12,
+    travel_recommendation: "Favorable conditions for exploring local landmarks.",
+  };
+}
+
 export default function DashboardPage() {
   const router = useRouter();
 
@@ -55,6 +156,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [destFilter, setDestFilter] = useState<"all" | "india" | "abroad">("all");
 
+  const [userCity, setUserCity] = useState("Trivandrum");
   const [weatherCity, setWeatherCity] = useState("Trivandrum");
   const [weatherLoading, setWeatherLoading] = useState(false);
   const [weatherData, setWeatherData] = useState<{
@@ -75,6 +177,12 @@ export default function DashboardPage() {
     travel_recommendation: "Great conditions for coastal exploration and sunset photography.",
   });
 
+  const switchCityWeather = (city: string) => {
+    setWeatherCity(city);
+    const profile = getCityWeatherProfile(city);
+    setWeatherData(profile);
+  };
+
   useEffect(() => {
     const hour = new Date().getHours();
     if (hour < 12) setGreeting("Good morning");
@@ -94,6 +202,14 @@ export default function DashboardPage() {
         }
         if (user.tripgenius_id) setTripGeniusId(user.tripgenius_id);
         if (user.eco_score !== undefined) setEcoScore(user.eco_score);
+        if (user.location || user.city || user.district) {
+          const loc = (user.location || user.city || user.district || "").split(",")[0].trim();
+          if (loc) {
+            setUserCity(loc);
+            setWeatherCity(loc);
+            setWeatherData(getCityWeatherProfile(loc));
+          }
+        }
       } catch {
         // ignore
       }
@@ -144,15 +260,21 @@ export default function DashboardPage() {
 
   // Fetch live weather data for selected city
   useEffect(() => {
+    let isMounted = true;
     const fetchWeather = async () => {
       setWeatherLoading(true);
       try {
+        const baseUrl =
+          typeof window !== "undefined"
+            ? `${window.location.protocol}//${window.location.hostname}:8000`
+            : "http://127.0.0.1:8000";
+
         const res = await fetch(
-          `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(weatherCity)}`,
+          `${baseUrl}/api/weather?city=${encodeURIComponent(weatherCity)}`,
         );
         if (res.ok) {
           const data = await res.json();
-          if (data && data.temperature !== undefined) {
+          if (isMounted && data && data.temperature !== undefined) {
             setWeatherData({
               city: data.city || weatherCity,
               temperature: Math.round(data.temperature),
@@ -165,12 +287,15 @@ export default function DashboardPage() {
           }
         }
       } catch {
-        // keep fallback
+        // fallback profile already set immediately by switchCityWeather
       } finally {
-        setWeatherLoading(false);
+        if (isMounted) setWeatherLoading(false);
       }
     };
     fetchWeather();
+    return () => {
+      isMounted = false;
+    };
   }, [weatherCity]);
 
   const handlePromptSubmit = (
@@ -614,11 +739,16 @@ export default function DashboardPage() {
               }}
             >
               {[
+                ...(userCity && !["trivandrum", "thiruvananthapuram"].includes(userCity.toLowerCase())
+                  ? [{ label: `📍 ${userCity} (Home)`, city: userCity }]
+                  : []),
                 { label: "Trivandrum", city: "Thiruvananthapuram" },
-                { label: "Varkala", city: "Varkala" },
                 { label: "Munnar", city: "Munnar" },
+                { label: "Varkala", city: "Varkala" },
                 { label: "Goa", city: "Goa" },
                 { label: "Kochi", city: "Kochi" },
+                { label: "Ooty", city: "Ooty" },
+                { label: "Wayanad", city: "Wayanad" },
               ].map((loc) => {
                 const isActive =
                   weatherCity.toLowerCase() === loc.city.toLowerCase() ||
@@ -627,7 +757,7 @@ export default function DashboardPage() {
                   <button
                     key={loc.label}
                     type="button"
-                    onClick={() => setWeatherCity(loc.city)}
+                    onClick={() => switchCityWeather(loc.city)}
                     style={{
                       background: isActive
                         ? "rgba(14, 165, 233, 0.25)"

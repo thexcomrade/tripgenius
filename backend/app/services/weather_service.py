@@ -11,9 +11,32 @@ class WeatherService:
     def __init__(self) -> None:
         self.api_key = settings.OPENWEATHER_API_KEY
 
-    def get_current_weather(self, city: str) -> dict[str, Any]:
+    CITY_ALIASES = {
+        "chickmanglore": "Chikkamagaluru",
+        "chikmagalur": "Chikkamagaluru",
+        "chickmagalur": "Chikkamagaluru",
+        "trivandrum": "Thiruvananthapuram",
+        "cochin": "Kochi",
+        "ooty": "Udhagamandalam",
+        "calicut": "Kozhikode",
+        "alleppey": "Alappuzha",
+        "quilon": "Kollam",
+        "palghat": "Palakkad",
+        "cannanoor": "Kannur",
+        "cannanore": "Kannur",
+        "trichur": "Thrissur",
+        "mysore": "Mysuru",
+        "bangalore": "Bengaluru",
+        "bombay": "Mumbai",
+        "madras": "Chennai",
+        "calcutta": "Kolkata",
+        "pondi": "Puducherry",
+        "pondicherry": "Puducherry",
+    }
 
-        params = {"q": city, "appid": self.api_key, "units": "metric"}
+    def get_current_weather(self, city: str) -> dict[str, Any]:
+        city_query = self.CITY_ALIASES.get(city.strip().lower(), city.strip())
+        params = {"q": city_query, "appid": self.api_key, "units": "metric"}
 
         response = requests.get(self.BASE_URL, params=params, timeout=15)
 

@@ -96,6 +96,20 @@ def get_current_user(
         )
 
 
+def get_current_user_or_guest(
+    authorization: Annotated[str | None, Header()] = None,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> User | None:
+    if not authorization or not authorization.startswith("Bearer "):
+        return None
+    token = authorization.replace("Bearer ", "")
+    try:
+        user_id = get_token_subject(token)
+        return auth_service.get_user_by_id(user_id)
+    except Exception:
+        return None
+
+
 # =====================================================
 # Helpers
 # =====================================================
@@ -154,12 +168,14 @@ def serialize_trip(trip: Trip) -> dict:
 
 @router.post("/generate-ai-itinerary", response_model=AITripGenerationResponse)
 def generate_ai_itinerary(
-    payload: AITripGenerationRequest, current_user: User = Depends(get_current_user)
+    payload: AITripGenerationRequest,
+    current_user: User | None = Depends(get_current_user_or_guest),
 ):
     logger = logging.getLogger(__name__)
+    user_id = current_user.id if current_user else "guest_traveler"
     logger.info(
         "AI itinerary request: user=%s destination=%s",
-        current_user.id,
+        user_id,
         payload.destination,
     )
 
