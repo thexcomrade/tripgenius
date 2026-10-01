@@ -767,23 +767,54 @@ class TourismRAGService:
                     "source": "rag_knowledge_engine",
                 }
 
-            # - Standard Structured Destination Breakdown (Direct Recommendation + Highlights + Tips + 1 Question)
-            highlights_bullets = "\n".join(
-                [f"• **{h['name']}**: {h['desc']}" for h in dest_data["highlights"][:3]]
-            )
-            itinerary_bullets = "\n".join([f"• {step}" for step in dest_data["itinerary_2day"]])
+            # Check if duration / days are provided in query or history
+            days_match = re.search(r"\b(\d+)\s*(?:day|days|d)\b", full_context)
+            has_days = bool(days_match)
+            num_days = int(days_match.group(1)) if days_match else None
+
+            has_travelers = any(w in full_context for w in ["solo", "couple", "family", "friends", "group", "people", "person", "pax"])
+            has_budget = any(w in full_context for w in ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap", "cost"])
+
+            # CASE A: User just mentioned destination without enough trip parameters -> Ask questions to collect info
+            if not has_days and not has_travelers and not any(w in msg_lower for w in ["food", "weather", "stay", "hotel", "reach", "transit"]):
+                return {
+                    "reply": (
+                        f"{greeting_prefix}\n\n"
+                        f"**{cname}** is an extraordinary choice! {dest_data['tagline']}.\n\n"
+                        f"{dest_data['vibe']}.\n\n"
+                        f"To help me craft your complete, personalized day-by-day itinerary with verified stays and costs in ₹, could you tell me:\n\n"
+                        f"• 🗓️ **How many days** are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)\n"
+                        f"• 👥 **How many travelers** will be joining? (Solo, couple, family, or friends?)\n"
+                        f"• 💰 What is your approximate **budget tier**? (Budget backpacker, comfortable heritage stay, or luxury?)\n"
+                        f"• ✨ Any **must-have experiences**? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)\n\n"
+                        f"Drop your details below, and I'll synthesize a comprehensive day-by-day plan with timings, authentic stays, food spots, and costs in ₹ for you!"
+                    ),
+                    "source": "rag_consultative_engine",
+                }
+
+            # CASE B: Days or parameters are provided -> Generate complete text plan
+            itinerary_list = dest_data.get("itinerary_5day") if (num_days and num_days >= 4 and "itinerary_5day" in dest_data) else dest_data.get("itinerary_2day", [])
+            itinerary_str = "\n".join([f"• **{step.split(':')[0]}**: {':'.join(step.split(':')[1:]).strip() if ':' in step else step}" for step in itinerary_list])
+            foods_str = "\n".join([f"• {f}" for f in dest_data["food_specialities"][:4]])
+            stays_str = "\n".join([f"• {s}" for s in dest_data["stay_options"][:3]])
+
+            plan_title = f"{num_days or 3}-Day Bespoke {cname} Travel Plan"
 
             reply = (
-                f"{greeting_prefix} Welcome to **{cname}** — {dest_data['tagline']}!\n\n"
-                f"🎯 **The Vibe**: {dest_data['vibe']}.\n\n"
-                f"🗺️ **Must-Experience Highlights**:\n"
-                f"{highlights_bullets}\n\n"
-                f"🗓️ **Curated 2-Day Plan**:\n"
-                f"{itinerary_bullets}\n\n"
-                f"🍲 **Must-Eat**: {dest_data['food_specialities'][0]} & {dest_data['food_specialities'][1]}.\n"
-                f"💰 **Expected Cost**: {dest_data['budget_per_day']}.\n"
-                f"💡 **DASAPPAN's Insider Tip**: {dest_data['insider_tip']}\n\n"
-                f"❓ {dest_data['follow_up_question']}"
+                f"{greeting_prefix}\n\n"
+                f"Here is your personalized **{plan_title}** — {dest_data['tagline']}:\n\n"
+                f"### 🗓️ Day-by-Day Journey\n"
+                f"{itinerary_str}\n\n"
+                f"### 🏨 Recommended Stays\n"
+                f"{stays_str}\n\n"
+                f"### 🍲 Iconic Food & Dining\n"
+                f"{foods_str}\n\n"
+                f"### 💰 Estimated Budget Guidelines\n"
+                f"• **Daily Average**: {dest_data['budget_per_day']}\n"
+                f"• **Transit Details**: {dest_data['transit']}\n\n"
+                f"### 💡 Dasappan's Local Insider Secret\n"
+                f"{dest_data['insider_tip']}\n\n"
+                f"Would you like recommendations on specific hotel bookings or adjustments to this plan?"
             )
             return {"reply": reply, "source": "rag_knowledge_engine"}
 

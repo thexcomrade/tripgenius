@@ -238,6 +238,8 @@ export default function AIChatPage() {
     if (messages.length > 0) {
       localStorage.setItem("tripgenius_ai_chat", JSON.stringify(messages));
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      localStorage.removeItem("tripgenius_ai_chat");
     }
   }, [messages]);
 
@@ -336,16 +338,9 @@ export default function AIChatPage() {
       window.speechSynthesis.cancel();
       setSpeakingId(null);
     }
-    const welcome: ChatMessage = {
-      id: generateMsgId(),
-      role: "assistant",
-      content:
-        `Namaskaram ${userName}! 🙏 Chat refreshed!\n\n` +
-        `How may I help you today?\n\n` +
-        `Tell me your dream destination, budget, or travel style, and I'll analyze it to craft the perfect plan with verified stays and costs in ₹!`,
-      timestamp: new Date().toISOString(),
-    };
-    setMessages([welcome]);
+    cancelAutoSend();
+    setInput("");
+    setMessages([]);
     localStorage.removeItem("tripgenius_ai_chat");
   };
 
@@ -357,6 +352,10 @@ export default function AIChatPage() {
 
   const extractDestination = (text: string): string | undefined => {
     const keywords = [
+      "Varanasi",
+      "Kashi",
+      "Banaras",
+      "Benares",
       "Thenkasi",
       "Tenkasi",
       "Courtallam",
@@ -371,6 +370,9 @@ export default function AIChatPage() {
       "Alleppey",
       "Goa",
       "Delhi",
+      "Jaipur",
+      "Manali",
+      "Ladakh",
       "Paris",
       "Tokyo",
       "Bali",
@@ -443,11 +445,15 @@ export default function AIChatPage() {
       );
     }
 
-    // Intelligent client-side RAG fallback
+    // Intelligent client-side fallback matching Next-Gen Travel AI Engine 2.0
     setTimeout(() => {
       let aiReply = "";
       const lower = textToSend.toLowerCase();
       const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste"];
+      const daysMatch = lower.match(/\b(\d+)\s*(?:day|days|d)\b/);
+      const numDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
+      const hasTravelers = ["solo", "couple", "family", "friends", "group", "people", "person", "pax"].some((w) => lower.includes(w));
+      const hasBudget = ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap"].some((w) => lower.includes(w));
 
       if (greetingWords.some((g) => lower === g || lower.startsWith(g + " "))) {
         aiReply =
@@ -455,38 +461,63 @@ export default function AIChatPage() {
           `How may I help you today?\n\n` +
           `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal itinerary for you!\n\n` +
           `❓ Where would you like to travel, or what can I help you plan?`;
-      } else if (lower.includes("thenkasi") || lower.includes("courtallam")) {
+      } else if (dest && !numDays && !hasTravelers && !hasBudget) {
+        // Consultative discovery: User said a destination without enough details -> Ask questions!
         aiReply =
-          `Namaskaram ${userName}! 🙏 Welcome to **Thenkasi & Courtallam** — The Spa of South India!\n\n` +
-          `🎯 **The Vibe**: Therapeutic mineral waterfalls flowing through herbal Western Ghats forests, historic 13th-century Pandyan temples, and legendary border cuisine.\n\n` +
-          `🗺️ **Must-Experience Highlights**:\n` +
-          `• **Courtallam Main Falls & Five Falls (Aintharuvi)**: Natural herbal spa bath in cascading mountain waters (₹30 parking).\n` +
-          `• **Kasi Viswanathar Temple**: Majestic 180-ft 9-tier Rajagopuram facing the Western Ghats.\n` +
-          `• **Gundar Dam & Shenkottai Drive**: Scenic reservoir surrounded by rubber estates and misty hills.\n\n` +
-          `🗓️ **Curated 2-Day Plan**:\n` +
-          `• Day 1: Kasi Viswanathar Temple darshan, Courtallam Main Falls herbal bath, evening Shenkottai parotta trail.\n` +
-          `• Day 2: Morning Five Falls visit, Gundar Dam reservoir drive, spice & herbal honey shopping.\n\n` +
-          `🍲 **Must-Eat**: Hot Tenkasi Ennai Parotta with spicy Salna & Border Rahmath Mutton Fry.\n` +
-          `💰 **Expected Cost**: ₹1,800 – ₹3,000 per person/day.\n` +
-          `💡 **DASAPPAN's Insider Tip**: Visit Five Falls at 6:30 AM to beat the Saaral season crowd.\n\n` +
-          `❓ Are you planning a trip during the Courtallam Saaral season (June–Sept) for waterfalls, or a peaceful weekend trip?`;
-      } else if (dest) {
-        aiReply =
-          `Namaskaram ${userName}! 🙏 Here is your curated blueprint for **${dest}**:\n\n` +
-          `🎯 **The Vibe**: Scenic landscapes, local hospitality, and rejuvenating outdoor experiences.\n\n` +
-          `🗺️ **Recommended Pacing**: 3 to 4 days for a complete, scenic immersion.\n` +
-          `💰 **Estimated Budget**: ~₹2,500 – ₹4,500 per day per person (including boutique stay, authentic meals, and regional transit).\n` +
-          `🍲 **Culinary Specialties**: Regional thalis, authentic curries, and freshly brewed local beverages.\n` +
-          `💡 **DASAPPAN's Insider Tip**: Book stays slightly away from the main town center for the best views and tranquility.\n\n` +
-          `❓ Tell me, how many days are you planning for, and are you traveling solo, as a couple, or with family?`;
+          `Namaskaram ${userName}! 🙏\n\n` +
+          `**${dest}** is an incredible choice! A deeply captivating journey awaits you.\n\n` +
+          `To help me craft your personalized, day-by-day plan with verified stays and costs in ₹, could you tell me:\n\n` +
+          `• 🗓️ **How many days** are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)\n` +
+          `• 👥 **How many travelers** will be joining you? (Solo, couple, family, or friends?)\n` +
+          `• 💰 What is your approximate **budget tier**? (Budget backpacker, comfortable heritage stay, or luxury?)\n` +
+          `• ✨ Any **must-have experiences**? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)\n\n` +
+          `Drop your details below, and I'll synthesize a comprehensive day-by-day plan with timings, authentic stays, food spots, and costs in ₹ for you!`;
+      } else if (dest && (numDays || hasTravelers || hasBudget)) {
+        // Full plan generation
+        const days = numDays || 5;
+        if (dest.toLowerCase().includes("varanasi") || dest.toLowerCase().includes("kashi") || dest.toLowerCase().includes("banaras")) {
+          aiReply =
+            `Namaskaram ${userName}! 🙏\n\n` +
+            `Here is your bespoke **${days}-Day Varanasi (Kashi) Spiritual & Cultural Immersion Plan**:\n\n` +
+            `### 🗓️ Day-by-Day Journey\n` +
+            `• **Day 1: Arrival & The Sacred Evening Ganga Aarti** — Settle into your riverside haveli. Stroll from Assi Ghat to Dashashwamedh Ghat. At dusk, witness the hypnotic Ganga Aarti from a wooden boat on the river.\n` +
+            `• **Day 2: Subah-e-Banaras & Kashi Vishwanath Corridor** — 5:30 AM rowboat cruise from Assi to Manikarnika Ghat at sunrise. Breakfast at Ram Bhandar (kachori-jalebi). Darshan at Kashi Vishwanath Corridor and Annapurna Temple.\n` +
+            `• **Day 3: Sarnath & Buddhist Heritage** — Morning excursion to Sarnath (Dhamek Stupa & Archaeological Museum) where Lord Buddha gave his first sermon. Return for sunset reflections at Chet Singh Ghat.\n` +
+            `• **Day 4: Heritage Galis, Silk Weaving & Ramnagar Fort** — Explore Madanpura handloom silk-weaving lanes. Visit Kal Bhairav Temple. Take a local boat to 18th-century sandstone Ramnagar Fort across the river.\n` +
+            `• **Day 5: Northern Ghats & Culinary Farewell** — Gentle morning meditation at Panchganga Ghat. Savor famous Tamatar Chaat at Kashi Chaat Bhandar and clay-cup Blue Lassi before departure.\n\n` +
+            `### 🏨 Recommended Stays\n` +
+            `• Heritage Riverside Haveli on Ghats (~₹3,200 – ₹5,500/night)\n` +
+            `• Boutique Comfort Stay near Godowlia (~₹1,800 – ₹2,800/night)\n\n` +
+            `### 🍲 Iconic Food Trail\n` +
+            `• Morning Kachori-Sabzi with hot Jalebis at Ram Bhandar\n` +
+            `• Tamatar Chaat and Palak Patta Chaat at Kashi Chaat Bhandar\n` +
+            `• Authentic saffron-topped Kulhad Lassi at Blue Lassi Shop\n` +
+            `• Legendary Banarasi Meetha Paan at Keshav Paan\n\n` +
+            `### 💰 Estimated Budget (in ₹)\n` +
+            `• Daily Average: ~₹1,800 – ₹3,200 per person/day (stays, meals, hand-rowed boats, and transit)\n\n` +
+            `### 💡 Dasappan's Local Insider Secret\n` +
+            `Always hire a hand-rowed wooden boat (₹400–₹600) rather than a motorboat at dawn. The silence on the misty river at 5:45 AM is unforgettable.\n\n` +
+            `Would you like hotel recommendations or help with temple darshan timings?`;
+        } else {
+          aiReply =
+            `Namaskaram ${userName}! 🙏\n\n` +
+            `Here is your tailored **${days}-Day ${dest} Travel Blueprint**:\n\n` +
+            `### 🗓️ Curated ${days}-Day Itinerary\n` +
+            `• **Day 1: Arrival & Local Immersion** — Check in, explore central heritage streets, enjoy local sunset viewpoints and authentic regional dinner.\n` +
+            `• **Day 2: Iconic Landmarks & Scenic Exploration** — Guided exploration of prime natural and architectural wonders, panoramic photo stops, and signature cultural visits.\n` +
+            `• **Day 3: Offbeat Trails & Cuisine** — Discover hidden nature trails, local artisan markets, and heritage dining.\n` +
+            (days > 3 ? `• **Days 4–${days}: Leisure & Unique Excursions** — Deep dive into neighboring villages, scenic valleys or waterfronts, and souvenir shopping.\n\n` : `\n`) +
+            `### 🏨 Stays & Dining\n` +
+            `• Boutique stays & eco-resorts: ~₹2,200 – ₹4,500/night\n` +
+            `• Authentic regional delicacies, fresh thalis, and local street treats\n\n` +
+            `### 💰 Estimated Budget\n` +
+            `• ~₹2,000 – ₹4,000 per person per day (covering stay, meals, and local transit in ₹)\n\n` +
+            `Would you like me to refine this with specific hotel options or flight/train transit details?`;
+        }
       } else {
         aiReply =
-          `Namaskaram ${userName}! 🙏 I'd love to help you plan your travel.\n\n` +
-          `How may I help you today? Could you tell me:\n` +
-          `• Which destination or region are you targeting?\n` +
-          `• How many days and what is your approximate budget tier?\n\n` +
-          `💡 Popular destinations right now: **Thenkasi & Courtallam**, **Munnar**, **Vattavada**, **Varkala**, **Coorg**, or **Paris**.\n\n` +
-          `❓ Which one shall we look into first?`;
+          `Namaskaram ${userName}! 🙏 I am here to help you plan an unforgettable trip.\n\n` +
+          `Tell me your dream destination (e.g. Varanasi, Munnar, Goa, Paris, Tokyo), or ask me anything about budgets, stays, or packing essentials!`;
       }
 
       const assistantMsg: ChatMessage = {
@@ -655,6 +686,30 @@ export default function AIChatPage() {
           padding: "12px 4px",
         }}
       >
+        {messages.length === 0 && (
+          <div
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "12px",
+              color: "#64748B",
+              padding: "60px 20px",
+              textAlign: "center",
+            }}
+          >
+            <Sparkles size={36} color="#38BDF8" style={{ opacity: 0.7 }} />
+            <div style={{ fontSize: "1.1rem", fontWeight: 600, color: "#94A3B8" }}>
+              Conversation Cleared
+            </div>
+            <p style={{ fontSize: "0.88rem", maxWidth: "420px", color: "#64748B", lineHeight: 1.5 }}>
+              Ask DASAPPAN anything about destinations worldwide, budgets, stays, or tap any suggestion above to start fresh.
+            </p>
+          </div>
+        )}
+
         {messages.map((msg) => {
           const isUser = msg.role === "user";
           return (
