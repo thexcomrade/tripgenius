@@ -69,19 +69,20 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 200px)",
+        minHeight: "calc(100vh - 140px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 20px",
+        padding: "20px",
+        zoom: "80%",
       }}
     >
       <GlassCard
         style={{
           width: "100%",
           maxWidth: "460px",
-          padding: "44px 36px",
-          borderRadius: "28px",
+          padding: "40px 34px",
+          borderRadius: "26px",
           boxShadow: "0 24px 60px rgba(0, 0, 0, 0.50)",
         }}
       >
@@ -97,7 +98,7 @@ export default function LoginPage() {
           >
             <Image
               src="/logo/logo.svg"
-              alt="TripGenius Logo"
+              alt="Trip Geni Logo"
               width={42}
               height={42}
               priority
@@ -110,7 +111,7 @@ export default function LoginPage() {
                 letterSpacing: "-0.5px",
               }}
             >
-              TripGenius
+              Trip Geni
             </span>
           </div>
 

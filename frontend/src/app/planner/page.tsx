@@ -7,7 +7,7 @@ import {
   MapPin,
   Calendar,
   Users,
-  DollarSign,
+  IndianRupee,
   Compass,
   Car,
   Hotel,
@@ -85,6 +85,12 @@ const TRANSPORT_MODES = [
     icon: "🚗",
   },
   {
+    id: "Bike",
+    label: "Bike Rental",
+    desc: "Two-wheeler rental across local spots",
+    icon: "🏍️",
+  },
+  {
     id: "Train",
     label: "Scenic Train",
     desc: "Eco-conscious & scenic regional transit",
@@ -112,29 +118,40 @@ const TRANSPORT_MODES = [
 
 const ACCOMMODATIONS = [
   {
+    id: "NoStay",
+    label: "No Stay / Day Trip",
+    desc: "Single-day outing — no overnight accommodation needed",
+    icon: "🌅",
+  },
+  {
     id: "Hotel",
     label: "Comfort Hotel",
     desc: "Modern amenities & central access",
+    icon: "🏨",
   },
   {
     id: "Resort",
     label: "Boutique Resort",
     desc: "Scenic vistas & premium relaxation",
+    icon: "🏖️",
   },
   {
     id: "Homestay",
     label: "Authentic Homestay",
     desc: "Warm hospitality & regional cooking",
+    icon: "🏡",
   },
   {
     id: "Eco-Lodge",
     label: "Eco Lodge / Farmstay",
     desc: "Solar powered & tranquil nature immersion",
+    icon: "🌿",
   },
   {
     id: "Hostel",
     label: "Backpacker Hostel",
     desc: "Budget friendly & social backpacker hubs",
+    icon: "🎒",
   },
 ];
 
@@ -174,10 +191,9 @@ function PlannerContent() {
   const [travelStyle, setTravelStyle] = useState("Leisure");
   const [transportationMode, setTransportationMode] = useState("Car");
   const [preferredAccommodation, setPreferredAccommodation] = useState("Hotel");
-  const [selectedInterests, setSelectedInterests] = useState<string[]>([
-    "Tea Gardens",
-    "Local Food Tasting",
-  ]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+  const [customInterestInput, setCustomInterestInput] = useState("");
+  const [customInterestsList, setCustomInterestsList] = useState<string[]>([]);
 
   const [loading, setLoading] = useState(false);
   const [aiProcessingStage, setAiProcessingStage] = useState(0);
@@ -284,7 +300,15 @@ function PlannerContent() {
   };
 
   return (
-    <div className="page-container" style={{ maxWidth: "1140px" }}>
+    <div
+      className="page-container"
+      style={{
+        maxWidth: "780px",
+        width: "90%",
+        margin: "0 auto",
+        padding: "24px 16px",
+      }}
+    >
       {/* HEADER */}
       <div style={{ textAlign: "center", marginBottom: "36px" }}>
         <div style={{ display: "inline-flex", marginBottom: "12px" }}>
@@ -352,7 +376,7 @@ function PlannerContent() {
 
         {[
           { step: 1, title: "Destination", icon: MapPin },
-          { step: 2, stepName: "Duration & Budget", icon: DollarSign },
+          { step: 2, stepName: "Duration & Budget", icon: IndianRupee },
           { step: 3, stepName: "Style & Transit", icon: Compass },
           { step: 4, stepName: "Stay & Interests", icon: Heart },
         ].map((s, idx) => {
@@ -562,7 +586,7 @@ function PlannerContent() {
         </GlassCard>
       ) : (
         /* STEP CARD FORM */
-        <GlassCard style={{ padding: "36px 32px" }}>
+        <GlassCard style={{ padding: "30px 24px" }}>
           {/* STEP 1: DESTINATION */}
           {currentStep === 1 && (
             <div
@@ -694,170 +718,155 @@ function PlannerContent() {
               <div
                 style={{
                   display: "grid",
-                  gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                  gridTemplateColumns: "1fr",
                   gap: "24px",
                 }}
               >
+                {/* DURATION (DAYS) */}
                 <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.88rem",
-                      fontWeight: 600,
-                      color: "#CBD5E1",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Duration (Days)
-                  </label>
                   <div
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
+                      justifyContent: "space-between",
+                      marginBottom: "10px",
                     }}
                   >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDurationDays(Math.max(1, durationDays - 1))
-                      }
+                    <label
                       style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.08)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#FFFFFF",
-                        fontSize: "1.2rem",
-                        cursor: "pointer",
+                        fontSize: "0.90rem",
+                        fontWeight: 600,
+                        color: "#E2E8F0",
                       }}
                     >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="30"
-                      value={durationDays}
-                      onChange={(e) =>
-                        setDurationDays(
-                          Math.max(1, Math.min(30, Number(e.target.value))),
-                        )
-                      }
-                      className="input-base"
-                      style={{
-                        textAlign: "center",
-                        fontSize: "1.2rem",
-                        fontWeight: 700,
-                        MozAppearance: "textfield",
-                        WebkitAppearance: "none",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setDurationDays(Math.min(30, durationDays + 1))
-                      }
-                      style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.08)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#FFFFFF",
-                        fontSize: "1.2rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    style={{
-                      display: "block",
-                      fontSize: "0.88rem",
-                      fontWeight: 600,
-                      color: "#CBD5E1",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Travelers Count
-                  </label>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "10px",
-                    }}
-                  >
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTravelersCount(Math.max(1, travelersCount - 1))
-                      }
-                      style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.08)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#FFFFFF",
-                        fontSize: "1.2rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      -
-                    </button>
-                    <input
-                      type="number"
-                      min="1"
-                      max="500"
-                      value={travelersCount}
-                      onChange={(e) => {
-                        const val = parseInt(e.target.value);
-                        setTravelersCount(isNaN(val) ? 1 : Math.max(1, Math.min(500, val)));
-                      }}
-                      className="input-base"
-                      style={{
-                        textAlign: "center",
-                        fontSize: "1.2rem",
-                        fontWeight: 700,
-                        width: "100px",
-                        MozAppearance: "textfield",
-                        WebkitAppearance: "none",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTravelersCount(Math.min(500, travelersCount + 1))
-                      }
-                      style={{
-                        width: "42px",
-                        height: "42px",
-                        borderRadius: "10px",
-                        background: "rgba(255, 255, 255, 0.08)",
-                        border: "1px solid rgba(255, 255, 255, 0.15)",
-                        color: "#FFFFFF",
-                        fontSize: "1.2rem",
-                        cursor: "pointer",
-                      }}
-                    >
-                      +
-                    </button>
+                      Duration (Days)
+                    </label>
+                    <span style={{ fontSize: "0.82rem", color: "#38BDF8", fontWeight: 700 }}>
+                      {durationDays} Day{durationDays > 1 ? "s" : ""} Selected
+                    </span>
                   </div>
 
-                  {/* Quick Select Preset Pills (including College & Mega Tours) */}
                   <div
                     style={{
                       display: "flex",
                       flexWrap: "wrap",
-                      gap: "6px",
-                      marginTop: "10px",
+                      gap: "10px",
+                      alignItems: "center",
+                    }}
+                  >
+                    {[
+                      { label: "3 Days (Weekend)", days: 3 },
+                      { label: "5 Days (Standard)", days: 5 },
+                      { label: "7 Days (Week)", days: 7 },
+                    ].map((item) => {
+                      const isSelected = durationDays === item.days;
+                      return (
+                        <button
+                          key={item.days}
+                          type="button"
+                          onClick={() => setDurationDays(item.days)}
+                          style={{
+                            padding: "9px 16px",
+                            borderRadius: "10px",
+                            background: isSelected
+                              ? "rgba(14, 165, 233, 0.22)"
+                              : "rgba(255, 255, 255, 0.05)",
+                            border: isSelected
+                              ? "1px solid #38BDF8"
+                              : "1px solid rgba(255, 255, 255, 0.12)",
+                            color: isSelected ? "#38BDF8" : "#94A3B8",
+                            fontSize: "0.85rem",
+                            fontWeight: isSelected ? 700 : 500,
+                            cursor: "pointer",
+                            transition: "all 0.18s ease",
+                          }}
+                        >
+                          {item.label}
+                        </button>
+                      );
+                    })}
+
+                    {/* Custom Days Input without +/- icons */}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "10px",
+                        padding: "4px 10px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.78rem", color: "#94A3B8" }}>Custom:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="30"
+                        value={durationDays === 0 ? "" : durationDays}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const str = e.target.value;
+                          if (!str) {
+                            setDurationDays(0);
+                            return;
+                          }
+                          const val = parseInt(str);
+                          if (!isNaN(val)) {
+                            setDurationDays(Math.max(1, Math.min(30, val)));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (!durationDays || durationDays < 1) {
+                            setDurationDays(1);
+                          }
+                        }}
+                        style={{
+                          width: "55px",
+                          textAlign: "center",
+                          fontSize: "0.95rem",
+                          fontWeight: 700,
+                          background: "transparent",
+                          border: "none",
+                          color: "#FFFFFF",
+                          outline: "none",
+                        }}
+                      />
+                      <span style={{ fontSize: "0.78rem", color: "#64748B" }}>days</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* TRAVELERS COUNT */}
+                <div>
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "10px",
+                    }}
+                  >
+                    <label
+                      style={{
+                        fontSize: "0.90rem",
+                        fontWeight: 600,
+                        color: "#E2E8F0",
+                      }}
+                    >
+                      Travelers Count
+                    </label>
+                    <span style={{ fontSize: "0.82rem", color: "#38BDF8", fontWeight: 700 }}>
+                      {travelersCount} Traveler{travelersCount > 1 ? "s" : ""}
+                    </span>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      alignItems: "center",
                     }}
                   >
                     {[
@@ -867,41 +876,89 @@ function PlannerContent() {
                       { label: "Group (15)", count: 15 },
                       { label: "🎓 College (50)", count: 50 },
                       { label: "🚌 Mega Tour (100+)", count: 100 },
-                    ].map((preset) => (
-                      <button
-                        key={preset.count}
-                        type="button"
-                        onClick={() => setTravelersCount(preset.count)}
-                        style={{
-                          fontSize: "0.75rem",
-                          padding: "4px 8px",
-                          borderRadius: "6px",
-                          border:
-                            travelersCount === preset.count
+                    ].map((preset) => {
+                      const isSelected = travelersCount === preset.count;
+                      return (
+                        <button
+                          key={preset.count}
+                          type="button"
+                          onClick={() => setTravelersCount(preset.count)}
+                          style={{
+                            fontSize: "0.82rem",
+                            padding: "8px 14px",
+                            borderRadius: "10px",
+                            border: isSelected
                               ? "1px solid #38BDF8"
                               : "1px solid rgba(255, 255, 255, 0.12)",
-                          background:
-                            travelersCount === preset.count
-                              ? "rgba(14, 165, 233, 0.2)"
-                              : "rgba(255, 255, 255, 0.04)",
-                          color:
-                            travelersCount === preset.count
-                              ? "#38BDF8"
-                              : "#94A3B8",
-                          cursor: "pointer",
-                          fontWeight: travelersCount === preset.count ? 700 : 500,
+                            background: isSelected
+                              ? "rgba(14, 165, 233, 0.22)"
+                              : "rgba(255, 255, 255, 0.05)",
+                            color: isSelected ? "#38BDF8" : "#CBD5E1",
+                            cursor: "pointer",
+                            fontWeight: isSelected ? 700 : 500,
+                            transition: "all 0.18s ease",
+                          }}
+                        >
+                          {preset.label}
+                        </button>
+                      );
+                    })}
+
+                    {/* Custom Travelers Input without +/- icons */}
+                    <div
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        background: "rgba(255, 255, 255, 0.04)",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "10px",
+                        padding: "4px 10px",
+                      }}
+                    >
+                      <span style={{ fontSize: "0.78rem", color: "#94A3B8" }}>Custom:</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="500"
+                        value={travelersCount === 0 ? "" : travelersCount}
+                        onFocus={(e) => e.target.select()}
+                        onChange={(e) => {
+                          const str = e.target.value;
+                          if (!str) {
+                            setTravelersCount(0);
+                            return;
+                          }
+                          const val = parseInt(str);
+                          if (!isNaN(val)) {
+                            setTravelersCount(Math.max(1, Math.min(500, val)));
+                          }
                         }}
-                      >
-                        {preset.label}
-                      </button>
-                    ))}
+                        onBlur={() => {
+                          if (!travelersCount || travelersCount < 1) {
+                            setTravelersCount(1);
+                          }
+                        }}
+                        style={{
+                          width: "55px",
+                          textAlign: "center",
+                          fontSize: "0.95rem",
+                          fontWeight: 700,
+                          background: "transparent",
+                          border: "none",
+                          color: "#FFFFFF",
+                          outline: "none",
+                        }}
+                      />
+                      <span style={{ fontSize: "0.78rem", color: "#64748B" }}>people</span>
+                    </div>
                   </div>
 
                   {travelersCount >= 30 && (
                     <div
                       style={{
-                        marginTop: "8px",
-                        padding: "6px 10px",
+                        marginTop: "10px",
+                        padding: "8px 12px",
                         borderRadius: "8px",
                         background: "rgba(14, 165, 233, 0.1)",
                         border: "1px solid rgba(14, 165, 233, 0.25)",
@@ -915,21 +972,24 @@ function PlannerContent() {
                 </div>
               </div>
 
+              {/* TOTAL ESTIMATED BUDGET (₹) WITH 3 OPTIONS (NO DRAG SLIDER) */}
               <div className="space-y-4">
                 <div
                   style={{
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-end",
-                    marginBottom: "4px",
+                    marginBottom: "8px",
+                    flexWrap: "wrap",
+                    gap: "10px",
                   }}
                 >
                   <div>
                     <label
                       style={{
-                        fontSize: "0.88rem",
+                        fontSize: "0.90rem",
                         fontWeight: 600,
-                        color: "#CBD5E1",
+                        color: "#E2E8F0",
                         display: "block",
                       }}
                     >
@@ -940,62 +1000,51 @@ function PlannerContent() {
                     </span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ color: "#38BDF8", fontWeight: 700 }}>₹</span>
+                    <span style={{ color: "#38BDF8", fontWeight: 700, fontSize: "1.1rem" }}>₹</span>
                     <input
                       type="number"
-                      min="2000"
-                      max="300000"
+                      min="1000"
+                      max="5000000"
                       step="500"
-                      value={budget}
-                      onChange={(e) => setBudget(Math.max(1000, Number(e.target.value)))}
+                      value={budget === 0 ? "" : budget}
+                      onFocus={(e) => e.target.select()}
+                      onChange={(e) => {
+                        const str = e.target.value;
+                        if (!str) {
+                          setBudget(0);
+                          return;
+                        }
+                        const val = parseInt(str);
+                        if (!isNaN(val)) {
+                          setBudget(Math.max(0, val));
+                        }
+                      }}
+                      onBlur={() => {
+                        if (!budget || budget < 1000) {
+                          setBudget(1000);
+                        }
+                      }}
                       className="input-base"
                       style={{
-                        width: "120px",
+                        width: "140px",
                         textAlign: "right",
-                        fontSize: "1.1rem",
+                        fontSize: "1.15rem",
                         fontWeight: 800,
                         color: "#38BDF8",
-                        padding: "6px 12px",
+                        padding: "8px 14px",
+                        borderRadius: "10px",
                       }}
                     />
                   </div>
                 </div>
 
-                <input
-                  type="range"
-                  min="3000"
-                  max="150000"
-                  step="1000"
-                  value={budget}
-                  onChange={(e) => setBudget(Number(e.target.value))}
-                  style={{
-                    width: "100%",
-                    accentColor: "#0EA5E9",
-                    cursor: "pointer",
-                  }}
-                />
-
-                {/* DYNAMIC REALISTIC PRESETS */}
+                {/* THREE BUDGET OPTIONS */}
                 <div>
-                  <span
-                    style={{
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      color: "#64748B",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px",
-                      display: "block",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Recommended Budget Tiers (Calculated for {durationDays} Days · {travelersCount} Traveler{travelersCount > 1 ? "s" : ""})
-                  </span>
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "10px" }}>
                     {[
-                      { label: "Backpacker", perDayPerson: 1500, style: "Hostel / Transit" },
-                      { label: "Comfort", perDayPerson: 3000, style: "3-Star Hotel / Cabs" },
-                      { label: "Romantic", perDayPerson: 4500, style: "Resort / Fine Dining" },
-                      { label: "Luxury", perDayPerson: 8000, style: "5-Star Heritage / Private" },
+                      { label: "🎒 Budget", perDayPerson: 1500, style: "Hostels, trains, local dining", desc: "Best for smart travelers" },
+                      { label: "🌟 Comfort", perDayPerson: 3500, style: "3-star hotels, cabs, restaurants", desc: "Most popular choice" },
+                      { label: "💎 Luxury", perDayPerson: 8000, style: "5-star resorts, private cars, fine dining", desc: "Premium experience" },
                     ].map((tier) => {
                       const calculatedTotal = tier.perDayPerson * durationDays * travelersCount;
                       const isSelected = Math.abs(budget - calculatedTotal) < 1500;
@@ -1006,29 +1055,27 @@ function PlannerContent() {
                           type="button"
                           onClick={() => setBudget(calculatedTotal)}
                           style={{
-                            padding: "8px 14px",
+                            padding: "12px 16px",
                             borderRadius: "12px",
                             background: isSelected
-                              ? "rgba(14, 165, 233, 0.25)"
+                              ? "rgba(14, 165, 233, 0.22)"
                               : "rgba(255, 255, 255, 0.05)",
                             border: isSelected
                               ? "1px solid #38BDF8"
                               : "1px solid rgba(255, 255, 255, 0.10)",
                             color: isSelected ? "#38BDF8" : "#CBD5E1",
-                            fontSize: "0.82rem",
-                            fontWeight: 600,
                             cursor: "pointer",
                             transition: "all 0.2s ease",
                             textAlign: "left",
                           }}
                         >
-                          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                            <span>{tier.label}</span>
-                            <span style={{ color: "#10B981", fontSize: "0.75rem" }}>
+                          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                            <span style={{ fontWeight: 700, fontSize: "0.90rem" }}>{tier.label}</span>
+                            <span style={{ color: "#10B981", fontSize: "0.85rem", fontWeight: 700 }}>
                               ₹{calculatedTotal.toLocaleString("en-IN")}
                             </span>
                           </div>
-                          <div style={{ fontSize: "0.70rem", color: "#94A3B8" }}>
+                          <div style={{ fontSize: "0.75rem", color: "#94A3B8" }}>
                             {tier.style}
                           </div>
                         </button>
@@ -1236,6 +1283,7 @@ function PlannerContent() {
                 >
                   {ACCOMMODATIONS.map((acc) => {
                     const isSelected = preferredAccommodation === acc.id;
+                    const isNoStay = acc.id === "NoStay";
                     return (
                       <div
                         key={acc.id}
@@ -1244,32 +1292,49 @@ function PlannerContent() {
                           padding: "14px",
                           borderRadius: "12px",
                           background: isSelected
-                            ? "rgba(14, 165, 233, 0.15)"
+                            ? isNoStay
+                              ? "rgba(251, 146, 60, 0.15)"
+                              : "rgba(14, 165, 233, 0.15)"
                             : "rgba(255, 255, 255, 0.04)",
                           border: isSelected
-                            ? "1px solid #38BDF8"
+                            ? isNoStay
+                              ? "1px solid #FB923C"
+                              : "1px solid #38BDF8"
+                            : isNoStay
+                            ? "1px dashed rgba(251, 146, 60, 0.35)"
                             : "1px solid rgba(255, 255, 255, 0.08)",
                           cursor: "pointer",
+                          transition: "all 0.2s ease",
                         }}
                       >
-                        <h5
-                          style={{
-                            fontSize: "0.9rem",
-                            fontWeight: 700,
-                            color: isSelected ? "#38BDF8" : "#FFFFFF",
-                          }}
-                        >
-                          {acc.label}
-                        </h5>
+                        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "4px" }}>
+                          <span style={{ fontSize: "1.1rem" }}>{acc.icon}</span>
+                          <h5
+                            style={{
+                              fontSize: "0.9rem",
+                              fontWeight: 700,
+                              color: isSelected
+                                ? isNoStay ? "#FB923C" : "#38BDF8"
+                                : "#FFFFFF",
+                            }}
+                          >
+                            {acc.label}
+                          </h5>
+                        </div>
                         <p
                           style={{
                             fontSize: "0.75rem",
-                            color: "#94A3B8",
+                            color: isNoStay ? "#94A3B8" : "#94A3B8",
                             marginTop: "2px",
                           }}
                         >
                           {acc.desc}
                         </p>
+                        {isNoStay && (
+                          <p style={{ fontSize: "0.68rem", color: "#FB923C", marginTop: "4px", fontStyle: "italic" }}>
+                            💡 Budget will exclude hotel costs
+                          </p>
+                        )}
                       </div>
                     );
                   })}
@@ -1286,12 +1351,22 @@ function PlannerContent() {
                     marginBottom: "12px",
                   }}
                 >
-                  Activity & Interest Focus ({selectedInterests.length}{" "}
-                  selected)
+                  Activity & Interest Focus{" "}
+                  {selectedInterests.length > 0 ? (
+                    <span style={{ color: "#38BDF8" }}>
+                      ({selectedInterests.length} selected)
+                    </span>
+                  ) : (
+                    <span style={{ color: "#94A3B8", fontWeight: 400 }}>
+                      (Optional — pick any or add your own ideas)
+                    </span>
+                  )}
                 </label>
+
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {INTEREST_TAGS.map((tag) => {
+                  {[...INTEREST_TAGS, ...customInterestsList].map((tag) => {
                     const isSelected = selectedInterests.includes(tag);
+                    const isCustom = customInterestsList.includes(tag);
                     return (
                       <button
                         key={tag}
@@ -1318,10 +1393,111 @@ function PlannerContent() {
                       >
                         {isSelected && <Check size={14} color="#38BDF8" />}
                         <span>{tag}</span>
+                        {isCustom && (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setCustomInterestsList((prev) =>
+                                prev.filter((t) => t !== tag),
+                              );
+                              setSelectedInterests((prev) =>
+                                prev.filter((t) => t !== tag),
+                              );
+                            }}
+                            style={{
+                              marginLeft: "4px",
+                              color: "#94A3B8",
+                              fontSize: "1rem",
+                              lineHeight: 1,
+                              padding: "0 2px",
+                            }}
+                            title="Remove custom idea"
+                          >
+                            ×
+                          </span>
+                        )}
                       </button>
                     );
                   })}
                 </div>
+
+                {/* ADD USER'S OWN IDEAS INPUT */}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    const trimmed = customInterestInput.trim();
+                    if (trimmed) {
+                      if (
+                        !customInterestsList.includes(trimmed) &&
+                        !INTEREST_TAGS.includes(trimmed)
+                      ) {
+                        setCustomInterestsList((prev) => [...prev, trimmed]);
+                      }
+                      if (!selectedInterests.includes(trimmed)) {
+                        setSelectedInterests((prev) => [...prev, trimmed]);
+                      }
+                      setCustomInterestInput("");
+                    }
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginTop: "14px",
+                    maxWidth: "460px",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flex: 1,
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      borderRadius: "999px",
+                      padding: "6px 14px",
+                    }}
+                  >
+                    <Sparkles size={14} color="#38BDF8" />
+                    <input
+                      type="text"
+                      value={customInterestInput}
+                      onChange={(e) => setCustomInterestInput(e.target.value)}
+                      placeholder="Add your own ideas (e.g. Campfire, Scuba, Stargazing)..."
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        outline: "none",
+                        color: "#FFFFFF",
+                        fontSize: "0.82rem",
+                        width: "100%",
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!customInterestInput.trim()}
+                    style={{
+                      background: customInterestInput.trim()
+                        ? "linear-gradient(135deg, #0EA5E9, #14B8A6)"
+                        : "rgba(255, 255, 255, 0.06)",
+                      color: customInterestInput.trim() ? "#FFFFFF" : "#64748B",
+                      border: "none",
+                      borderRadius: "999px",
+                      padding: "8px 16px",
+                      fontSize: "0.82rem",
+                      fontWeight: 600,
+                      cursor: customInterestInput.trim()
+                        ? "pointer"
+                        : "default",
+                      whiteSpace: "nowrap",
+                      transition: "all 0.15s ease",
+                    }}
+                  >
+                    + Add Idea
+                  </button>
+                </form>
               </div>
             </div>
           )}

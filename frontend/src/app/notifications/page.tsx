@@ -8,7 +8,7 @@ import {
   Trash2,
   Sparkles,
   Calendar,
-  DollarSign,
+  IndianRupee,
   MapPin,
   AlertCircle,
   Clock,
@@ -137,7 +137,7 @@ export default function NotificationsPage() {
       case "ai":
         return <Sparkles size={18} color="#FBBF24" />;
       case "budget":
-        return <DollarSign size={18} color="#34D399" />;
+        return <IndianRupee size={18} color="#34D399" />;
       default:
         return <MapPin size={18} color="#C084FC" />;
     }

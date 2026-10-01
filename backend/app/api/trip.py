@@ -161,6 +161,49 @@ def serialize_trip(trip: Trip) -> dict:
     }
 
 
+def ensure_rich_trip_details(trip: Trip, db: Session) -> Trip:
+    """Guarantees trip has a rich DayPlan[] with morning/afternoon/evening schedules."""
+    itin = trip.ai_itinerary
+    needs_enrichment = (
+        not itin
+        or itin == {}
+        or itin == []
+        or (isinstance(itin, list) and len(itin) == 0)
+    )
+    if needs_enrichment:
+        try:
+            ai_service = get_ai_service()
+            plan = ai_service.generate_offline_trip_plan(
+                destination=trip.destination,
+                duration_days=trip.duration_days,
+                budget=trip.budget,
+                interests=trip.interests or ["Sightseeing"],
+                travelers_count=trip.travelers_count or 1,
+                travel_style=trip.travel_style,
+                transportation_mode=trip.transportation_mode,
+                preferred_accommodation=trip.preferred_accommodation,
+            )
+            trip.ai_itinerary = plan.get("ai_itinerary", [])
+            if not trip.recommended_hotels:
+                trip.recommended_hotels = plan.get("recommended_hotels", [])
+            if not trip.recommended_restaurants:
+                trip.recommended_restaurants = plan.get("recommended_restaurants", [])
+            if not trip.attractions:
+                trip.attractions = plan.get("attractions", [])
+            if not trip.weather_summary:
+                trip.weather_summary = plan.get("weather_summary", {})
+            if not trip.packing_checklist:
+                trip.packing_checklist = plan.get("packing_checklist", [])
+            if not trip.travel_tips:
+                trip.travel_tips = plan.get("travel_tips", [])
+            db.commit()
+            db.refresh(trip)
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.warning("ensure_rich_trip_details auto-heal skipped: %s", e)
+    return trip
+
+
 # =====================================================
 # AI Itinerary Generation
 # =====================================================
@@ -257,9 +300,11 @@ def create_trip(
 def trip_history(
     current_user: User = Depends(get_current_user),
     trip_service: TripService = Depends(get_trip_service),
+    db: Session = Depends(get_db),
 ):
 
-    trips = trip_service.get_trip_history(current_user.id)
+    raw_trips = trip_service.get_trip_history(current_user.id)
+    trips = [ensure_rich_trip_details(t, db) for t in raw_trips]
 
     return TripHistoryResponse(
         total_trips=len(trips),
@@ -273,6 +318,27 @@ def trip_history(
                 sustainability_score=trip.sustainability_score or 0,
                 status=trip.status or "draft",
                 created_at=trip.created_at,
+                travelers_count=trip.travelers_count,
+                travel_style=trip.travel_style,
+                interests=trip.interests or [],
+                transportation_mode=trip.transportation_mode,
+                preferred_accommodation=trip.preferred_accommodation,
+                ai_itinerary=trip.ai_itinerary or [],
+                itinerary_summary=trip.itinerary_summary,
+                attractions=trip.attractions or [],
+                recommended_hotels=trip.recommended_hotels or [],
+                recommended_restaurants=trip.recommended_restaurants or [],
+                local_cuisines=trip.local_cuisines or [],
+                beverages_to_try=trip.beverages_to_try or [],
+                weather_summary=trip.weather_summary or {},
+                weather_alerts=trip.weather_alerts or [],
+                packing_checklist=trip.packing_checklist or [],
+                travel_tips=trip.travel_tips or [],
+                estimated_trip_cost=trip.estimated_trip_cost or 0.0,
+                accommodation_cost=trip.accommodation_cost or 0.0,
+                food_cost=trip.food_cost or 0.0,
+                transportation_cost=trip.transportation_cost or 0.0,
+                miscellaneous_cost=trip.miscellaneous_cost or 0.0,
             )
             for trip in trips
         ],
@@ -295,6 +361,29 @@ def trip_statistics(
     return TripStatisticsResponse(**stats)
 
 
+class BulkDeleteRequest(BaseModel):
+    trip_ids: list[str] = Field(default_factory=list)
+
+
+@router.post("/bulk-delete")
+def bulk_delete_trips(
+    payload: BulkDeleteRequest,
+    current_user: User = Depends(get_current_user),
+    trip_service: TripService = Depends(get_trip_service),
+):
+    deleted_count = trip_service.bulk_delete_trips(current_user.id, payload.trip_ids)
+    return {"message": f"{deleted_count} trips deleted successfully", "deleted_count": deleted_count}
+
+
+@router.delete("/delete-all")
+def delete_all_trips(
+    current_user: User = Depends(get_current_user),
+    trip_service: TripService = Depends(get_trip_service),
+):
+    deleted_count = trip_service.delete_all_user_trips(current_user.id)
+    return {"message": f"All {deleted_count} trips deleted successfully", "deleted_count": deleted_count}
+
+
 # =====================================================
 # Get Trip  (parameterized — must be AFTER specific paths)
 # =====================================================
@@ -305,6 +394,7 @@ def get_trip(
     trip_id: str,
     current_user: User = Depends(get_current_user),
     trip_service: TripService = Depends(get_trip_service),
+    db: Session = Depends(get_db),
 ):
 
     trip = trip_service.get_trip_by_id(trip_id)
@@ -314,6 +404,8 @@ def get_trip(
 
     if trip.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Access denied")
+
+    trip = ensure_rich_trip_details(trip, db)
 
     return TripResponse(**serialize_trip(trip))
 

@@ -61,14 +61,29 @@ from app.services.ai_service import get_ai_service
 from app.services.weather_service import WeatherService
 
 
+from typing import List, Optional
+
+
+class ChatHistoryItem(BaseModel):
+    role: str
+    content: str
+
+
 class ChatRequest(BaseModel):
     message: str
+    history: Optional[List[ChatHistoryItem]] = None
+    user_name: Optional[str] = None
 
 
 @app.post("/api/chat")
 async def chat_with_ai(request: ChatRequest) -> dict:
     ai_service = get_ai_service()
-    result = ai_service.generate_chat_response(request.message)
+    raw_history = (
+        [h.model_dump() for h in request.history] if request.history else None
+    )
+    result = ai_service.generate_chat_response(
+        request.message, raw_history, user_name=request.user_name
+    )
     return result
 
 

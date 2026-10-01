@@ -181,9 +181,9 @@ export function SectionHeader({
         <h2
           style={{
             fontSize: "1.8rem",
-            fontWeight: 800,
+            fontWeight: 700,
             color: "#FFFFFF",
-            letterSpacing: "-0.5px",
+            letterSpacing: "-0.02em",
           }}
         >
           {title}

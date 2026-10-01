@@ -32,6 +32,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [form, setForm] = useState<RegisterForm>({
     full_name: "",
@@ -112,19 +113,20 @@ export default function RegisterPage() {
   return (
     <div
       style={{
-        minHeight: "calc(100vh - 200px)",
+        minHeight: "calc(100vh - 140px)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: "40px 20px",
+        padding: "20px",
+        zoom: "80%",
       }}
     >
       <GlassCard
         style={{
           width: "100%",
-          maxWidth: "520px",
-          padding: "44px 36px",
-          borderRadius: "28px",
+          maxWidth: "500px",
+          padding: "40px 34px",
+          borderRadius: "26px",
           boxShadow: "0 24px 60px rgba(0, 0, 0, 0.50)",
         }}
       >
@@ -140,7 +142,7 @@ export default function RegisterPage() {
           >
             <Image
               src="/logo/logo.svg"
-              alt="TripGenius Logo"
+              alt="Trip Geni Logo"
               width={42}
               height={42}
               priority
@@ -153,7 +155,7 @@ export default function RegisterPage() {
                 letterSpacing: "-0.5px",
               }}
             >
-              TripGenius
+              Trip Geni
             </span>
           </div>
 
@@ -168,7 +170,7 @@ export default function RegisterPage() {
             Create Your Traveler Account
           </h1>
           <p style={{ color: "#94A3B8", fontSize: "0.92rem", lineHeight: 1.5 }}>
-            Join TripGenius to unlock AI-synthesized itineraries, weather
+            Join Trip Geni to unlock AI-synthesized itineraries, weather
             intelligence, and eco-travel tracking.
           </p>
         </div>
@@ -326,6 +328,7 @@ export default function RegisterPage() {
                     left: "14px",
                     top: "50%",
                     transform: "translateY(-50%)",
+                    pointerEvents: "none",
                   }}
                 />
                 <input
@@ -335,23 +338,32 @@ export default function RegisterPage() {
                   onChange={(e) => updateField("password", e.target.value)}
                   placeholder="Min 8 chars"
                   className="input-base"
-                  style={{ paddingLeft: "38px", paddingRight: "36px" }}
+                  style={{ paddingLeft: "38px", paddingRight: "40px" }}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                   style={{
                     position: "absolute",
-                    right: "10px",
+                    right: "12px",
                     top: "50%",
                     transform: "translateY(-50%)",
                     background: "transparent",
                     border: "none",
                     color: "#94A3B8",
                     cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "4px",
+                    borderRadius: "4px",
+                    transition: "color 0.15s ease",
                   }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#38BDF8")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
                 >
-                  {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -368,16 +380,55 @@ export default function RegisterPage() {
               >
                 Confirm Password
               </label>
-              <input
-                type={showPassword ? "text" : "password"}
-                required
-                value={form.confirm_password}
-                onChange={(e) =>
-                  updateField("confirm_password", e.target.value)
-                }
-                placeholder="Re-enter password"
-                className="input-base"
-              />
+              <div style={{ position: "relative" }}>
+                <Lock
+                  size={16}
+                  color="#94A3B8"
+                  style={{
+                    position: "absolute",
+                    left: "14px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  required
+                  value={form.confirm_password}
+                  onChange={(e) =>
+                    updateField("confirm_password", e.target.value)
+                  }
+                  placeholder="Re-enter password"
+                  className="input-base"
+                  style={{ paddingLeft: "38px", paddingRight: "40px" }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                  style={{
+                    position: "absolute",
+                    right: "12px",
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "transparent",
+                    border: "none",
+                    color: "#94A3B8",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    padding: "4px",
+                    borderRadius: "4px",
+                    transition: "color 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#38BDF8")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
 

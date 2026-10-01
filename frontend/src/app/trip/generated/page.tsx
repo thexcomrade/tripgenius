@@ -8,7 +8,7 @@ import {
   Sparkles,
   Calendar,
   Users,
-  DollarSign,
+  IndianRupee,
   Leaf,
   MapPin,
   Bookmark,
@@ -40,16 +40,12 @@ import Button from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
 import { GlassCard, SectionHeader } from "../../../components/ui/Card";
 import tripService from "../../../services/trip.service";
-
-interface DayPlan {
-  day: number;
-  title: string;
-  destination?: string;
-  morning?: string;
-  afternoon?: string;
-  evening?: string;
-  activities?: string[];
-}
+import {
+  ensureTripItinerary,
+  generateRichDayPlans,
+  getDestinationImage,
+  DayPlan,
+} from "../../../utils/itineraryHelper";
 
 interface WeatherSummary {
   city?: string;
@@ -170,28 +166,64 @@ export default function GeneratedTripPage() {
   const [showInsights, setShowInsights] = useState(false);
 
   useEffect(() => {
-    try {
-      const storedTrip = localStorage.getItem("latest_trip");
-      if (storedTrip) {
-        const parsed = JSON.parse(storedTrip);
-        setTrip(parsed);
-        const tripKey = parsed.destination
-          ? `trip_custom_items_${parsed.destination}`
-          : "trip_custom_items_default";
-        const savedCustom = localStorage.getItem(tripKey);
-        if (savedCustom) {
-          try {
-            setCustomPackingItems(JSON.parse(savedCustom));
-          } catch {
-            // ignore
+    async function initTrip() {
+      try {
+        const storedTrip =
+          localStorage.getItem("tripgenius_generated_trip") ||
+          localStorage.getItem("latest_trip");
+        if (storedTrip) {
+          let parsed: TripData = JSON.parse(storedTrip);
+
+          const hasValidItinerary =
+            Array.isArray(parsed.ai_itinerary) &&
+            parsed.ai_itinerary.length > 0 &&
+            parsed.ai_itinerary.some(
+              (d: any) => d && (d.morning || d.afternoon || d.evening)
+            );
+
+          if (!hasValidItinerary && parsed.id && !parsed.id.startsWith("tg-")) {
+            try {
+              const backendTrip = await tripService.getTrip(parsed.id);
+              if (
+                backendTrip &&
+                Array.isArray(backendTrip.ai_itinerary) &&
+                backendTrip.ai_itinerary.length > 0
+              ) {
+                parsed = { ...parsed, ...backendTrip };
+              }
+            } catch (err) {
+              console.warn("Backend trip fetch warning:", err);
+            }
+          }
+
+          // Guarantee complete DayPlan timeline
+          parsed = ensureTripItinerary(parsed);
+          localStorage.setItem("latest_trip", JSON.stringify(parsed));
+          localStorage.setItem(
+            "tripgenius_generated_trip",
+            JSON.stringify(parsed)
+          );
+
+          setTrip(parsed);
+          const tripKey = parsed.destination
+            ? `trip_custom_items_${parsed.destination}`
+            : "trip_custom_items_default";
+          const savedCustom = localStorage.getItem(tripKey);
+          if (savedCustom) {
+            try {
+              setCustomPackingItems(JSON.parse(savedCustom));
+            } catch {
+              // ignore
+            }
           }
         }
+      } catch (error) {
+        console.error("Trip loading error:", error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Trip loading error:", error);
-    } finally {
-      setLoading(false);
     }
+    initTrip();
   }, []);
 
   const toggleCheckItem = (item: string) => {
@@ -240,39 +272,103 @@ export default function GeneratedTripPage() {
     setSaveFeedback("");
 
     try {
+      const tripId =
+        trip.id ||
+        `tg-${trip.destination.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`;
+      const tripImage = getDestinationImage(trip.destination);
+
+      const tripRecord = {
+        ...trip,
+        id: tripId,
+        trip_title:
+          trip.trip_title || `${trip.destination} (${trip.duration_days} Days)`,
+        destination: trip.destination,
+        duration_days: trip.duration_days,
+        budget: trip.estimated_trip_cost ?? trip.budget,
+        travelers_count: trip.travelers_count,
+        travel_style: trip.travel_style,
+        interests: trip.interests || [],
+        transportation_mode: trip.transportation_mode,
+        preferred_accommodation: trip.preferred_accommodation,
+        sustainability_score: trip.sustainability_score ?? 92,
+        image: tripImage,
+        saved_at: new Date().toISOString(),
+      };
+
+      // 1. Save to tripgenius_saved_trips (Profile source of truth)
+      const existingProfile = JSON.parse(
+        localStorage.getItem("tripgenius_saved_trips") || "[]",
+      );
+      const isProfileDuplicate = existingProfile.some(
+        (s: any) =>
+          s.id === tripId ||
+          (s.destination?.toLowerCase() === trip.destination.toLowerCase() &&
+            s.duration_days === trip.duration_days &&
+            s.generated_at === trip.generated_at),
+      );
+      if (!isProfileDuplicate) {
+        existingProfile.unshift(tripRecord);
+        localStorage.setItem(
+          "tripgenius_saved_trips",
+          JSON.stringify(existingProfile),
+        );
+      }
+
+      // 2. Also save to saved_trips (History & legacy source of truth)
+      const existingHistory = JSON.parse(
+        localStorage.getItem("saved_trips") || "[]",
+      );
+      const isHistoryDuplicate = existingHistory.some(
+        (s: any) =>
+          s.id === tripId ||
+          (s.destination?.toLowerCase() === trip.destination.toLowerCase() &&
+            s.duration_days === trip.duration_days &&
+            s.generated_at === trip.generated_at),
+      );
+      if (!isHistoryDuplicate) {
+        existingHistory.unshift(tripRecord);
+        localStorage.setItem("saved_trips", JSON.stringify(existingHistory));
+      }
+
+      // 3. If logged in with token, persist to backend DB
       const token = localStorage.getItem("tripgenius_token");
       if (token) {
-        await tripService.createTrip({
-          trip_title: trip.trip_title || `${trip.destination} AI Itinerary`,
-          destination: trip.destination,
-          duration_days: trip.duration_days,
-          budget: trip.budget,
-          travelers_count: trip.travelers_count,
-          travel_style: trip.travel_style,
-          interests: trip.interests || [],
-          transportation_mode: trip.transportation_mode,
-          preferred_accommodation: trip.preferred_accommodation,
-        });
-        setSaveFeedback("success");
-      } else {
-        // LocalStorage save
-        const existing = JSON.parse(
-          localStorage.getItem("saved_trips") || "[]",
-        );
-        const tripId = `${trip.destination}-${trip.generated_at || Date.now()}`;
-        const duplicate = existing.some(
-          (s: TripData & { generated_at?: string }) =>
-            `${s.destination}-${s.generated_at}` === tripId,
-        );
-        if (duplicate) {
-          setSaveFeedback("duplicate");
-          setSaving(false);
-          return;
+        try {
+          await tripService.createTrip({
+            trip_title: tripRecord.trip_title,
+            destination: trip.destination,
+            duration_days: trip.duration_days,
+            budget: trip.budget,
+            travelers_count: trip.travelers_count,
+            travel_style: trip.travel_style,
+            interests: trip.interests || [],
+            transportation_mode: trip.transportation_mode,
+            preferred_accommodation: trip.preferred_accommodation,
+            ai_itinerary: trip.ai_itinerary || [],
+            itinerary_summary: trip.destination_summary,
+            attractions: trip.attractions || [],
+            recommended_hotels: trip.recommended_hotels || [],
+            recommended_restaurants: trip.recommended_restaurants || [],
+            local_cuisines: trip.local_cuisines || [],
+            beverages_to_try: trip.beverages_to_try || [],
+            weather_summary: trip.weather_summary || {},
+            packing_checklist: trip.packing_checklist || [],
+            travel_tips: trip.travel_tips || [],
+            estimated_trip_cost: trip.estimated_trip_cost || trip.budget,
+            accommodation_cost: trip.accommodation_cost || 0,
+            food_cost: trip.food_cost || 0,
+            transportation_cost: trip.transportation_cost || 0,
+            miscellaneous_cost: trip.miscellaneous_cost || 0,
+            sustainability_score: trip.sustainability_score || 90,
+            carbon_footprint_estimate: trip.carbon_footprint_estimate || 0,
+            eco_friendly_recommendations: trip.eco_friendly_recommendations || [],
+          });
+        } catch (apiErr) {
+          console.warn("Backend save warning:", apiErr);
         }
-        existing.unshift({ ...trip, saved_at: new Date().toISOString() });
-        localStorage.setItem("saved_trips", JSON.stringify(existing));
-        setSaveFeedback("success");
       }
+
+      setSaveFeedback("success");
     } catch (err) {
       console.error(err);
       setSaveFeedback("error");
@@ -297,7 +393,15 @@ export default function GeneratedTripPage() {
         }
       }
 
-      const { blob, filename } = await tripService.exportTripPDF(trip, userName);
+      const tripImage = getDestinationImage(trip.destination);
+      const { blob, filename } = await tripService.exportTripPDF(
+        {
+          ...trip,
+          image_url: tripImage,
+          cover_image: tripImage,
+        },
+        userName,
+      );
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
@@ -467,8 +571,7 @@ export default function GeneratedTripPage() {
     );
   }
 
-  const imageSrc =
-    DESTINATION_IMAGES[trip.destination] || "/destinations/munnar.jpg";
+  const imageSrc = getDestinationImage(trip.destination);
   const isOffline = trip.generation_mode === "offline";
 
   return (
@@ -654,13 +757,21 @@ export default function GeneratedTripPage() {
               {downloadingPdf ? "Generating PDF..." : "Download PDF"}
             </Button>
             <Button
-              variant="primary"
+              variant={saveFeedback === "success" ? "secondary" : "primary"}
               size="md"
               isLoading={saving}
-              leftIcon={<Bookmark size={16} />}
+              leftIcon={
+                saveFeedback === "success" ? (
+                  <Check size={16} color="#10B981" />
+                ) : (
+                  <Bookmark size={16} />
+                )
+              }
               onClick={handleSaveTrip}
             >
-              Save Itinerary
+              {saveFeedback === "success"
+                ? "Saved to Profile! ✓"
+                : "Save Itinerary"}
             </Button>
           </div>
 
@@ -721,7 +832,7 @@ export default function GeneratedTripPage() {
               <span
                 style={{ display: "flex", alignItems: "center", gap: "6px" }}
               >
-                <DollarSign size={16} color="#34D399" />{" "}
+                <IndianRupee size={16} color="#34D399" />{" "}
                 <strong>
                   ₹{(trip.estimated_trip_cost ?? trip.budget).toLocaleString()}{" "}
                   Est. Budget
@@ -760,7 +871,7 @@ export default function GeneratedTripPage() {
         {[
           { id: "itinerary", label: "Day-by-Day Timeline", icon: Calendar },
           { id: "stays", label: "Stays & Food", icon: Hotel },
-          { id: "budget", label: "Cost Breakdown", icon: DollarSign },
+          { id: "budget", label: "Cost Breakdown", icon: IndianRupee },
           { id: "weather", label: "Weather & Packing", icon: Sun },
           { id: "eco", label: "Eco & Sustainability", icon: Leaf },
         ].map((tab) => {
@@ -806,209 +917,199 @@ export default function GeneratedTripPage() {
             subtitle="Optimized schedule factoring travel transit, attraction visiting hours, and peak scenery windows."
           />
 
-          {trip.ai_itinerary && trip.ai_itinerary.length > 0 ? (
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "20px" }}
-            >
-              {trip.ai_itinerary.map((day) => (
-                <GlassCard key={day.day} style={{ padding: "28px" }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "12px",
-                      marginBottom: "20px",
-                    }}
-                  >
+          {(() => {
+            const itineraryDays =
+              trip.ai_itinerary && trip.ai_itinerary.length > 0
+                ? trip.ai_itinerary
+                : generateRichDayPlans(
+                    trip.destination,
+                    trip.duration_days,
+                    trip.interests,
+                    trip.travel_style,
+                    trip.attractions,
+                    trip.budget
+                  );
+
+            return (
+              <div
+                style={{ display: "flex", flexDirection: "column", gap: "20px" }}
+              >
+                {itineraryDays.map((day) => (
+                  <GlassCard key={day.day} style={{ padding: "28px" }}>
                     <div
                       style={{
-                        padding: "6px 14px",
-                        borderRadius: "10px",
-                        background: "linear-gradient(135deg, #0EA5E9, #14B8A6)",
-                        color: "#FFFFFF",
-                        fontWeight: 800,
-                        fontSize: "0.95rem",
-                      }}
-                    >
-                      Day {day.day}
-                    </div>
-                    <h3
-                      style={{
-                        fontSize: "1.3rem",
-                        fontWeight: 800,
-                        color: "#FFFFFF",
-                      }}
-                    >
-                      {day.title}
-                    </h3>
-                  </div>
-
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fit, minmax(280px, 1fr))",
-                      gap: "16px",
-                    }}
-                  >
-                    {day.morning && (
-                      <div
-                        style={{
-                          background: "rgba(255, 255, 255, 0.03)",
-                          padding: "18px",
-                          borderRadius: "14px",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            color: "#FBBF24",
-                            fontWeight: 700,
-                            fontSize: "0.9rem",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          <Sun size={16} /> Morning
-                        </div>
-                        <p
-                          style={{
-                            color: "#CBD5E1",
-                            fontSize: "0.9rem",
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {day.morning}
-                        </p>
-                      </div>
-                    )}
-
-                    {day.afternoon && (
-                      <div
-                        style={{
-                          background: "rgba(255, 255, 255, 0.03)",
-                          padding: "18px",
-                          borderRadius: "14px",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            color: "#38BDF8",
-                            fontWeight: 700,
-                            fontSize: "0.9rem",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          <CloudSun size={16} /> Afternoon
-                        </div>
-                        <p
-                          style={{
-                            color: "#CBD5E1",
-                            fontSize: "0.9rem",
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {day.afternoon}
-                        </p>
-                      </div>
-                    )}
-
-                    {day.evening && (
-                      <div
-                        style={{
-                          background: "rgba(255, 255, 255, 0.03)",
-                          padding: "18px",
-                          borderRadius: "14px",
-                          border: "1px solid rgba(255, 255, 255, 0.06)",
-                        }}
-                      >
-                        <div
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "8px",
-                            color: "#C084FC",
-                            fontWeight: 700,
-                            fontSize: "0.9rem",
-                            marginBottom: "8px",
-                          }}
-                        >
-                          <Coffee size={16} /> Evening & Sunset
-                        </div>
-                        <p
-                          style={{
-                            color: "#CBD5E1",
-                            fontSize: "0.9rem",
-                            lineHeight: 1.6,
-                          }}
-                        >
-                          {day.evening}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-
-                  {day.activities && day.activities.length > 0 && (
-                    <div
-                      style={{
-                        marginTop: "18px",
                         display: "flex",
                         alignItems: "center",
-                        gap: "8px",
-                        flexWrap: "wrap",
+                        gap: "12px",
+                        marginBottom: "20px",
                       }}
                     >
-                      <span
+                      <div
                         style={{
-                          fontSize: "0.82rem",
-                          color: "#94A3B8",
-                          fontWeight: 600,
+                          padding: "6px 14px",
+                          borderRadius: "10px",
+                          background:
+                            "linear-gradient(135deg, #0EA5E9, #14B8A6)",
+                          color: "#FFFFFF",
+                          fontWeight: 800,
+                          fontSize: "0.95rem",
                         }}
                       >
-                        Key Stops:
-                      </span>
-                      {day.activities.map((act, i) => (
-                        <Badge key={i} variant="neutral" size="sm">
-                          {act}
-                        </Badge>
-                      ))}
+                        Day {day.day}
+                      </div>
+                      <h3
+                        style={{
+                          fontSize: "1.3rem",
+                          fontWeight: 800,
+                          color: "#FFFFFF",
+                        }}
+                      >
+                        {day.title || day.theme || `Explore ${trip.destination}`}
+                      </h3>
                     </div>
-                  )}
-                </GlassCard>
-              ))}
-            </div>
-          ) : (
-            /* Fallback days */
-            <div
-              style={{ display: "flex", flexDirection: "column", gap: "16px" }}
-            >
-              {Array.from({ length: trip.duration_days }).map((_, idx) => (
-                <GlassCard key={idx} style={{ padding: "24px" }}>
-                  <h4
-                    style={{
-                      fontSize: "1.2rem",
-                      fontWeight: 800,
-                      color: "#38BDF8",
-                      marginBottom: "8px",
-                    }}
-                  >
-                    Day {idx + 1} • Explore {trip.destination}
-                  </h4>
-                  <p style={{ color: "#CBD5E1", lineHeight: 1.7 }}>
-                    Discover curated viewpoints, local tea plantations,
-                    authentic dining spots, and cultural heritage across{" "}
-                    {trip.destination}.
-                  </p>
-                </GlassCard>
-              ))}
-            </div>
-          )}
+
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns:
+                          "repeat(auto-fit, minmax(280px, 1fr))",
+                        gap: "16px",
+                      }}
+                    >
+                      {day.morning && (
+                        <div
+                          style={{
+                            background: "rgba(255, 255, 255, 0.03)",
+                            padding: "18px",
+                            borderRadius: "14px",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              color: "#FBBF24",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <Sun size={16} /> Morning
+                          </div>
+                          <p
+                            style={{
+                              color: "#CBD5E1",
+                              fontSize: "0.9rem",
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {day.morning}
+                          </p>
+                        </div>
+                      )}
+
+                      {day.afternoon && (
+                        <div
+                          style={{
+                            background: "rgba(255, 255, 255, 0.03)",
+                            padding: "18px",
+                            borderRadius: "14px",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              color: "#38BDF8",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <CloudSun size={16} /> Afternoon
+                          </div>
+                          <p
+                            style={{
+                              color: "#CBD5E1",
+                              fontSize: "0.9rem",
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {day.afternoon}
+                          </p>
+                        </div>
+                      )}
+
+                      {day.evening && (
+                        <div
+                          style={{
+                            background: "rgba(255, 255, 255, 0.03)",
+                            padding: "18px",
+                            borderRadius: "14px",
+                            border: "1px solid rgba(255, 255, 255, 0.06)",
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "8px",
+                              color: "#C084FC",
+                              fontWeight: 700,
+                              fontSize: "0.9rem",
+                              marginBottom: "8px",
+                            }}
+                          >
+                            <Coffee size={16} /> Evening & Sunset
+                          </div>
+                          <p
+                            style={{
+                              color: "#CBD5E1",
+                              fontSize: "0.9rem",
+                              lineHeight: 1.6,
+                            }}
+                          >
+                            {day.evening}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {day.activities && day.activities.length > 0 && (
+                      <div
+                        style={{
+                          marginTop: "18px",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          flexWrap: "wrap",
+                        }}
+                      >
+                        <span
+                          style={{
+                            fontSize: "0.82rem",
+                            color: "#94A3B8",
+                            fontWeight: 600,
+                          }}
+                        >
+                          Key Stops:
+                        </span>
+                        {day.activities.map((act, i) => (
+                          <Badge key={i} variant="neutral" size="sm">
+                            {act}
+                          </Badge>
+                        ))}
+                      </div>
+                    )}
+                  </GlassCard>
+                ))}
+              </div>
+            );
+          })()}
 
           {/* OTHER ATTRACTIONS & PLACES WITH LOCATION */}
           {trip.attractions && trip.attractions.length > 0 && (
@@ -2495,13 +2596,21 @@ export default function GeneratedTripPage() {
         }}
       >
         <Button
-          variant="primary"
+          variant={saveFeedback === "success" ? "secondary" : "primary"}
           size="md"
-          leftIcon={<Bookmark size={16} />}
+          leftIcon={
+            saveFeedback === "success" ? (
+              <Check size={16} color="#10B981" />
+            ) : (
+              <Bookmark size={16} />
+            )
+          }
           isLoading={saving}
           onClick={handleSaveTrip}
         >
-          Save Itinerary
+          {saveFeedback === "success"
+            ? "Saved to Profile! ✓"
+            : "Save Itinerary"}
         </Button>
         <Link href="/planner" style={{ textDecoration: "none" }}>
           <Button

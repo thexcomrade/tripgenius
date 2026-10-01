@@ -167,6 +167,47 @@ class TripCreateRequest(BaseModel):
 
     preferred_accommodation: str | None = None
 
+    # Full plan preservation fields
+    ai_itinerary: Any | None = None
+
+    itinerary_summary: str | None = None
+
+    attractions: list[Any] = Field(default_factory=list)
+
+    recommended_hotels: list[Any] = Field(default_factory=list)
+
+    recommended_restaurants: list[Any] = Field(default_factory=list)
+
+    local_cuisines: list[str] = Field(default_factory=list)
+
+    beverages_to_try: list[str] = Field(default_factory=list)
+
+    weather_summary: dict[str, Any] = Field(default_factory=dict)
+
+    weather_alerts: list[str] = Field(default_factory=list)
+
+    packing_checklist: list[str] = Field(default_factory=list)
+
+    travel_tips: list[str] = Field(default_factory=list)
+
+    estimated_trip_cost: float | None = None
+
+    accommodation_cost: float | None = None
+
+    food_cost: float | None = None
+
+    transportation_cost: float | None = None
+
+    miscellaneous_cost: float | None = None
+
+    sustainability_score: int | None = None
+
+    carbon_footprint_estimate: float | None = None
+
+    eco_friendly_recommendations: list[str] = Field(default_factory=list)
+
+    ai_confidence_score: float | None = None
+
 
 # ============================================================
 # Trip Update Request
@@ -397,11 +438,54 @@ class TripHistoryItem(BaseModel):
 
     budget: float
 
-    sustainability_score: int
+    sustainability_score: int = 0
 
-    status: str
+    status: str = "draft"
 
     created_at: datetime
+
+    # Full plan preservation fields
+    travelers_count: int = 1
+
+    travel_style: str | None = None
+
+    interests: list[Any] = Field(default_factory=list)
+
+    transportation_mode: str | None = None
+
+    preferred_accommodation: str | None = None
+
+    ai_itinerary: Any | None = None
+
+    itinerary_summary: str | None = None
+
+    attractions: list[Any] = Field(default_factory=list)
+
+    recommended_hotels: list[Any] = Field(default_factory=list)
+
+    recommended_restaurants: list[Any] = Field(default_factory=list)
+
+    local_cuisines: list[str] = Field(default_factory=list)
+
+    beverages_to_try: list[str] = Field(default_factory=list)
+
+    weather_summary: dict[str, Any] = Field(default_factory=dict)
+
+    weather_alerts: list[str] = Field(default_factory=list)
+
+    packing_checklist: list[str] = Field(default_factory=list)
+
+    travel_tips: list[str] = Field(default_factory=list)
+
+    estimated_trip_cost: float = 0.0
+
+    accommodation_cost: float = 0.0
+
+    food_cost: float = 0.0
+
+    transportation_cost: float = 0.0
+
+    miscellaneous_cost: float = 0.0
 
 
 class TripHistoryResponse(BaseModel):

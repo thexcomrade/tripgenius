@@ -465,7 +465,7 @@ export default function ProfileHeader({
                     color: "#FFFFFF",
                   }}
                 >
-                  {user.total_trips || 4}
+                  {user.total_trips ?? 3}
                 </div>
               </div>
 

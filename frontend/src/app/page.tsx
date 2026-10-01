@@ -301,16 +301,29 @@ export default function HomePage() {
 
         <h1
           style={{
-            fontSize: "clamp(2.5rem, 6vw, 4.8rem)",
-            fontWeight: 900,
-            lineHeight: 1.15,
-            letterSpacing: "-1.5px",
+            fontSize: "clamp(2.4rem, 5.5vw, 4.4rem)",
+            fontWeight: 500,
+            lineHeight: 1.18,
+            letterSpacing: "-0.035em",
             maxWidth: "1050px",
             margin: "0 auto 24px auto",
+            color: "#F8FAFC",
           }}
         >
-          Plan Extraordinary Journeys with{" "}
-          <span className="gradient-text">Intelligent Precision</span>
+          Plan{" "}
+          <span
+            style={{
+              fontWeight: 300,
+              color: "#E2E8F0",
+              letterSpacing: "-0.02em",
+            }}
+          >
+            Extraordinary
+          </span>{" "}
+          Journeys with{" "}
+          <span className="gradient-text" style={{ fontWeight: 700 }}>
+            Intelligent Precision
+          </span>
         </h1>
 
         <p
@@ -955,10 +968,11 @@ export default function HomePage() {
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
-            padding: "20px",
-            background: "rgba(3, 7, 18, 0.80)",
+            padding: "16px",
+            background: "rgba(3, 7, 18, 0.85)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
+            overflowY: "auto",
           }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setIsReviewModalOpen(false);
@@ -968,30 +982,34 @@ export default function HomePage() {
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: "540px",
+              maxWidth: "460px",
+              maxHeight: "calc(100vh - 36px)",
+              overflowY: "auto",
               background:
                 "linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(30, 41, 59, 0.96))",
               border: "1px solid rgba(255, 255, 255, 0.14)",
               boxShadow:
-                "0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 40px rgba(14, 165, 233, 0.15)",
-              borderRadius: "24px",
-              padding: "32px",
+                "0 20px 50px -15px rgba(0, 0, 0, 0.85), 0 0 35px rgba(14, 165, 233, 0.15)",
+              borderRadius: "18px",
+              padding: "20px 24px",
               color: "#FFFFFF",
+              boxSizing: "border-box",
             }}
           >
             {/* Close Button */}
             <button
               type="button"
               onClick={() => setIsReviewModalOpen(false)}
+              aria-label="Close dialog"
               style={{
                 position: "absolute",
-                top: "20px",
-                right: "20px",
+                top: "14px",
+                right: "14px",
                 background: "rgba(255, 255, 255, 0.08)",
                 border: "1px solid rgba(255, 255, 255, 0.12)",
                 borderRadius: "50%",
-                width: "36px",
-                height: "36px",
+                width: "30px",
+                height: "30px",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -1008,26 +1026,27 @@ export default function HomePage() {
                 e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
               }}
             >
-              <X size={18} />
+              <X size={16} />
             </button>
 
             {/* Modal Header */}
-            <div style={{ marginBottom: "20px" }}>
-              <div style={{ display: "inline-flex", marginBottom: "8px" }}>
+            <div style={{ marginBottom: "14px", paddingRight: "32px" }}>
+              <div style={{ display: "inline-flex", marginBottom: "4px" }}>
                 <Badge
                   variant="amber"
                   size="sm"
-                  icon={<Star size={12} fill="#FBBF24" color="#FBBF24" />}
+                  icon={<Star size={11} fill="#FBBF24" color="#FBBF24" />}
                 >
                   Traveler Feedback
                 </Badge>
               </div>
               <h3
                 style={{
-                  fontSize: "1.5rem",
+                  fontSize: "1.25rem",
                   fontWeight: 800,
                   color: "#FFFFFF",
-                  margin: "4px 0",
+                  margin: "2px 0 4px 0",
+                  lineHeight: 1.25,
                 }}
               >
                 Share Your Experience
@@ -1035,8 +1054,9 @@ export default function HomePage() {
               <p
                 style={{
                   color: "#94A3B8",
-                  fontSize: "0.88rem",
-                  lineHeight: 1.5,
+                  fontSize: "0.80rem",
+                  lineHeight: 1.4,
+                  margin: 0,
                 }}
               >
                 Share your journey or planning experience with fellow travelers.
@@ -1045,20 +1065,20 @@ export default function HomePage() {
 
             <form onSubmit={handleReviewSubmit}>
               {/* Star Rating Picker */}
-              <div style={{ marginBottom: "18px" }}>
+              <div style={{ marginBottom: "12px" }}>
                 <label
                   style={{
                     display: "block",
-                    fontSize: "0.85rem",
+                    fontSize: "0.78rem",
                     fontWeight: 600,
                     color: "#CBD5E1",
-                    marginBottom: "8px",
+                    marginBottom: "4px",
                   }}
                 >
                   Rating
                 </label>
                 <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
+                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
                 >
                   {[1, 2, 3, 4, 5].map((star) => {
                     const active = (hoveredStar ?? reviewRating) >= star;
@@ -1073,7 +1093,7 @@ export default function HomePage() {
                           background: "none",
                           border: "none",
                           cursor: "pointer",
-                          padding: "4px",
+                          padding: "2px",
                           display: "inline-flex",
                           alignItems: "center",
                           justifyContent: "center",
@@ -1082,7 +1102,7 @@ export default function HomePage() {
                         }}
                       >
                         <Star
-                          size={28}
+                          size={22}
                           fill={active ? "#FBBF24" : "transparent"}
                           color={active ? "#FBBF24" : "#64748B"}
                         />
@@ -1091,8 +1111,8 @@ export default function HomePage() {
                   })}
                   <span
                     style={{
-                      marginLeft: "8px",
-                      fontSize: "0.9rem",
+                      marginLeft: "6px",
+                      fontSize: "0.82rem",
                       fontWeight: 700,
                       color: "#FDE68A",
                     }}
@@ -1103,14 +1123,14 @@ export default function HomePage() {
               </div>
 
               {/* Name Input */}
-              <div style={{ marginBottom: "16px" }}>
+              <div style={{ marginBottom: "10px" }}>
                 <label
                   style={{
                     display: "block",
-                    fontSize: "0.85rem",
+                    fontSize: "0.78rem",
                     fontWeight: 600,
                     color: "#CBD5E1",
-                    marginBottom: "6px",
+                    marginBottom: "4px",
                   }}
                 >
                   Your Name
@@ -1123,12 +1143,12 @@ export default function HomePage() {
                   onChange={(e) => setReviewName(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
                     background: "rgba(15, 23, 42, 0.7)",
                     border: "1px solid rgba(255, 255, 255, 0.14)",
                     color: "#FFFFFF",
-                    fontSize: "0.95rem",
+                    fontSize: "0.88rem",
                     outline: "none",
                     boxSizing: "border-box",
                   }}
@@ -1140,18 +1160,18 @@ export default function HomePage() {
                 style={{
                   display: "grid",
                   gridTemplateColumns: "1fr 1fr",
-                  gap: "12px",
-                  marginBottom: "8px",
+                  gap: "10px",
+                  marginBottom: "6px",
                 }}
               >
                 <div>
                   <label
                     style={{
                       display: "block",
-                      fontSize: "0.85rem",
+                      fontSize: "0.78rem",
                       fontWeight: 600,
                       color: "#CBD5E1",
-                      marginBottom: "6px",
+                      marginBottom: "4px",
                     }}
                   >
                     Role / Profession
@@ -1163,12 +1183,12 @@ export default function HomePage() {
                     onChange={(e) => setReviewProfession(e.target.value)}
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      borderRadius: "12px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
                       background: "rgba(15, 23, 42, 0.7)",
                       border: "1px solid rgba(255, 255, 255, 0.14)",
                       color: "#FFFFFF",
-                      fontSize: "0.9rem",
+                      fontSize: "0.85rem",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1178,10 +1198,10 @@ export default function HomePage() {
                   <label
                     style={{
                       display: "block",
-                      fontSize: "0.85rem",
+                      fontSize: "0.78rem",
                       fontWeight: 600,
                       color: "#CBD5E1",
-                      marginBottom: "6px",
+                      marginBottom: "4px",
                     }}
                   >
                     Place / City
@@ -1193,12 +1213,12 @@ export default function HomePage() {
                     onChange={(e) => setReviewPlace(e.target.value)}
                     style={{
                       width: "100%",
-                      padding: "10px 14px",
-                      borderRadius: "12px",
+                      padding: "8px 12px",
+                      borderRadius: "10px",
                       background: "rgba(15, 23, 42, 0.7)",
                       border: "1px solid rgba(255, 255, 255, 0.14)",
                       color: "#FFFFFF",
-                      fontSize: "0.9rem",
+                      fontSize: "0.85rem",
                       outline: "none",
                       boxSizing: "border-box",
                     }}
@@ -1209,22 +1229,22 @@ export default function HomePage() {
               {/* Tag Preview */}
               <div
                 style={{
-                  marginBottom: "16px",
+                  marginBottom: "10px",
                   display: "flex",
                   alignItems: "center",
-                  gap: "8px",
+                  gap: "6px",
                 }}
               >
-                <span style={{ fontSize: "0.78rem", color: "#94A3B8" }}>
+                <span style={{ fontSize: "0.72rem", color: "#94A3B8" }}>
                   Tag Preview:
                 </span>
                 <span
                   style={{
-                    fontSize: "0.8rem",
+                    fontSize: "0.74rem",
                     fontWeight: 600,
                     color: "#38BDF8",
                     background: "rgba(14, 165, 233, 0.12)",
-                    padding: "3px 10px",
+                    padding: "2px 8px",
                     borderRadius: "999px",
                     border: "1px solid rgba(14, 165, 233, 0.3)",
                   }}
@@ -1235,33 +1255,33 @@ export default function HomePage() {
               </div>
 
               {/* Description Input */}
-              <div style={{ marginBottom: "22px" }}>
+              <div style={{ marginBottom: "14px" }}>
                 <label
                   style={{
                     display: "block",
-                    fontSize: "0.85rem",
+                    fontSize: "0.78rem",
                     fontWeight: 600,
                     color: "#CBD5E1",
-                    marginBottom: "6px",
+                    marginBottom: "4px",
                   }}
                 >
                   Review Description
                 </label>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   placeholder="Tell us what you liked about TripGenius, the AI itinerary, eco-recommendations, or hidden places..."
                   value={reviewDescription}
                   onChange={(e) => setReviewDescription(e.target.value)}
                   style={{
                     width: "100%",
-                    padding: "12px 14px",
-                    borderRadius: "12px",
+                    padding: "8px 12px",
+                    borderRadius: "10px",
                     background: "rgba(15, 23, 42, 0.7)",
                     border: "1px solid rgba(255, 255, 255, 0.14)",
                     color: "#FFFFFF",
-                    fontSize: "0.92rem",
-                    lineHeight: 1.6,
+                    fontSize: "0.86rem",
+                    lineHeight: 1.5,
                     resize: "vertical",
                     outline: "none",
                     boxSizing: "border-box",
@@ -1274,13 +1294,13 @@ export default function HomePage() {
                 style={{
                   display: "flex",
                   justifyContent: "flex-end",
-                  gap: "12px",
+                  gap: "10px",
                 }}
               >
                 <Button
                   type="button"
                   variant="ghost"
-                  size="md"
+                  size="sm"
                   onClick={() => setIsReviewModalOpen(false)}
                 >
                   Cancel
@@ -1288,8 +1308,8 @@ export default function HomePage() {
                 <Button
                   type="submit"
                   variant="primary"
-                  size="md"
-                  leftIcon={<Star size={16} fill="#FBBF24" color="#FBBF24" />}
+                  size="sm"
+                  leftIcon={<Star size={14} fill="#FBBF24" color="#FBBF24" />}
                 >
                   Publish Review
                 </Button>

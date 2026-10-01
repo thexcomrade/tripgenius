@@ -13,6 +13,11 @@ import {
   Compass,
   ArrowRight,
   MapPin,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Radio,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -27,12 +32,25 @@ interface ChatMessage {
 }
 
 const PROMPT_SUGGESTIONS = [
+  "Plan a 3-day scenic trip to Thenkasi & Courtallam under ₹12,000",
   "Plan a 4-day scenic trip to Munnar under ₹18,000",
   "Best offbeat waterfalls and viewpoints near Wayanad",
   "Eco-friendly homestays and coffee trails in Coorg",
   "Relaxing 3-day beach escape to Varkala with seafood spots",
-  "What is the best season and weather for visiting Ooty?",
+  "Romantic 5-day cultural holiday in Paris with top cafes",
 ];
+
+// Safe UUID generator that works across all browser environments and non-HTTPS contexts
+const generateMsgId = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      // fallback
+    }
+  }
+  return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+};
 
 export default function AIChatPage() {
   const router = useRouter();
@@ -42,24 +60,177 @@ export default function AIChatPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("Traveler");
 
+  // In-Built 2026 Voice Assistant States
+  const [isListening, setIsListening] = useState(false);
+  const [speechSupported, setSpeechSupported] = useState(true);
+  const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [autoSendCountdown, setAutoSendCountdown] = useState<number | null>(null);
+  const recognitionRef = useRef<any>(null);
+  const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const latestTranscriptRef = useRef<string>("");
+  const handleSendMessageRef = useRef<(msgText?: string) => Promise<void>>(
+    async () => {}
+  );
+
+  const cancelAutoSend = () => {
+    if (silenceTimeoutRef.current) {
+      clearTimeout(silenceTimeoutRef.current);
+      silenceTimeoutRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+    setAutoSendCountdown(null);
+  };
+
+  // Load user name
   useEffect(() => {
+    let name = "Traveler";
+    const storedUser = localStorage.getItem("tripgenius_user");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        name = parsed.full_name || parsed.name || parsed.username || "Traveler";
+      } catch {
+        // fallback
+      }
+    }
+    setUserName(name);
+
+    // Initialize or load chat
     const stored = localStorage.getItem("tripgenius_ai_chat");
     if (stored) {
       try {
-        setMessages(JSON.parse(stored));
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // If first message has legacy misty Western Ghats intro, refresh it to the new clean greeting
+          if (
+            parsed[0].content &&
+            parsed[0].content.includes("misty Western Ghats waterfalls")
+          ) {
+            parsed[0].content =
+              `Namaskaram ${name}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
+              `How may I help you today?\n\n` +
+              `Tell me your dream destination, budget, or travel style, and I'll analyze your requirements to craft the perfect plan with verified stays and costs in ₹.\n\n` +
+              `🎙️ **Voice Command Enabled**: You can speak with me using the microphone button below, or type your message. Trip Geni automatically sends your message after you finish speaking.\n\n` +
+              `❓ Where would you like to travel, or what would you like me to plan for you?`;
+            localStorage.setItem("tripgenius_ai_chat", JSON.stringify(parsed));
+          }
+          setMessages(parsed);
+          return;
+        }
       } catch {
-        setMessages([]);
+        // ignore
       }
-    } else {
-      const welcome: ChatMessage = {
-        id: "welcome-msg",
-        role: "assistant",
-        content:
-          "👋 Hello! I'm TripGenius AI, your personal travel companion. What's your name, and where are you dreaming of traveling next?",
-        timestamp: new Date().toISOString(),
-      };
-      setMessages([welcome]);
+    }
+
+    const welcome: ChatMessage = {
+      id: "welcome-msg",
+      role: "assistant",
+      content:
+        `Namaskaram ${name}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
+        `How may I help you today?\n\n` +
+        `Tell me your dream destination, budget, or travel style, and I'll analyze your requirements to craft the perfect plan with verified stays and costs in ₹.\n\n` +
+        `🎙️ **Voice Command Enabled**: You can speak with me using the microphone button below, or type your message. Trip Geni automatically sends your message after you finish speaking.\n\n` +
+        `❓ Where would you like to travel, or what would you like me to plan for you?`,
+      timestamp: new Date().toISOString(),
+    };
+    setMessages([welcome]);
+  }, []);
+
+  // Web Speech API: English Voice Recognition Setup with Auto-Send on Silence
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+
+      if (SpeechRecognition) {
+        try {
+          const recognition = new SpeechRecognition();
+          recognition.continuous = true;
+          recognition.interimResults = true;
+          recognition.lang = "en-US";
+
+          recognition.onstart = () => {
+            setIsListening(true);
+          };
+
+          recognition.onresult = (event: any) => {
+            let transcript = "";
+            for (let i = 0; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+            }
+            const clean = transcript.trim();
+            if (clean) {
+              setInput(clean);
+              latestTranscriptRef.current = clean;
+
+              // Reset any ongoing timers
+              if (silenceTimeoutRef.current) {
+                clearTimeout(silenceTimeoutRef.current);
+              }
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+              }
+
+              // Start visual countdown for smooth user feedback
+              setAutoSendCountdown(2);
+              let remaining = 2;
+              countdownIntervalRef.current = setInterval(() => {
+                remaining -= 1;
+                if (remaining > 0) {
+                  setAutoSendCountdown(remaining);
+                } else {
+                  if (countdownIntervalRef.current) {
+                    clearInterval(countdownIntervalRef.current);
+                  }
+                  setAutoSendCountdown(null);
+                }
+              }, 900);
+
+              // 1.8s silence detector: if user stops speaking for 1.8s, automatically send!
+              silenceTimeoutRef.current = setTimeout(() => {
+                if (countdownIntervalRef.current) {
+                  clearInterval(countdownIntervalRef.current);
+                }
+                setAutoSendCountdown(null);
+                const textToSend = latestTranscriptRef.current.trim();
+                if (textToSend) {
+                  if (recognitionRef.current) {
+                    try {
+                      recognitionRef.current.stop();
+                    } catch {}
+                  }
+                  setIsListening(false);
+                  handleSendMessageRef.current?.(textToSend);
+                }
+              }, 1800);
+            }
+          };
+
+          recognition.onerror = (event: any) => {
+            console.warn("Speech recognition error:", event.error);
+            cancelAutoSend();
+            setIsListening(false);
+          };
+
+          recognition.onend = () => {
+            setIsListening(false);
+          };
+
+          recognitionRef.current = recognition;
+        } catch (e) {
+          console.warn("Could not initialize SpeechRecognition:", e);
+          setSpeechSupported(false);
+        }
+      } else {
+        setSpeechSupported(false);
+      }
     }
   }, []);
 
@@ -70,12 +241,108 @@ export default function AIChatPage() {
     }
   }, [messages]);
 
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
+      return;
+    }
+
+    cancelAutoSend();
+
+    if (isListening) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+    } else {
+      try {
+        latestTranscriptRef.current = "";
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (err) {
+        console.warn("Recognition start failed:", err);
+      }
+    }
+  };
+
+  // Text-To-Speech (TTS Voice Narration with Dasappan Male Voice & Brisk Pace)
+  const handleSpeak = (text: string, msgId: string) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      return;
+    }
+
+    if (speakingId === msgId) {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    // Clean markdown and symbols for crisp English speech
+    const cleanSpeech = text
+      .replace(/[*#_~`>•]/g, " ")
+      .replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+      .replace(/₹/g, " Rupees ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const utterance = new SpeechSynthesisUtterance(cleanSpeech);
+    utterance.rate = 1.15; // Brisk, fluid, responsive reading pace
+    utterance.pitch = 0.98; // Grounded, warm male tone
+    utterance.lang = "en-US";
+
+    const voices = window.speechSynthesis.getVoices();
+    // Prioritize authentic, clear male English voices suitable for Dasappan
+    const maleVoice =
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.toLowerCase().includes("male") ||
+            v.name.toLowerCase().includes("david") ||
+            v.name.toLowerCase().includes("george") ||
+            v.name.toLowerCase().includes("guy") ||
+            v.name.toLowerCase().includes("mark") ||
+            v.name.toLowerCase().includes("prabhat") ||
+            v.name.toLowerCase().includes("ravi") ||
+            v.name.toLowerCase().includes("google uk english male") ||
+            v.name.toLowerCase().includes("natural") ||
+            v.name.toLowerCase().includes("ryan"))
+      ) ||
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          !v.name.toLowerCase().includes("female") &&
+          !v.name.toLowerCase().includes("zira") &&
+          !v.name.toLowerCase().includes("samantha") &&
+          !v.name.toLowerCase().includes("victoria") &&
+          !v.name.toLowerCase().includes("karen")
+      ) ||
+      voices.find((v) => v.lang.startsWith("en"));
+
+    if (maleVoice) {
+      utterance.voice = maleVoice;
+    }
+
+    utterance.onend = () => setSpeakingId(null);
+    utterance.onerror = () => setSpeakingId(null);
+
+    setSpeakingId(msgId);
+    window.speechSynthesis.speak(utterance);
+  };
+
   const handleClearChat = () => {
+    if (speakingId && typeof window !== "undefined") {
+      window.speechSynthesis.cancel();
+      setSpeakingId(null);
+    }
     const welcome: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateMsgId(),
       role: "assistant",
       content:
-        "👋 Chat refreshed! What's your name, and where are you dreaming of traveling next?",
+        `Namaskaram ${userName}! 🙏 Chat refreshed!\n\n` +
+        `How may I help you today?\n\n` +
+        `Tell me your dream destination, budget, or travel style, and I'll analyze it to craft the perfect plan with verified stays and costs in ₹!`,
       timestamp: new Date().toISOString(),
     };
     setMessages([welcome]);
@@ -90,6 +357,10 @@ export default function AIChatPage() {
 
   const extractDestination = (text: string): string | undefined => {
     const keywords = [
+      "Thenkasi",
+      "Tenkasi",
+      "Courtallam",
+      "Vattavada",
       "Munnar",
       "Coorg",
       "Ooty",
@@ -99,16 +370,29 @@ export default function AIChatPage() {
       "Mysore",
       "Alleppey",
       "Goa",
+      "Delhi",
+      "Paris",
+      "Tokyo",
+      "Bali",
+      "Dubai",
     ];
     return keywords.find((k) => text.toLowerCase().includes(k.toLowerCase()));
   };
 
   const handleSendMessage = async (msgText?: string) => {
+    cancelAutoSend();
     const textToSend = (msgText || input).trim();
     if (!textToSend || loading) return;
 
+    if (isListening && recognitionRef.current) {
+      try {
+        recognitionRef.current.stop();
+      } catch {}
+      setIsListening(false);
+    }
+
     const userMsg: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: generateMsgId(),
       role: "user",
       content: textToSend,
       timestamp: new Date().toISOString(),
@@ -123,16 +407,26 @@ export default function AIChatPage() {
     try {
       const apiBase =
         process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
+      const historyPayload = messages.slice(-6).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+
       const res = await fetch(`${apiBase}/api/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: textToSend }),
+        body: JSON.stringify({
+          message: textToSend,
+          history: historyPayload,
+          user_name: userName,
+        }),
       });
 
       if (res.ok) {
         const data = await res.json();
         const assistantMsg: ChatMessage = {
-          id: crypto.randomUUID(),
+          id: generateMsgId(),
           role: "assistant",
           content: data.reply || "I am ready to help plan your trip!",
           timestamp: new Date().toISOString(),
@@ -145,34 +439,58 @@ export default function AIChatPage() {
     } catch (e) {
       console.warn(
         "Backend chat endpoint unreachable, using client knowledge fallback:",
-        e,
+        e
       );
     }
 
-    // Intelligent client-side fallback
+    // Intelligent client-side RAG fallback
     setTimeout(() => {
       let aiReply = "";
-      if (dest) {
+      const lower = textToSend.toLowerCase();
+      const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste"];
+
+      if (greetingWords.some((g) => lower === g || lower.startsWith(g + " "))) {
         aiReply =
-          `🌿 **TripGenius Guide for ${dest}**\n\n` +
-          `• **Recommended Pacing**: 3 to 4 days for a complete, scenic immersion.\n` +
-          `• **Optimal Travel Window**: September through March for pleasant temperatures and clear views.\n` +
-          `• **Estimated Budget**: ~₹3,500 – ₹5,500 per day for 2 travelers (including boutique stay, authentic meals, and regional transit).\n` +
-          `• **Must-See Highlights**: Scenic mountain trails, tea/spice plantations, local waterfalls, and cultural heritage viewpoints.\n` +
-          `• **Culinary Specialties**: Freshly brewed highland teas, regional thali, and authentic delicacies.\n` +
-          `• **Eco Travel Tip**: Choose certified green homestays and minimize single-use plastics.\n\n` +
-          `👉 *You can use the TripGenius AI Planner to synthesize a full day-by-day itinerary with exact cost breakdown.*`;
+          `Namaskaram ${userName}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
+          `How may I help you today?\n\n` +
+          `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal itinerary for you!\n\n` +
+          `❓ Where would you like to travel, or what can I help you plan?`;
+      } else if (lower.includes("thenkasi") || lower.includes("courtallam")) {
+        aiReply =
+          `Namaskaram ${userName}! 🙏 Welcome to **Thenkasi & Courtallam** — The Spa of South India!\n\n` +
+          `🎯 **The Vibe**: Therapeutic mineral waterfalls flowing through herbal Western Ghats forests, historic 13th-century Pandyan temples, and legendary border cuisine.\n\n` +
+          `🗺️ **Must-Experience Highlights**:\n` +
+          `• **Courtallam Main Falls & Five Falls (Aintharuvi)**: Natural herbal spa bath in cascading mountain waters (₹30 parking).\n` +
+          `• **Kasi Viswanathar Temple**: Majestic 180-ft 9-tier Rajagopuram facing the Western Ghats.\n` +
+          `• **Gundar Dam & Shenkottai Drive**: Scenic reservoir surrounded by rubber estates and misty hills.\n\n` +
+          `🗓️ **Curated 2-Day Plan**:\n` +
+          `• Day 1: Kasi Viswanathar Temple darshan, Courtallam Main Falls herbal bath, evening Shenkottai parotta trail.\n` +
+          `• Day 2: Morning Five Falls visit, Gundar Dam reservoir drive, spice & herbal honey shopping.\n\n` +
+          `🍲 **Must-Eat**: Hot Tenkasi Ennai Parotta with spicy Salna & Border Rahmath Mutton Fry.\n` +
+          `💰 **Expected Cost**: ₹1,800 – ₹3,000 per person/day.\n` +
+          `💡 **DASAPPAN's Insider Tip**: Visit Five Falls at 6:30 AM to beat the Saaral season crowd.\n\n` +
+          `❓ Are you planning a trip during the Courtallam Saaral season (June–Sept) for waterfalls, or a peaceful weekend trip?`;
+      } else if (dest) {
+        aiReply =
+          `Namaskaram ${userName}! 🙏 Here is your curated blueprint for **${dest}**:\n\n` +
+          `🎯 **The Vibe**: Scenic landscapes, local hospitality, and rejuvenating outdoor experiences.\n\n` +
+          `🗺️ **Recommended Pacing**: 3 to 4 days for a complete, scenic immersion.\n` +
+          `💰 **Estimated Budget**: ~₹2,500 – ₹4,500 per day per person (including boutique stay, authentic meals, and regional transit).\n` +
+          `🍲 **Culinary Specialties**: Regional thalis, authentic curries, and freshly brewed local beverages.\n` +
+          `💡 **DASAPPAN's Insider Tip**: Book stays slightly away from the main town center for the best views and tranquility.\n\n` +
+          `❓ Tell me, how many days are you planning for, and are you traveling solo, as a couple, or with family?`;
       } else {
         aiReply =
-          `✈️ **TripGenius Travel Advice for "${textToSend}"**\n\n` +
-          `• **Top Destinations**: Munnar (highland tea gardens), Coorg (coffee hills & waterfalls), Varkala (cliffside beaches), and Wayanad (rainforest trails).\n` +
-          `• **Planning Recommendation**: Allocate ~40% of budget to accommodations, 25% to regional dining, and 20% to low-carbon transit.\n` +
-          `• **Pacing**: Dedicate at least 3 days per destination to balance travel transit with relaxed exploration.\n\n` +
-          `👉 *Tap 'Open Planner' below to generate your complete bespoke itinerary.*`;
+          `Namaskaram ${userName}! 🙏 I'd love to help you plan your travel.\n\n` +
+          `How may I help you today? Could you tell me:\n` +
+          `• Which destination or region are you targeting?\n` +
+          `• How many days and what is your approximate budget tier?\n\n` +
+          `💡 Popular destinations right now: **Thenkasi & Courtallam**, **Munnar**, **Vattavada**, **Varkala**, **Coorg**, or **Paris**.\n\n` +
+          `❓ Which one shall we look into first?`;
       }
 
       const assistantMsg: ChatMessage = {
-        id: crypto.randomUUID(),
+        id: generateMsgId(),
         role: "assistant",
         content: aiReply,
         timestamp: new Date().toISOString(),
@@ -181,8 +499,10 @@ export default function AIChatPage() {
 
       setMessages((prev) => [...prev, assistantMsg]);
       setLoading(false);
-    }, 800);
+    }, 400);
   };
+
+  handleSendMessageRef.current = handleSendMessage;
 
   return (
     <div
@@ -191,8 +511,7 @@ export default function AIChatPage() {
         maxWidth: "1000px",
         display: "flex",
         flexDirection: "column",
-        height: "calc(100vh - 180px)",
-        minHeight: "650px",
+        height: "calc(100vh - 80px)",
       }}
     >
       {/* CHAT HEADER */}
@@ -205,32 +524,49 @@ export default function AIChatPage() {
           borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
           <div
             style={{
-              width: "42px",
-              height: "42px",
-              borderRadius: "12px",
-              background: "linear-gradient(135deg, #0EA5E9, #14B8A6)",
+              width: "48px",
+              height: "48px",
+              borderRadius: "50%",
+              background:
+                "radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, rgba(2, 132, 199, 0.1) 100%)",
+              border: "2.5px solid #0EA5E9",
+              boxShadow:
+                "0 0 16px rgba(14, 165, 233, 0.50), inset 0 0 8px rgba(14, 165, 233, 0.25)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#FFFFFF",
-              boxShadow: "0 0 16px rgba(14, 165, 233, 0.40)",
+              overflow: "hidden",
+              flexShrink: 0,
             }}
           >
-            <Bot size={22} />
+            <img
+              src="/images/das.ico"
+              alt="DASAPPAN"
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                borderRadius: "50%",
+              }}
+              onError={(e) => {
+                (e.target as HTMLImageElement).src = "/images/das.png";
+              }}
+            />
           </div>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <h2
                 style={{
-                  fontSize: "1.25rem",
+                  fontSize: "1.2rem",
                   fontWeight: 800,
                   color: "#FFFFFF",
+                  margin: 0,
                 }}
               >
-                TripGenius AI Companion
+                DASAPPAN
               </h2>
               <span
                 style={{
@@ -242,73 +578,81 @@ export default function AIChatPage() {
                 }}
               />
             </div>
-            <p style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
-              Powered by Google Gemini & Regional Tourism Datasets
+            <p
+              style={{
+                fontSize: "0.8rem",
+                color: "#94A3B8",
+                margin: "2px 0 0 0",
+              }}
+            >
+              AI Travel Companion • Voice Enabled • Global Planning
             </p>
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleClearChat}
-          title="Clear Conversation"
-          style={{
-            padding: "8px 14px",
-            borderRadius: "10px",
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.10)",
-            color: "#94A3B8",
-            fontSize: "0.85rem",
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-            gap: "6px",
-          }}
-        >
-          <Trash2 size={14} /> Clear
-        </button>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleClearChat}
+            leftIcon={<Trash2 size={14} />}
+          >
+            Clear
+          </Button>
+        </div>
       </div>
 
-      {/* PROMPT SUGGESTION CHIPS */}
+      {/* QUICK SUGGESTIONS CAROUSEL */}
       <div
         style={{
           display: "flex",
           gap: "8px",
+          padding: "12px 0",
           overflowX: "auto",
-          padding: "14px 0 10px 0",
+          scrollbarWidth: "none",
         }}
       >
-        {PROMPT_SUGGESTIONS.map((prompt, idx) => (
+        {PROMPT_SUGGESTIONS.map((s, idx) => (
           <button
             key={idx}
             type="button"
-            onClick={() => handleSendMessage(prompt)}
+            onClick={() => handleSendMessage(s)}
             style={{
-              padding: "6px 14px",
+              background: "rgba(255, 255, 255, 0.04)",
+              border: "1px solid rgba(255, 255, 255, 0.08)",
               borderRadius: "999px",
-              background: "rgba(14, 165, 233, 0.08)",
-              border: "1px solid rgba(14, 165, 233, 0.20)",
-              color: "#CBD5E1",
+              padding: "6px 14px",
               fontSize: "0.8rem",
+              color: "#CBD5E1",
               cursor: "pointer",
               whiteSpace: "nowrap",
-              transition: "all 0.2s ease",
+              transition: "all 0.2s",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(14, 165, 233, 0.15)";
+              e.currentTarget.style.borderColor = "#0EA5E9";
+              e.currentTarget.style.color = "#FFFFFF";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255, 255, 255, 0.04)";
+              e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+              e.currentTarget.style.color = "#CBD5E1";
             }}
           >
-            {prompt}
+            {s}
           </button>
         ))}
       </div>
 
-      {/* MESSAGE STREAM */}
+      {/* MESSAGES CONTAINER */}
       <div
         style={{
           flex: 1,
           overflowY: "auto",
-          padding: "16px 4px",
           display: "flex",
           flexDirection: "column",
-          gap: "20px",
+          gap: "18px",
+          padding: "12px 4px",
         }}
       >
         {messages.map((msg) => {
@@ -318,47 +662,63 @@ export default function AIChatPage() {
               key={msg.id}
               style={{
                 display: "flex",
-                justifyContent: isUser ? "flex-end" : "flex-start",
                 gap: "12px",
-                maxWidth: "100%",
+                alignItems: "flex-start",
+                justifyContent: isUser ? "flex-end" : "flex-start",
               }}
             >
               {!isUser && (
                 <div
                   style={{
-                    width: "34px",
-                    height: "34px",
-                    borderRadius: "10px",
-                    background: "linear-gradient(135deg, #0EA5E9, #14B8A6)",
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    background: "rgba(14, 165, 233, 0.15)",
+                    border: "2px solid #0EA5E9",
+                    boxShadow: "0 0 10px rgba(14, 165, 233, 0.40)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    color: "#FFFFFF",
+                    overflow: "hidden",
                     flexShrink: 0,
-                    marginTop: "4px",
+                    marginTop: "2px",
                   }}
                 >
-                  <Bot size={18} />
+                  <img
+                    src="/images/das.ico"
+                    alt="DASAPPAN"
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                      borderRadius: "50%",
+                    }}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = "/images/das.png";
+                    }}
+                  />
                 </div>
               )}
 
               <div
                 style={{
-                  maxWidth: "80%",
+                  maxWidth: "75%",
                   display: "flex",
                   flexDirection: "column",
-                  gap: "8px",
+                  gap: "6px",
+                  alignItems: isUser ? "flex-end" : "flex-start",
                 }}
               >
                 <div
                   style={{
-                    padding: "16px 20px",
+                    padding: "14px 18px",
                     borderRadius: isUser
-                      ? "20px 20px 4px 20px"
-                      : "4px 20px 20px 20px",
+                      ? "18px 18px 4px 18px"
+                      : "18px 18px 18px 4px",
                     background: isUser
-                      ? "linear-gradient(135deg, #0284C7, #0D9488)"
+                      ? "linear-gradient(135deg, #0EA5E9, #0284C7)"
                       : "rgba(15, 23, 42, 0.85)",
+                    backdropFilter: "blur(12px)",
                     border: isUser
                       ? "none"
                       : "1px solid rgba(255, 255, 255, 0.10)",
@@ -378,9 +738,50 @@ export default function AIChatPage() {
                     style={{
                       display: "flex",
                       alignItems: "center",
-                      gap: "10px",
+                      gap: "12px",
+                      marginTop: "2px",
                     }}
                   >
+                    {/* TTS VOICE PLAYBACK BUTTON */}
+                    <button
+                      type="button"
+                      onClick={() => handleSpeak(msg.content, msg.id)}
+                      style={{
+                        background:
+                          speakingId === msg.id
+                            ? "rgba(14, 165, 233, 0.2)"
+                            : "transparent",
+                        border:
+                          speakingId === msg.id
+                            ? "1px solid rgba(14, 165, 233, 0.5)"
+                            : "none",
+                        borderRadius: "6px",
+                        padding: "2px 6px",
+                        color: speakingId === msg.id ? "#38BDF8" : "#94A3B8",
+                        fontSize: "0.78rem",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        transition: "all 0.2s",
+                      }}
+                      title={
+                        speakingId === msg.id
+                          ? "Stop voice playback"
+                          : "Listen in English voice (TTS)"
+                      }
+                    >
+                      {speakingId === msg.id ? (
+                        <VolumeX size={13} color="#38BDF8" />
+                      ) : (
+                        <Volume2 size={13} />
+                      )}
+                      <span>
+                        {speakingId === msg.id ? "Stop Voice" : "Voice Readout"}
+                      </span>
+                    </button>
+
+                    {/* COPY BUTTON */}
                     <button
                       type="button"
                       onClick={() => handleCopy(msg.content, msg.id)}
@@ -408,7 +809,7 @@ export default function AIChatPage() {
                         type="button"
                         onClick={() =>
                           router.push(
-                            `/planner?destination=${encodeURIComponent(msg.suggestedDestination!)}`,
+                            `/planner?destination=${encodeURIComponent(msg.suggestedDestination!)}`
                           )
                         }
                         style={{
@@ -425,8 +826,7 @@ export default function AIChatPage() {
                           gap: "4px",
                         }}
                       >
-                        <Sparkles size={11} /> Open {msg.suggestedDestination}{" "}
-                        in Planner
+                        <Sparkles size={11} /> Open {msg.suggestedDestination} in Planner
                       </button>
                     )}
                   </div>
@@ -440,17 +840,32 @@ export default function AIChatPage() {
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <div
               style={{
-                width: "34px",
-                height: "34px",
-                borderRadius: "10px",
-                background: "rgba(14, 165, 233, 0.2)",
+                width: "36px",
+                height: "36px",
+                borderRadius: "50%",
+                background: "rgba(14, 165, 233, 0.20)",
+                border: "2px solid #0EA5E9",
+                boxShadow: "0 0 10px rgba(14, 165, 233, 0.40)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                color: "#38BDF8",
+                overflow: "hidden",
+                flexShrink: 0,
               }}
             >
-              <Bot size={18} />
+              <img
+                src="/images/das.ico"
+                alt="DASAPPAN"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  borderRadius: "50%",
+                }}
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = "/images/das.png";
+                }}
+              />
             </div>
             <div
               style={{
@@ -496,7 +911,140 @@ export default function AIChatPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* CHAT INPUT COMPOSER */}
+      {/* LISTENING INDICATOR BANNER */}
+      {isListening && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background:
+              "linear-gradient(90deg, rgba(239, 68, 68, 0.20), rgba(14, 165, 233, 0.20))",
+            border: "1px solid rgba(239, 68, 68, 0.40)",
+            borderRadius: "12px",
+            padding: "8px 16px",
+            marginBottom: "6px",
+            animation: "pulseAura 2s infinite",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              style={{
+                width: "10px",
+                height: "10px",
+                borderRadius: "50%",
+                background: "#EF4444",
+                boxShadow: "0 0 10px #EF4444",
+                animation: "blink 1s infinite",
+              }}
+            />
+            <span style={{ fontSize: "0.85rem", color: "#F8FAFC", fontWeight: 600 }}>
+              Listening to your voice in English... Speak your question or destination
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={toggleListening}
+            style={{
+              background: "rgba(239, 68, 68, 0.3)",
+              border: "1px solid rgba(239, 68, 68, 0.6)",
+              color: "#FFFFFF",
+              borderRadius: "6px",
+              padding: "2px 8px",
+              fontSize: "0.75rem",
+              cursor: "pointer",
+            }}
+          >
+            Done
+          </button>
+        </div>
+      )}
+
+      {/* VOICE NLP AUTO-SEND COUNTDOWN BANNER */}
+      {autoSendCountdown !== null && (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background:
+              "linear-gradient(135deg, rgba(14, 165, 233, 0.18), rgba(20, 184, 166, 0.18))",
+            border: "1px solid rgba(56, 189, 248, 0.45)",
+            borderRadius: "14px",
+            padding: "8px 14px",
+            marginBottom: "8px",
+            fontSize: "0.85rem",
+            color: "#E0F2FE",
+            backdropFilter: "blur(12px)",
+            animation: "fadeIn 0.2s ease-in-out",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span
+              style={{
+                width: "9px",
+                height: "9px",
+                borderRadius: "50%",
+                background: "#10B981",
+                boxShadow: "0 0 10px #10B981",
+                display: "inline-block",
+                animation: "blink 1s infinite",
+              }}
+            />
+            <span>
+              Voice recognized. Auto-sending in <b>{autoSendCountdown}s</b> after silence...
+            </span>
+          </div>
+
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <button
+              type="button"
+              onClick={cancelAutoSend}
+              style={{
+                background: "rgba(239, 68, 68, 0.2)",
+                border: "1px solid rgba(239, 68, 68, 0.4)",
+                color: "#FCA5A5",
+                borderRadius: "8px",
+                padding: "3px 10px",
+                fontSize: "0.75rem",
+                cursor: "pointer",
+                fontWeight: 600,
+                transition: "all 0.15s ease",
+              }}
+            >
+              Cancel Auto-send
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                cancelAutoSend();
+                if (recognitionRef.current) {
+                  try {
+                    recognitionRef.current.stop();
+                  } catch {}
+                }
+                setIsListening(false);
+                handleSendMessage(latestTranscriptRef.current || input);
+              }}
+              style={{
+                background: "#0EA5E9",
+                border: "none",
+                color: "#FFFFFF",
+                borderRadius: "8px",
+                padding: "3px 12px",
+                fontSize: "0.75rem",
+                fontWeight: 700,
+                cursor: "pointer",
+                boxShadow: "0 0 10px rgba(14, 165, 233, 0.5)",
+              }}
+            >
+              Send Now
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CHAT INPUT COMPOSER WITH VOICE MIC BUTTON */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -508,18 +1056,59 @@ export default function AIChatPage() {
           gap: "10px",
           background: "rgba(15, 23, 42, 0.95)",
           backdropFilter: "blur(20px)",
-          border: "1px solid rgba(255, 255, 255, 0.12)",
+          border: isListening
+            ? "1.5px solid #0EA5E9"
+            : "1px solid rgba(255, 255, 255, 0.12)",
           borderRadius: "16px",
-          padding: "8px 12px 8px 18px",
-          boxShadow: "0 8px 24px rgba(0, 0, 0, 0.35)",
-          marginTop: "12px",
+          padding: "8px 12px 8px 14px",
+          boxShadow: isListening
+            ? "0 0 20px rgba(14, 165, 233, 0.4)"
+            : "0 8px 24px rgba(0, 0, 0, 0.35)",
+          marginTop: "8px",
+          transition: "all 0.2s",
         }}
       >
+        {/* VOICE INPUT MIC BUTTON */}
+        <button
+          type="button"
+          onClick={toggleListening}
+          title={
+            isListening
+              ? "Stop listening"
+              : "Voice Command: Speak your destination or question in English"
+          }
+          style={{
+            background: isListening
+              ? "rgba(239, 68, 68, 0.25)"
+              : "rgba(14, 165, 233, 0.12)",
+            border: isListening
+              ? "1.5px solid #EF4444"
+              : "1.5px solid rgba(14, 165, 233, 0.35)",
+            color: isListening ? "#F87171" : "#38BDF8",
+            borderRadius: "50%",
+            width: "36px",
+            height: "36px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            flexShrink: 0,
+            boxShadow: isListening ? "0 0 12px rgba(239, 68, 68, 0.6)" : "none",
+            transition: "all 0.2s ease",
+          }}
+        >
+          {isListening ? <MicOff size={17} /> : <Mic size={17} />}
+        </button>
+
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask anything about destinations, budgets, stays, or packing..."
+          placeholder={
+            isListening
+              ? "Listening to your voice..."
+              : "Ask anything about destinations worldwide, budgets, stays, or packing..."
+          }
           style={{
             flex: 1,
             background: "transparent",
@@ -529,6 +1118,7 @@ export default function AIChatPage() {
             outline: "none",
           }}
         />
+
         <Button
           type="submit"
           variant="primary"
@@ -549,6 +1139,24 @@ export default function AIChatPage() {
           }
           40% {
             transform: scale(1);
+          }
+        }
+        @keyframes blink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+        @keyframes pulseAura {
+          0%,
+          100% {
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.2);
+          }
+          50% {
+            box-shadow: 0 0 16px rgba(14, 165, 233, 0.4);
           }
         }
       `}</style>

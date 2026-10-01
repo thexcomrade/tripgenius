@@ -73,6 +73,27 @@ class TripService:
 
         return True
 
+    def bulk_delete_trips(self, user_id: str, trip_ids: list[str]) -> int:
+        if not trip_ids:
+            return 0
+        deleted = (
+            self.db.query(Trip)
+            .filter(Trip.user_id == user_id, Trip.id.in_(trip_ids))
+            .delete(synchronize_session=False)
+        )
+        self.db.commit()
+        return deleted
+
+    def delete_all_user_trips(self, user_id: str) -> int:
+        deleted = (
+            self.db.query(Trip)
+            .filter(Trip.user_id == user_id)
+            .delete(synchronize_session=False)
+        )
+        self.db.commit()
+        return deleted
+
+
     def favorite_trip(self, trip_id: str) -> Trip:
 
         trip = self.get_trip_by_id(trip_id)

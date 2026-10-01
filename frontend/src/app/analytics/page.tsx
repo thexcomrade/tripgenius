@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   BarChart3,
   TrendingUp,
-  DollarSign,
+  IndianRupee,
   Leaf,
   Calendar,
   Plane,
@@ -196,7 +196,7 @@ export default function AnalyticsPage() {
         <MetricCard
           title="Total Spending Allocated"
           value={`₹${stats.totalBudget.toLocaleString()}`}
-          icon={<DollarSign size={20} />}
+          icon={<IndianRupee size={20} />}
           change="+12% vs last period"
           changeType="positive"
           subtitle="Aggregated across itineraries"

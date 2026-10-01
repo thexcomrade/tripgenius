@@ -20,6 +20,7 @@ from app.schemas.auth_schema import (
     LoginRequest,
     LoginResponse,
     ChangePasswordRequest,
+    SendPasswordOtpResponse,
     CurrentUserResponse,
     AuthenticationStatusResponse,
     LogoutResponse,
@@ -119,6 +120,21 @@ def get_profile(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(exc))
 
 
+@router.post("/send-password-otp", response_model=SendPasswordOtpResponse)
+def send_password_otp(
+    user_id: str = Depends(get_current_user_id),
+    service: AuthService = Depends(get_auth_service),
+) -> SendPasswordOtpResponse:
+    try:
+        result = service.send_password_change_otp(user_id=user_id)
+        return SendPasswordOtpResponse(
+            message=result["message"],
+            email=result["email"],
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
 @router.post("/change-password")
 def change_password(
     payload: ChangePasswordRequest,
@@ -131,6 +147,7 @@ def change_password(
             user_id=user_id,
             current_password=payload.current_password,
             new_password=payload.new_password,
+            verification_code=payload.verification_code,
         )
 
         return {"message": "Password updated successfully"}

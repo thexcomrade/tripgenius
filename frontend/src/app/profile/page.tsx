@@ -112,7 +112,7 @@ export default function ProfilePage() {
     bio: "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries.",
     country: "Trivandrum, Kerala, India",
     profile_image: "",
-    total_trips: 4,
+    total_trips: 3,
     saved_trips: 0,
     eco_score: 92,
     countries_visited: 3,
@@ -136,7 +136,14 @@ export default function ProfilePage() {
       const token = localStorage.getItem("tripgenius_token");
       const storedUser = localStorage.getItem("tripgenius_user");
       const image = localStorage.getItem("tripgenius_profile_image");
-      const storedSaved = localStorage.getItem("tripgenius_saved_trips");
+      let storedSaved = localStorage.getItem("tripgenius_saved_trips");
+      if (!storedSaved || storedSaved === "[]") {
+        const fallbackSaved = localStorage.getItem("saved_trips");
+        if (fallbackSaved && fallbackSaved !== "[]") {
+          storedSaved = fallbackSaved;
+          localStorage.setItem("tripgenius_saved_trips", fallbackSaved);
+        }
+      }
 
       let parsedSaved: any[] = [];
       if (storedSaved) {
@@ -154,17 +161,8 @@ export default function ProfilePage() {
         const parsed = JSON.parse(storedUser);
         setIsLoggedIn(true);
 
-        // Fetch statistics if available
-        let liveTotalTrips =
-          parsed.total_trips ?? (parsedSaved.length > 0 ? parsedSaved.length : 4);
-        try {
-          const stats = await tripService.getStatistics();
-          if (stats && typeof stats.total_trips === "number") {
-            liveTotalTrips = stats.total_trips;
-          }
-        } catch {
-          // Keep local fallback
-        }
+        // Show user's saved trips count, or the 3 curated sample journeys
+        const liveTotalTrips = parsedSaved.length > 0 ? parsedSaved.length : 3;
 
         const name =
           parsed.full_name && parsed.full_name !== "Traveler"
@@ -247,7 +245,12 @@ export default function ProfilePage() {
     const updated = savedTripsList.filter((trip) => trip.id !== id);
     setSavedTripsList(updated);
     localStorage.setItem("tripgenius_saved_trips", JSON.stringify(updated));
-    setUser((prev) => ({ ...prev, saved_trips: updated.length }));
+    localStorage.setItem("saved_trips", JSON.stringify(updated));
+    setUser((prev) => ({
+      ...prev,
+      saved_trips: updated.length,
+      total_trips: updated.length > 0 ? updated.length : 3,
+    }));
   }
 
   function handleSavePreferences(newPreferences: string[]) {

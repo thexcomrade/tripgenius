@@ -1,12 +1,20 @@
+"use client";
+
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Sparkles, Compass, Leaf, Shield, Heart } from "lucide-react";
+import { Leaf, Shield } from "lucide-react";
+
+/** Pages where the footer should be hidden (e.g. full-height chat UI). */
+const FOOTER_HIDDEN_PATHS = ["/ai-chat"];
 
 export default function AppFooter() {
+  const pathname = usePathname();
+  if (FOOTER_HIDDEN_PATHS.includes(pathname)) return null;
   return (
     <footer
       style={{
-        marginTop: "100px",
+        marginTop: "48px",
         background: "rgba(2, 6, 23, 0.95)",
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
@@ -19,15 +27,15 @@ export default function AppFooter() {
           width: "100%",
           maxWidth: "1680px",
           margin: "0 auto",
-          padding: "60px clamp(20px, 4vw, 56px) 30px clamp(20px, 4vw, 56px)",
+          padding: "36px clamp(16px, 3.5vw, 44px) 18px clamp(16px, 3.5vw, 44px)",
         }}
       >
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-            gap: "clamp(24px, 3vw, 48px)",
-            marginBottom: "50px",
+            gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+            gap: "clamp(20px, 2.5vw, 36px)",
+            marginBottom: "28px",
           }}
         >
           {/* BRAND COL */}
@@ -42,28 +50,28 @@ export default function AppFooter() {
             >
               <Image
                 src="/logo/logo.svg"
-                alt="TripGenius Logo"
-                width={36}
-                height={36}
+                alt="Trip Geni Logo"
+                width={30}
+                height={30}
                 priority
               />
               <span
                 style={{
                   color: "#FFFFFF",
-                  fontSize: "1.6rem",
+                  fontSize: "1.35rem",
                   fontWeight: 800,
                   letterSpacing: "-0.5px",
                 }}
               >
-                TripGenius
+                Trip Geni
               </span>
             </div>
             <p
               style={{
                 color: "#94A3B8",
-                fontSize: "0.92rem",
-                lineHeight: 1.7,
-                marginBottom: "20px",
+                fontSize: "0.85rem",
+                lineHeight: 1.55,
+                marginBottom: "14px",
               }}
             >
               Next-generation AI travel companion designed for personalized,
@@ -108,9 +116,10 @@ export default function AppFooter() {
             <h4
               style={{
                 color: "#FFFFFF",
-                fontSize: "1rem",
+                fontSize: "0.88rem",
                 fontWeight: 700,
-                marginBottom: "18px",
+                marginBottom: "12px",
+                letterSpacing: "0.3px",
               }}
             >
               Explore & Plan
@@ -120,7 +129,7 @@ export default function AppFooter() {
                 listStyle: "none",
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
+                gap: "7px",
                 padding: 0,
               }}
             >
@@ -130,7 +139,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                     transition: "color 0.2s",
                   }}
                 >
@@ -143,7 +152,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                     transition: "color 0.2s",
                   }}
                 >
@@ -156,7 +165,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                     transition: "color 0.2s",
                   }}
                 >
@@ -169,7 +178,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                     transition: "color 0.2s",
                   }}
                 >
@@ -184,9 +193,10 @@ export default function AppFooter() {
             <h4
               style={{
                 color: "#FFFFFF",
-                fontSize: "1rem",
+                fontSize: "0.88rem",
                 fontWeight: 700,
-                marginBottom: "18px",
+                marginBottom: "12px",
+                letterSpacing: "0.3px",
               }}
             >
               Personal Hub
@@ -196,7 +206,7 @@ export default function AppFooter() {
                 listStyle: "none",
                 display: "flex",
                 flexDirection: "column",
-                gap: "10px",
+                gap: "7px",
                 padding: 0,
               }}
             >
@@ -206,7 +216,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                   }}
                 >
                   Trip History & Archive
@@ -218,7 +228,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                   }}
                 >
                   Saved Bucket List
@@ -230,7 +240,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                   }}
                 >
                   Travel Analytics
@@ -242,7 +252,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                   }}
                 >
                   Explorer Achievements
@@ -254,7 +264,7 @@ export default function AppFooter() {
                   style={{
                     color: "#CBD5E1",
                     textDecoration: "none",
-                    fontSize: "0.92rem",
+                    fontSize: "0.84rem",
                   }}
                 >
                   Account Settings
@@ -268,9 +278,10 @@ export default function AppFooter() {
             <h4
               style={{
                 color: "#FFFFFF",
-                fontSize: "1rem",
+                fontSize: "0.88rem",
                 fontWeight: 700,
-                marginBottom: "18px",
+                marginBottom: "12px",
+                letterSpacing: "0.3px",
               }}
             >
               Support & Inquiries
@@ -278,8 +289,8 @@ export default function AppFooter() {
             <p
               style={{
                 color: "#CBD5E1",
-                fontSize: "0.92rem",
-                marginBottom: "8px",
+                fontSize: "0.84rem",
+                marginBottom: "6px",
               }}
             >
               📧{" "}
@@ -293,8 +304,8 @@ export default function AppFooter() {
             <p
               style={{
                 color: "#CBD5E1",
-                fontSize: "0.92rem",
-                marginBottom: "8px",
+                fontSize: "0.84rem",
+                marginBottom: "6px",
               }}
             >
               📞{" "}
@@ -308,8 +319,8 @@ export default function AppFooter() {
             <p
               style={{
                 color: "#CBD5E1",
-                fontSize: "0.92rem",
-                marginBottom: "8px",
+                fontSize: "0.84rem",
+                marginBottom: "6px",
               }}
             >
               🌐 Live Service API: Connected
@@ -317,8 +328,8 @@ export default function AppFooter() {
             <p
               style={{
                 color: "#64748B",
-                fontSize: "0.85rem",
-                marginTop: "16px",
+                fontSize: "0.78rem",
+                marginTop: "10px",
               }}
             >
               Empowered by Google Gemini, OpenWeather Intelligence & Tourism
@@ -329,17 +340,17 @@ export default function AppFooter() {
 
         <div
           style={{
-            paddingTop: "24px",
+            paddingTop: "16px",
             borderTop: "1px solid rgba(255, 255, 255, 0.08)",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
             flexWrap: "wrap",
-            gap: "14px",
-            fontSize: "0.88rem",
+            gap: "12px",
+            fontSize: "0.82rem",
           }}
         >
-          <p>© 2026 TripGenius AI Platform. All rights reserved.</p>
+          <p>© 2026 Trip Geni AI Platform. All rights reserved.</p>
           <div
             style={{
               display: "flex",

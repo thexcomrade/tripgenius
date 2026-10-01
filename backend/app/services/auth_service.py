@@ -6,6 +6,21 @@ from app.schemas.auth_schema import LoginRequest, RegisterRequest
 
 from app.core.security import hash_password, verify_password, create_access_token
 
+from app.services.email_service import get_email_service
+from app.services.otp_service import get_otp_service
+
+
+def _mask_email(email: str) -> str:
+    parts = email.split("@")
+    if len(parts) != 2:
+        return email
+    user, domain = parts
+    if len(user) <= 2:
+        masked_user = user[0] + "*"
+    else:
+        masked_user = user[0] + "*" * (len(user) - 2) + user[-1]
+    return f"{masked_user}@{domain}"
+
 
 class AuthService:
     def __init__(self, db: Session) -> None:
@@ -63,24 +78,48 @@ class AuthService:
 
         return {"access_token": access_token, "token_type": "Bearer", "user": user}
 
-    def change_password(
-        self, user_id: str, current_password: str, new_password: str
-    ) -> bool:
-
+    def send_password_change_otp(self, user_id: str) -> dict:
         user = self.get_user_by_id(user_id)
-
         if not user:
             raise ValueError("User not found")
 
-        is_valid = verify_password(current_password, user.hashed_password)
+        otp_service = get_otp_service()
+        email_service = get_email_service()
 
+        otp_code, is_new = otp_service.generate_otp(user.id, user.email)
+        email_service.send_password_change_otp(
+            to_email=user.email,
+            recipient_name=user.full_name,
+            otp_code=otp_code,
+        )
+
+        masked_email = _mask_email(user.email)
+        return {
+            "message": f"Verification code sent to {masked_email}",
+            "email": masked_email,
+        }
+
+    def change_password(
+        self,
+        user_id: str,
+        current_password: str,
+        new_password: str,
+        verification_code: str,
+    ) -> bool:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        otp_service = get_otp_service()
+        if not otp_service.verify_otp(user_id, verification_code):
+            raise ValueError("Invalid or expired 6-digit verification code. Please check your email and retry.")
+
+        is_valid = verify_password(current_password, user.hashed_password)
         if not is_valid:
             raise ValueError("Current password is incorrect")
 
         user.hashed_password = hash_password(new_password)
-
         self.db.commit()
-
         return True
 
     def activate_user(self, user_id: str) -> User:

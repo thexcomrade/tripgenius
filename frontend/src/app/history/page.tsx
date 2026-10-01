@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { ensureTripItinerary } from "../../utils/itineraryHelper";
+
 interface TripHistoryItem {
   id?: string;
   trip_title?: string;
@@ -53,9 +55,11 @@ export default function HistoryPage() {
   }
 
   function viewTrip(trip: TripHistoryItem) {
-    localStorage.setItem("latest_trip", JSON.stringify(trip));
+    const enriched = ensureTripItinerary({ ...trip });
+    localStorage.setItem("latest_trip", JSON.stringify(enriched));
+    localStorage.setItem("tripgenius_generated_trip", JSON.stringify(enriched));
 
-    router.push(`/trip/${trip.id ?? "generated"}`);
+    router.push(`/trip/generated`);
   }
 
   if (loading) {

@@ -18,11 +18,18 @@ import {
   Sparkles,
   Eye,
   Plus,
+  CheckSquare,
+  Square,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Button from "../../../components/ui/Button";
 import Badge from "../../../components/ui/Badge";
 import { GlassCard, SectionHeader } from "../../../components/ui/Card";
 import tripService from "../../../services/trip.service";
+import {
+  ensureTripItinerary,
+  getDestinationImage,
+} from "../../../utils/itineraryHelper";
 
 interface SavedTrip {
   id?: string;
@@ -41,6 +48,14 @@ interface SavedTrip {
   is_favorite?: boolean;
   sustainability_score?: number;
   status?: string;
+  ai_itinerary?: any;
+  attractions?: string[];
+  recommended_hotels?: string[];
+  recommended_restaurants?: string[];
+  local_cuisines?: string[];
+  weather_summary?: any;
+  packing_checklist?: string[];
+  travel_tips?: string[];
 }
 
 const DESTINATION_IMAGES: Record<string, string> = {
@@ -68,44 +83,63 @@ export default function TripHistoryPage() {
   const [loading, setLoading] = useState(true);
   const [trips, setTrips] = useState<SavedTrip[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterStyle, setFilterStyle] = useState("All");
   const [sortBy, setSortBy] = useState("Newest");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     async function loadHistory() {
       const token = localStorage.getItem("tripgenius_token");
+      let backendList: SavedTrip[] = [];
       if (token) {
         try {
           const data = await tripService.getHistory();
-          if (data && data.trips) {
-            const backendTrips: SavedTrip[] = data.trips.map(
-              (t: SavedTrip) => ({
-                ...t,
-                saved_at: t.created_at,
-              }),
-            );
-            setTrips(backendTrips);
+          if (data && data.trips && data.trips.length > 0) {
+            backendList = data.trips.map((t: SavedTrip) => ({
+              ...t,
+              saved_at: t.created_at,
+            }));
           }
         } catch {
-          loadFromLocalStorage();
+          // ignore backend failure, fallback to localStorage
         }
-      } else {
-        loadFromLocalStorage();
+      }
+
+      // Merge with localStorage sources of truth so morning/afternoon/evening plans are never lost
+      try {
+        const localSaved: SavedTrip[] = JSON.parse(
+          localStorage.getItem("saved_trips") ||
+            localStorage.getItem("tripgenius_saved_trips") ||
+            "[]"
+        );
+        if (backendList.length === 0) {
+          setTrips(localSaved.map((t) => ensureTripItinerary(t)));
+        } else {
+          const merged = backendList.map((bt) => {
+            const localMatch = localSaved.find(
+              (lt) =>
+                lt.id === bt.id ||
+                (lt.destination?.toLowerCase() === bt.destination.toLowerCase() &&
+                  lt.duration_days === bt.duration_days)
+            );
+            const base = localMatch ? { ...localMatch, ...bt } : { ...bt };
+            if (
+              Array.isArray(localMatch?.ai_itinerary) &&
+              localMatch.ai_itinerary.length > 0 &&
+              (!Array.isArray(bt?.ai_itinerary) || bt.ai_itinerary.length === 0)
+            ) {
+              base.ai_itinerary = localMatch.ai_itinerary;
+            }
+            return ensureTripItinerary(base);
+          });
+          setTrips(merged);
+        }
+      } catch {
+        setTrips(backendList.map((t) => ensureTripItinerary(t)));
       }
       setLoading(false);
     }
-
-    const loadFromLocalStorage = () => {
-      try {
-        const stored = localStorage.getItem("saved_trips");
-        if (stored) {
-          setTrips(JSON.parse(stored));
-        }
-      } catch {
-        // ignore
-      }
-    };
 
     loadHistory();
   }, []);
@@ -129,10 +163,58 @@ export default function TripHistoryPage() {
     );
     setTrips(updated);
     localStorage.setItem("saved_trips", JSON.stringify(updated));
+    localStorage.setItem("trip_history", JSON.stringify(updated));
+    toast.success("Trip removed from archive");
   };
 
-  const handleOpenTrip = (trip: SavedTrip) => {
-    localStorage.setItem("latest_trip", JSON.stringify(trip));
+  const handleOpenTrip = async (trip: SavedTrip) => {
+    let fullTrip: any = { ...trip };
+
+    // Check localStorage (saved_trips & tripgenius_saved_trips) for rich DayPlan morning/afternoon/evening schedule
+    try {
+      const localProfiles = JSON.parse(
+        localStorage.getItem("tripgenius_saved_trips") || "[]"
+      );
+      const localHistory = JSON.parse(
+        localStorage.getItem("saved_trips") || "[]"
+      );
+      const combined = [...localProfiles, ...localHistory];
+      const match = combined.find(
+        (t: any) =>
+          (trip.id && t.id === trip.id) ||
+          (t.destination?.toLowerCase() === trip.destination.toLowerCase() &&
+            t.duration_days === trip.duration_days &&
+            Array.isArray(t.ai_itinerary) &&
+            t.ai_itinerary.length > 0)
+      );
+      if (match && Array.isArray(match.ai_itinerary) && match.ai_itinerary.length > 0) {
+        fullTrip = { ...match, ...trip, ai_itinerary: match.ai_itinerary };
+      }
+    } catch {}
+
+    // If ai_itinerary is still not populated and trip has a backend ID, fetch complete record
+    if (
+      (!fullTrip.ai_itinerary ||
+        (Array.isArray(fullTrip.ai_itinerary) &&
+          fullTrip.ai_itinerary.length === 0)) &&
+      trip.id &&
+      !trip.id.startsWith("tg-")
+    ) {
+      try {
+        const backendRecord = await tripService.getTrip(trip.id);
+        if (backendRecord && backendRecord.ai_itinerary) {
+          fullTrip = { ...fullTrip, ...backendRecord };
+        }
+      } catch (err) {
+        console.warn("Could not fetch full trip details:", err);
+      }
+    }
+
+    // Guarantee full Morning, Afternoon, Evening, and Key Stops itinerary is present
+    fullTrip = ensureTripItinerary(fullTrip);
+
+    localStorage.setItem("latest_trip", JSON.stringify(fullTrip));
+    localStorage.setItem("tripgenius_generated_trip", JSON.stringify(fullTrip));
     router.push("/trip/generated");
   };
 
@@ -144,10 +226,7 @@ export default function TripHistoryPage() {
             .toLowerCase()
             .includes(searchQuery.toLowerCase()) ||
           t.destination.toLowerCase().includes(searchQuery.toLowerCase());
-        const matchStyle =
-          filterStyle === "All" ||
-          (t.travel_style || "").toLowerCase() === filterStyle.toLowerCase();
-        return matchQuery && matchStyle;
+        return matchQuery;
       })
       .sort((a, b) => {
         if (sortBy === "Budget High") return (b.budget || 0) - (a.budget || 0);
@@ -159,13 +238,107 @@ export default function TripHistoryPage() {
           new Date(a.created_at || a.saved_at || 0).getTime()
         );
       });
-  }, [trips, searchQuery, filterStyle, sortBy]);
+  }, [trips, searchQuery, sortBy]);
+
+  const getTripKey = (trip: SavedTrip, idx: number) =>
+    trip.id || `trip-${idx}-${trip.destination}-${trip.created_at || ""}`;
+
+  const isAllSelected =
+    filteredTrips.length > 0 &&
+    filteredTrips.every((t, i) => selectedIds.includes(getTripKey(t, i)));
+
+  const handleToggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(filteredTrips.map((t, i) => getTripKey(t, i)));
+    }
+  };
+
+  const handleToggleSelect = (key: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(key) ? prev.filter((id) => id !== key) : [...prev, key]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const count = selectedIds.length;
+    const isAll = count === trips.length;
+    const confirmMsg = isAll
+      ? `Are you sure you want to delete ALL ${count} trips from your archive? This cannot be undone.`
+      : `Are you sure you want to delete ${count} selected trip(s) from your archive?`;
+
+    if (!confirm(confirmMsg)) return;
+
+    setIsDeleting(true);
+    try {
+      if (isAll) {
+        try {
+          await tripService.deleteAllTrips();
+        } catch {
+          // ignore
+        }
+        setTrips([]);
+        setSelectedIds([]);
+        localStorage.removeItem("saved_trips");
+        localStorage.removeItem("trip_history");
+        toast.success(`All ${count} trips deleted from archive!`);
+      } else {
+        const backendIds = trips
+          .filter((t, i) => selectedIds.includes(getTripKey(t, i)) && t.id)
+          .map((t) => t.id as string);
+
+        if (backendIds.length > 0) {
+          try {
+            await tripService.bulkDeleteTrips(backendIds);
+          } catch {
+            await Promise.allSettled(
+              backendIds.map((id) => tripService.deleteTrip(id))
+            );
+          }
+        }
+
+        const remaining = trips.filter(
+          (t, i) => !selectedIds.includes(getTripKey(t, i))
+        );
+        setTrips(remaining);
+        setSelectedIds([]);
+        localStorage.setItem("saved_trips", JSON.stringify(remaining));
+        localStorage.setItem("trip_history", JSON.stringify(remaining));
+        toast.success(`${count} trip(s) deleted successfully!`);
+      }
+    } catch {
+      toast.error("Failed to delete selected trips. Please try again.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div
       className="page-container"
-      style={{ display: "flex", flexDirection: "column", gap: "32px" }}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "32px",
+        position: "relative",
+      }}
     >
+      {/* AMBIENT GLOW BACKDROP */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "fixed",
+          inset: 0,
+          pointerEvents: "none",
+          zIndex: 0,
+          background:
+            "radial-gradient(ellipse 80% 50% at 20% -10%, rgba(14, 165, 233, 0.16), transparent 70%), " +
+            "radial-gradient(ellipse 60% 40% at 85% 25%, rgba(20, 184, 166, 0.13), transparent 60%), " +
+            "radial-gradient(ellipse 80% 60% at 50% 100%, rgba(14, 165, 233, 0.10), transparent 70%)",
+        }}
+      />
       {/* HEADER */}
       <div
         style={{
@@ -207,7 +380,7 @@ export default function TripHistoryPage() {
         </Link>
       </div>
 
-      {/* CONTROLS BAR: SEARCH, FILTERS, SORT, VIEW */}
+      {/* CONTROLS BAR: SELECT ALL, DELETE, SEARCH, FILTERS, SORT, VIEW */}
       <GlassCard style={{ padding: "16px 20px" }}>
         <div
           style={{
@@ -218,37 +391,129 @@ export default function TripHistoryPage() {
             gap: "16px",
           }}
         >
-          {/* SEARCH */}
+          {/* LEFT CONTROLS: SELECT ALL + DELETE BUTTON + SEARCH */}
           <div
             style={{
-              position: "relative",
-              minWidth: "260px",
+              display: "flex",
+              alignItems: "center",
+              gap: "14px",
               flex: 1,
-              maxWidth: "420px",
+              flexWrap: "wrap",
+              minWidth: "280px",
             }}
           >
-            <Search
-              size={16}
-              color="#94A3B8"
+            {/* SELECT ALL & DELETE OPTION (MATCHING USER'S SKETCH) */}
+            <div
               style={{
-                position: "absolute",
-                left: "14px",
-                top: "50%",
-                transform: "translateY(-50%)",
-              }}
-            />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search by destination or title..."
-              className="input-base"
-              style={{
-                paddingLeft: "40px",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "10px",
                 paddingRight: "14px",
-                height: "42px",
+                borderRight: "1px solid rgba(255, 255, 255, 0.12)",
               }}
-            />
+            >
+              <label
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  cursor: "pointer",
+                  userSelect: "none",
+                  fontSize: "0.88rem",
+                  fontWeight: 600,
+                  color: isAllSelected ? "#38BDF8" : "#94A3B8",
+                }}
+                title={isAllSelected ? "Deselect All" : "Select All"}
+              >
+                <input
+                  type="checkbox"
+                  checked={isAllSelected}
+                  onChange={handleToggleSelectAll}
+                  style={{
+                    width: "18px",
+                    height: "18px",
+                    cursor: "pointer",
+                    accentColor: "#0EA5E9",
+                    borderRadius: "4px",
+                  }}
+                />
+                <span>Select All</span>
+              </label>
+
+              <button
+                type="button"
+                onClick={handleBulkDelete}
+                disabled={selectedIds.length === 0 || isDeleting}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "8px 14px",
+                  borderRadius: "10px",
+                  fontSize: "0.85rem",
+                  fontWeight: 700,
+                  background:
+                    selectedIds.length > 0
+                      ? "rgba(239, 68, 68, 0.22)"
+                      : "rgba(255, 255, 255, 0.04)",
+                  border:
+                    selectedIds.length > 0
+                      ? "1px solid rgba(239, 68, 68, 0.55)"
+                      : "1px solid rgba(255, 255, 255, 0.08)",
+                  color: selectedIds.length > 0 ? "#FCA5A5" : "#64748B",
+                  cursor:
+                    selectedIds.length > 0 && !isDeleting
+                      ? "pointer"
+                      : "not-allowed",
+                  transition: "all 0.15s ease",
+                }}
+                title={
+                  selectedIds.length > 0
+                    ? `Delete ${selectedIds.length} selected trip(s)`
+                    : "Select trips to delete"
+                }
+              >
+                <Trash2 size={15} />
+                <span>
+                  {isDeleting
+                    ? "Deleting..."
+                    : `Delete${selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}`}
+                </span>
+              </button>
+            </div>
+
+            {/* SEARCH */}
+            <div
+              style={{
+                position: "relative",
+                minWidth: "220px",
+                flex: 1,
+                maxWidth: "380px",
+              }}
+            >
+              <Search
+                size={16}
+                color="#94A3B8"
+                style={{
+                  position: "absolute",
+                  left: "14px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                }}
+              />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by destination or title..."
+                className="input-base"
+                style={{
+                  paddingLeft: "40px",
+                  paddingRight: "14px",
+                  height: "42px",
+                }}
+              />
+            </div>
           </div>
 
           <div
@@ -259,28 +524,7 @@ export default function TripHistoryPage() {
               flexWrap: "wrap",
             }}
           >
-            {/* STYLE FILTER */}
-            <select
-              value={filterStyle}
-              onChange={(e) => setFilterStyle(e.target.value)}
-              style={{
-                padding: "10px 14px",
-                borderRadius: "10px",
-                background: "rgba(15, 23, 42, 0.85)",
-                border: "1px solid rgba(255, 255, 255, 0.12)",
-                color: "#F8FAFC",
-                fontSize: "0.88rem",
-                outline: "none",
-                cursor: "pointer",
-              }}
-            >
-              <option value="All">All Travel Styles</option>
-              <option value="Leisure">Leisure</option>
-              <option value="Adventure">Adventure</option>
-              <option value="Eco-Friendly">Eco-Friendly</option>
-              <option value="Cultural">Cultural</option>
-              <option value="Romantic">Romantic</option>
-            </select>
+
 
             {/* SORT BY */}
             <select
@@ -366,9 +610,7 @@ export default function TripHistoryPage() {
             }}
           >
             {filteredTrips.map((trip, idx) => {
-              const img =
-                DESTINATION_IMAGES[trip.destination] ||
-                "/destinations/munnar.jpg";
+              const img = getDestinationImage(trip.destination);
               return (
                 <div
                   key={trip.id || idx}
@@ -403,6 +645,35 @@ export default function TripHistoryPage() {
                           "linear-gradient(to top, rgba(3, 7, 18, 0.9) 0%, transparent 60%)",
                       }}
                     />
+                    {/* CARD SELECT CHECKBOX */}
+                    <div
+                      style={{
+                        position: "absolute",
+                        top: "12px",
+                        left: "12px",
+                        zIndex: 10,
+                        background: "rgba(15, 23, 42, 0.75)",
+                        borderRadius: "6px",
+                        padding: "4px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.includes(getTripKey(trip, idx))}
+                        onChange={() => handleToggleSelect(getTripKey(trip, idx))}
+                        style={{
+                          width: "18px",
+                          height: "18px",
+                          cursor: "pointer",
+                          accentColor: "#0EA5E9",
+                          borderRadius: "4px",
+                        }}
+                      />
+                    </div>
                     <div
                       style={{
                         position: "absolute",
@@ -532,6 +803,20 @@ export default function TripHistoryPage() {
                     color: "#94A3B8",
                   }}
                 >
+                  <th style={{ padding: "14px 16px", width: "44px" }}>
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={handleToggleSelectAll}
+                      style={{
+                        width: "17px",
+                        height: "17px",
+                        cursor: "pointer",
+                        accentColor: "#0EA5E9",
+                      }}
+                      title={isAllSelected ? "Deselect All" : "Select All"}
+                    />
+                  </th>
                   <th style={{ padding: "14px 16px" }}>Trip Title</th>
                   <th style={{ padding: "14px 16px" }}>Destination</th>
                   <th style={{ padding: "14px 16px" }}>Duration</th>
@@ -543,64 +828,88 @@ export default function TripHistoryPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredTrips.map((trip, idx) => (
-                  <tr
-                    key={trip.id || idx}
-                    style={{
-                      borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
-                      cursor: "pointer",
-                      transition: "background 0.2s",
-                    }}
-                    onClick={() => handleOpenTrip(trip)}
-                  >
-                    <td
+                {filteredTrips.map((trip, idx) => {
+                  const tripKey = getTripKey(trip, idx);
+                  const isSelected = selectedIds.includes(tripKey);
+                  return (
+                    <tr
+                      key={tripKey}
                       style={{
-                        padding: "14px 16px",
-                        fontWeight: 700,
-                        color: "#FFFFFF",
+                        borderBottom: "1px solid rgba(255, 255, 255, 0.05)",
+                        background: isSelected
+                          ? "rgba(14, 165, 233, 0.09)"
+                          : "transparent",
+                        cursor: "pointer",
+                        transition: "background 0.2s",
                       }}
+                      onClick={() => handleOpenTrip(trip)}
                     >
-                      {trip.trip_title || `${trip.destination} Expedition`}
-                    </td>
-                    <td style={{ padding: "14px 16px", color: "#CBD5E1" }}>
-                      {trip.destination}
-                    </td>
-                    <td style={{ padding: "14px 16px", color: "#CBD5E1" }}>
-                      {trip.duration_days} Days
-                    </td>
-                    <td
-                      style={{
-                        padding: "14px 16px",
-                        color: "#34D399",
-                        fontWeight: 600,
-                      }}
-                    >
-                      ₹{trip.budget.toLocaleString()}
-                    </td>
-                    <td style={{ padding: "14px 16px" }}>
-                      <Badge variant="eco" size="sm">
-                        {trip.sustainability_score ?? 80}/100
-                      </Badge>
-                    </td>
-                    <td style={{ padding: "14px 16px", textAlign: "right" }}>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDelete(trip.id, idx);
-                        }}
+                      <td
+                        style={{ padding: "14px 16px", width: "44px" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => handleToggleSelect(tripKey)}
+                          style={{
+                            width: "17px",
+                            height: "17px",
+                            cursor: "pointer",
+                            accentColor: "#0EA5E9",
+                          }}
+                        />
+                      </td>
+                      <td
                         style={{
-                          background: "transparent",
-                          border: "none",
-                          color: "#F87171",
-                          cursor: "pointer",
+                          padding: "14px 16px",
+                          fontWeight: 700,
+                          color: "#FFFFFF",
                         }}
                       >
-                        <Trash2 size={16} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                        {trip.trip_title || `${trip.destination} Expedition`}
+                      </td>
+                      <td style={{ padding: "14px 16px", color: "#CBD5E1" }}>
+                        {trip.destination}
+                      </td>
+                      <td style={{ padding: "14px 16px", color: "#CBD5E1" }}>
+                        {trip.duration_days} Days
+                      </td>
+                      <td
+                        style={{
+                          padding: "14px 16px",
+                          color: "#34D399",
+                          fontWeight: 600,
+                        }}
+                      >
+                        ₹{trip.budget.toLocaleString()}
+                      </td>
+                      <td style={{ padding: "14px 16px" }}>
+                        <Badge variant="eco" size="sm">
+                          {trip.sustainability_score ?? 80}/100
+                        </Badge>
+                      </td>
+                      <td style={{ padding: "14px 16px", textAlign: "right" }}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(trip.id, idx);
+                          }}
+                          title="Delete trip"
+                          style={{
+                            background: "transparent",
+                            border: "none",
+                            color: "#F87171",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </GlassCard>

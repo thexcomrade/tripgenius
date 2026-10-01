@@ -364,13 +364,13 @@ export default function ExplorePage() {
             <h1
               style={{
                 fontSize: "clamp(2rem, 4vw, 3.2rem)",
-                fontWeight: 900,
+                fontWeight: 650,
                 color: "#FFFFFF",
-                letterSpacing: "-1px",
+                letterSpacing: "-0.03em",
                 marginBottom: "8px",
               }}
             >
-              {spotlight.name} • {spotlight.location}
+              {spotlight.name} <span style={{ opacity: 0.6, fontWeight: 400 }}>•</span> {spotlight.location}
             </h1>
             <p
               style={{
@@ -431,7 +431,7 @@ export default function ExplorePage() {
         >
           <div>
             <h2
-              style={{ fontSize: "1.8rem", fontWeight: 800, color: "#FFFFFF" }}
+              style={{ fontSize: "1.75rem", fontWeight: 600, color: "#FFFFFF", letterSpacing: "-0.025em" }}
             >
               Explore Sanctuaries ({filteredDestinations.length})
             </h2>
@@ -615,8 +615,9 @@ export default function ExplorePage() {
                       <div>
                         <h3
                           style={{
-                            fontSize: "1.4rem",
-                            fontWeight: 800,
+                            fontSize: "1.3rem",
+                            fontWeight: 600,
+                            letterSpacing: "-0.02em",
                             color: "#FFFFFF",
                           }}
                         >

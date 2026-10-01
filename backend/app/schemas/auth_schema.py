@@ -57,6 +57,14 @@ class ChangePasswordRequest(BaseModel):
 
     new_password: str = Field(min_length=8, max_length=128)
 
+    verification_code: str = Field(min_length=6, max_length=6)
+
+
+class SendPasswordOtpResponse(BaseModel):
+    message: str
+
+    email: str
+
 
 class EmailVerificationRequest(BaseModel):
     token: str

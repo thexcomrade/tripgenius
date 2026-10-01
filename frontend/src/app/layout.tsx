@@ -11,7 +11,7 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "TripGenius — AI-Powered Sustainable Travel Intelligence",
+  title: "Trip Geni — AI-Powered Sustainable Travel Intelligence",
   description:
     "Next-generation travel platform generating personalized, eco-conscious, data-backed travel itineraries.",
   keywords: [
@@ -22,7 +22,7 @@ export const metadata: Metadata = {
     "eco travel score",
     "personalized vacation",
   ],
-  authors: [{ name: "TripGenius" }],
+  authors: [{ name: "Trip Geni" }],
 };
 
 export default function RootLayout({
@@ -32,6 +32,18 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body>
         <Toaster
           position="top-right"

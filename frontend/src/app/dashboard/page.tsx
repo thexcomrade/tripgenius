@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -23,6 +23,9 @@ import {
   Settings,
   History,
   ChevronRight,
+  ChevronDown,
+  Search,
+  X,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -122,7 +125,66 @@ const CITY_WEATHER_PROFILES: Record<string, {
     wind_speed: 10,
     travel_recommendation: "Perfect for spice plantation visits and waterfall viewpoints.",
   },
+  manali: {
+    city: "Manali (Himachal Pradesh)",
+    temperature: 14,
+    condition: "Crisp Himalayan Air",
+    description: "Cool pine-scented mountain air with snow-capped Pir Panjal views",
+    humidity: 55,
+    wind_speed: 8,
+    travel_recommendation: "Ideal for Solang Valley adventure, Rohtang snow points, and Old Manali cafes.",
+  },
+  delhi: {
+    city: "New Delhi & NCR",
+    temperature: 28,
+    condition: "Clear Skies & Sunny",
+    description: "Dry and sunny weather across historic monuments and wide boulevards",
+    humidity: 48,
+    wind_speed: 11,
+    travel_recommendation: "Perfect for India Gate, Humayun's Tomb, and evening food walks in Chandni Chowk.",
+  },
+  bangalore: {
+    city: "Bengaluru (Garden City)",
+    temperature: 24,
+    condition: "Pleasant & Overcast",
+    description: "Comfortable highland plateau breeze across Cubbon Park and Indiranagar",
+    humidity: 62,
+    wind_speed: 12,
+    travel_recommendation: "Fabulous weather for cafe-hopping, garden strolls, and craft breweries.",
+  },
+  jaipur: {
+    city: "Jaipur (Pink City)",
+    temperature: 31,
+    condition: "Warm & Sunlit",
+    description: "Bright sunny desert climate illuminating Amber Fort and Hawa Mahal",
+    humidity: 42,
+    wind_speed: 10,
+    travel_recommendation: "Great for palace explorations and heritage bazaars; keep hydrated in afternoon.",
+  },
+  paris: {
+    city: "Paris (France)",
+    temperature: 17,
+    condition: "Mild European Breeze",
+    description: "Gentle cool breeze along the Seine and historic Parisian avenues",
+    humidity: 64,
+    wind_speed: 14,
+    travel_recommendation: "Charming weather for museum hopping, river cruises, and open-air bistros.",
+  },
 };
+
+const POPULAR_WEATHER_CITIES = [
+  { name: "Trivandrum", label: "Trivandrum (Home)" },
+  { name: "Ooty", label: "Ooty" },
+  { name: "Munnar", label: "Munnar" },
+  { name: "Varkala", label: "Varkala" },
+  { name: "Kochi", label: "Kochi" },
+  { name: "Wayanad", label: "Wayanad" },
+  { name: "Goa", label: "Goa" },
+  { name: "Manali", label: "Manali" },
+  { name: "Delhi", label: "Delhi" },
+  { name: "Bangalore", label: "Bangalore" },
+  { name: "Jaipur", label: "Jaipur" },
+];
 
 function getCityWeatherProfile(city: string) {
   const key = (city || "").toLowerCase().trim();
@@ -131,14 +193,15 @@ function getCityWeatherProfile(city: string) {
       return prof;
     }
   }
+  const formatted = city.trim().charAt(0).toUpperCase() + city.trim().slice(1);
   return {
-    city: city.trim(),
+    city: formatted,
     temperature: 26,
-    condition: "Pleasant",
-    description: `Comfortable travel climate across ${city}`,
+    condition: "Pleasant & Clear",
+    description: `Comfortable travel climate and calm winds across ${formatted}`,
     humidity: 68,
     wind_speed: 12,
-    travel_recommendation: "Favorable conditions for exploring local landmarks.",
+    travel_recommendation: `Favorable conditions for exploring local landmarks and outdoor activities in ${formatted}.`,
   };
 }
 
@@ -177,10 +240,35 @@ export default function DashboardPage() {
     travel_recommendation: "Great conditions for coastal exploration and sunset photography.",
   });
 
+  const [isCityPickerOpen, setIsCityPickerOpen] = useState(false);
+  const [citySearchQuery, setCitySearchQuery] = useState("");
+  const cityPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        cityPickerRef.current &&
+        !cityPickerRef.current.contains(event.target as Node)
+      ) {
+        setIsCityPickerOpen(false);
+      }
+    }
+    if (isCityPickerOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isCityPickerOpen]);
+
   const switchCityWeather = (city: string) => {
-    setWeatherCity(city);
-    const profile = getCityWeatherProfile(city);
+    const trimmed = city.trim();
+    if (!trimmed) return;
+    setWeatherCity(trimmed);
+    const profile = getCityWeatherProfile(trimmed);
     setWeatherData(profile);
+    setIsCityPickerOpen(false);
+    setCitySearchQuery("");
   };
 
   useEffect(() => {
@@ -728,57 +816,259 @@ export default function DashboardPage() {
               </Badge>
             </div>
 
-            {/* QUICK CITY SWITCHER TABS */}
+            {/* LOCATION SELECTOR: ACTIVE CITY & OTHER BUTTON */}
             <div
+              ref={cityPickerRef}
               style={{
-                display: "flex",
-                gap: "6px",
+                position: "relative",
+                display: "inline-block",
                 marginBottom: "16px",
-                overflowX: "auto",
-                paddingBottom: "4px",
               }}
             >
-              {[
-                ...(userCity && !["trivandrum", "thiruvananthapuram"].includes(userCity.toLowerCase())
-                  ? [{ label: `📍 ${userCity} (Home)`, city: userCity }]
-                  : []),
-                { label: "Trivandrum", city: "Thiruvananthapuram" },
-                { label: "Munnar", city: "Munnar" },
-                { label: "Varkala", city: "Varkala" },
-                { label: "Goa", city: "Goa" },
-                { label: "Kochi", city: "Kochi" },
-                { label: "Ooty", city: "Ooty" },
-                { label: "Wayanad", city: "Wayanad" },
-              ].map((loc) => {
-                const isActive =
-                  weatherCity.toLowerCase() === loc.city.toLowerCase() ||
-                  weatherCity.toLowerCase() === loc.label.toLowerCase();
-                return (
-                  <button
-                    key={loc.label}
-                    type="button"
-                    onClick={() => switchCityWeather(loc.city)}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {/* ACTIVE CHOSEN LOCATION PILL */}
+                <button
+                  type="button"
+                  onClick={() => setIsCityPickerOpen(!isCityPickerOpen)}
+                  style={{
+                    background: "rgba(14, 165, 233, 0.22)",
+                    border: "1px solid rgba(14, 165, 233, 0.55)",
+                    borderRadius: "8px",
+                    padding: "5px 12px",
+                    color: "#38BDF8",
+                    fontSize: "0.82rem",
+                    fontWeight: 700,
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    boxShadow: "0 0 14px rgba(14, 165, 233, 0.22)",
+                    cursor: "pointer",
+                  }}
+                  title="Click to change location"
+                >
+                  <MapPin size={13} color="#38BDF8" />
+                  <span>
+                    {weatherCity.toLowerCase() === "thiruvananthapuram"
+                      ? "Trivandrum"
+                      : weatherCity.charAt(0).toUpperCase() + weatherCity.slice(1)}
+                  </span>
+                </button>
+
+                {/* OTHER / CHOOSE LOCATION BUTTON */}
+                <button
+                  type="button"
+                  onClick={() => setIsCityPickerOpen(!isCityPickerOpen)}
+                  style={{
+                    background: isCityPickerOpen
+                      ? "rgba(255, 255, 255, 0.12)"
+                      : "rgba(255, 255, 255, 0.05)",
+                    border: isCityPickerOpen
+                      ? "1px solid rgba(56, 189, 248, 0.50)"
+                      : "1px solid rgba(255, 255, 255, 0.10)",
+                    borderRadius: "8px",
+                    padding: "5px 12px",
+                    color: isCityPickerOpen ? "#F8FAFC" : "#94A3B8",
+                    fontSize: "0.80rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "6px",
+                    transition: "all 0.18s ease",
+                  }}
+                >
+                  <span>Other</span>
+                  <ChevronDown
+                    size={13}
                     style={{
-                      background: isActive
-                        ? "rgba(14, 165, 233, 0.25)"
-                        : "rgba(255, 255, 255, 0.05)",
-                      border: isActive
-                        ? "1px solid rgba(14, 165, 233, 0.50)"
-                        : "1px solid rgba(255, 255, 255, 0.08)",
-                      borderRadius: "8px",
-                      padding: "4px 10px",
-                      color: isActive ? "#38BDF8" : "#94A3B8",
-                      fontSize: "0.78rem",
-                      fontWeight: isActive ? 700 : 500,
-                      cursor: "pointer",
-                      whiteSpace: "nowrap",
-                      transition: "all 0.15s ease",
+                      transform: isCityPickerOpen ? "rotate(180deg)" : "none",
+                      transition: "transform 0.2s ease",
+                    }}
+                  />
+                </button>
+              </div>
+
+              {/* POPUP: CHOOSE OR SEARCH LOCATION */}
+              {isCityPickerOpen && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: "calc(100% + 8px)",
+                    left: 0,
+                    zIndex: 60,
+                    width: "320px",
+                    background: "rgba(15, 23, 42, 0.97)",
+                    backdropFilter: "blur(24px)",
+                    WebkitBackdropFilter: "blur(24px)",
+                    border: "1px solid rgba(56, 189, 248, 0.35)",
+                    borderRadius: "14px",
+                    boxShadow:
+                      "0 18px 48px rgba(0, 0, 0, 0.60), 0 0 20px rgba(14, 165, 233, 0.20)",
+                    padding: "16px",
+                  }}
+                >
+                  {/* Header */}
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: "12px",
                     }}
                   >
-                    {loc.label}
-                  </button>
-                );
-              })}
+                    <span
+                      style={{
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                        color: "#E2E8F0",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.05em",
+                      }}
+                    >
+                      Choose Destination
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setIsCityPickerOpen(false)}
+                      style={{
+                        background: "transparent",
+                        border: "none",
+                        color: "#94A3B8",
+                        cursor: "pointer",
+                        padding: "2px",
+                        display: "flex",
+                        alignItems: "center",
+                      }}
+                    >
+                      <X size={15} />
+                    </button>
+                  </div>
+
+                  {/* Search / Custom City Input */}
+                  <form
+                    onSubmit={(e) => {
+                      e.preventDefault();
+                      if (citySearchQuery.trim()) {
+                        switchCityWeather(citySearchQuery.trim());
+                      }
+                    }}
+                    style={{
+                      display: "flex",
+                      gap: "6px",
+                      marginBottom: "14px",
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        flex: 1,
+                        background: "rgba(255, 255, 255, 0.06)",
+                        border: "1px solid rgba(255, 255, 255, 0.12)",
+                        borderRadius: "8px",
+                        padding: "6px 10px",
+                      }}
+                    >
+                      <Search size={13} color="#94A3B8" />
+                      <input
+                        type="text"
+                        value={citySearchQuery}
+                        onChange={(e) => setCitySearchQuery(e.target.value)}
+                        placeholder="Type any city (e.g. Ooty)..."
+                        autoFocus
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          outline: "none",
+                          color: "#FFFFFF",
+                          fontSize: "0.80rem",
+                          width: "100%",
+                        }}
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={!citySearchQuery.trim()}
+                      style={{
+                        background: citySearchQuery.trim()
+                          ? "linear-gradient(135deg, #0EA5E9, #2563EB)"
+                          : "rgba(255, 255, 255, 0.08)",
+                        color: citySearchQuery.trim() ? "#FFFFFF" : "#64748B",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "0 12px",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: citySearchQuery.trim() ? "pointer" : "default",
+                      }}
+                    >
+                      Set
+                    </button>
+                  </form>
+
+                  {/* Quick Pick Destinations */}
+                  <div>
+                    <div
+                      style={{
+                        fontSize: "0.70rem",
+                        color: "#94A3B8",
+                        marginBottom: "8px",
+                        fontWeight: 600,
+                      }}
+                    >
+                      POPULAR DESTINATIONS
+                    </div>
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: "6px",
+                        maxHeight: "150px",
+                        overflowY: "auto",
+                      }}
+                    >
+                      {POPULAR_WEATHER_CITIES.map((c) => {
+                        const isCurrent =
+                          weatherCity.toLowerCase().trim() === c.name.toLowerCase().trim() ||
+                          (c.name.toLowerCase() === "trivandrum" &&
+                            weatherCity.toLowerCase().trim() === "thiruvananthapuram");
+                        return (
+                          <button
+                            key={c.name}
+                            type="button"
+                            onClick={() => switchCityWeather(c.name)}
+                            style={{
+                              background: isCurrent
+                                ? "rgba(14, 165, 233, 0.3)"
+                                : "rgba(255, 255, 255, 0.05)",
+                              border: isCurrent
+                                ? "1px solid rgba(14, 165, 233, 0.6)"
+                                : "1px solid rgba(255, 255, 255, 0.08)",
+                              borderRadius: "6px",
+                              padding: "4px 9px",
+                              color: isCurrent ? "#38BDF8" : "#CBD5E1",
+                              fontSize: "0.76rem",
+                              fontWeight: isCurrent ? 700 : 500,
+                              cursor: "pointer",
+                              transition: "all 0.15s ease",
+                            }}
+                          >
+                            {c.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             <div
@@ -879,10 +1169,10 @@ export default function DashboardPage() {
                     color: "#FFFFFF",
                   }}
                 >
-                  AI Travel Companion
+                  DASAPPAN
                 </h3>
                 <p style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
-                  Real-time itinerary assistant
+                  AI Travel Companion
                 </p>
               </div>
             </div>
@@ -895,7 +1185,7 @@ export default function DashboardPage() {
               }}
             >
               Have questions about local food trails, hidden spots, or train
-              connections? Ask the TripGenius AI Assistant anytime.
+              connections? Ask DASAPPAN anytime.
             </p>
           </div>
 

@@ -91,7 +91,7 @@ export default function AppNavbar() {
   ];
 
   const moreNav = [
-    { name: "AI Travel Chat", href: "/ai-chat", icon: Bot },
+    { name: "AI Chatbot", href: "/ai-chat", icon: Bot },
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Achievements", href: "/achievements", icon: Award },
   ];
@@ -138,7 +138,7 @@ export default function AppNavbar() {
         >
           <Image
             src="/logo/logo.svg"
-            alt="TripGenius Logo"
+            alt="Trip Geni Logo"
             width={38}
             height={38}
             priority
@@ -151,7 +151,7 @@ export default function AppNavbar() {
               letterSpacing: "-0.5px",
             }}
           >
-            TripGenius
+            Trip Geni
           </span>
         </Link>
 

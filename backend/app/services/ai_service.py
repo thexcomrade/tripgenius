@@ -18,6 +18,7 @@ from app.services.recommendation_service import RecommendationService
 from app.services.verified_travel_data import find_verified_entry
 
 from app.services.budget_learning_service import get_budget_rl_service
+from app.services.tourism_rag_service import get_tourism_rag_service
 
 
 logger = logging.getLogger(__name__)
@@ -67,7 +68,8 @@ class AIService:
 
         self.client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-        self.model_name = "gemini-2.5-flash"
+        self.model_name = "gemini-3-flash-preview"
+        self.fallback_models = ["gemini-3-flash-preview", "gemini-2.5-flash"]
 
     # ==================================================
     # Prompt Templates
@@ -102,7 +104,22 @@ class AIService:
             else "Sightseeing, Local Culture, Scenic Views"
         )
 
-        return f"""You are TripGenius AI, an elite travel architect and real-world expense specialist.
+        # Handle NoStay (day trip) — no hotel budget allocated
+        is_day_trip = (preferred_accommodation or "").lower() in ["nostay", "no stay", "no_stay", "day trip", "day_trip"]
+        is_bike_rental = (transportation_mode or "").lower() in ["bike", "bike rental"]
+
+        stay_line = (
+            "- Preferred Stay: NO OVERNIGHT STAY (Day Trip only — skip hotel recommendations, itinerary is single day)"
+            if is_day_trip
+            else f"- Preferred Stay: {preferred_accommodation or 'Comfort Hotel'}"
+        )
+        transit_note = (
+            "Bike Rental (Scooter ₹400–700/day or Cruiser ₹900–1,500/day — rates vary by locality)"
+            if is_bike_rental
+            else (transportation_mode or "Private Car / Taxi")
+        )
+
+        return f"""You are Trip Geni AI, an elite travel architect and real-world expense specialist.
 Create an inspiring, highly realistic, and accurate real-money travel and expense plan.
 
 DESTINATION & TRAVEL DETAILS:
@@ -110,21 +127,21 @@ DESTINATION & TRAVEL DETAILS:
 - Duration: {duration_days} Days ({nights} Nights)
 - Travelers: {travelers_count} Traveler(s)
 - Travel Style: {travel_style or "Leisure"}
-- Transit Mode: {transportation_mode or "Private Car / Taxi"}
-- Preferred Stay: {preferred_accommodation or "Comfort Hotel"}
+- Transit Mode: {transit_note}
+- {stay_line}
 - Traveler Interests: {interests_str}
 
 REALISTIC EXPENSE ARCHITECTURE (ALL FIGURES IN REAL MARKET INR):
 - Total Allocated Budget: ₹{budget:,.0f} for all {travelers_count} traveler(s) over {duration_days} days.
 - Daily Total Allowance: ~₹{cost['cost_per_day']:,.0f} / day (~₹{cost['cost_per_person_day']:,.0f} / person / day).
-- Stays & Lodging Budget: Total ₹{cost['accommodation_cost']:,.0f} (~₹{acc_per_night:,.0f} / room / night for {nights} nights).
+- Stays & Lodging Budget: {"₹0 (Day Trip — No Hotel)" if is_day_trip else f"Total ₹{cost['accommodation_cost']:,.0f} (~₹{acc_per_night:,.0f} / room / night for {nights} nights)"}.
 - Food & Dining Budget: Total ₹{cost['food_cost']:,.0f} (~₹{food_per_person_day:,.0f} / person / day, ~₹{food_per_meal:,.0f} per main meal / person).
 - Transit & Sightseeing: Total ₹{cost['transportation_cost']:,.0f} (~₹{transit_per_day:,.0f} / day).
 - Activities, Passes & Contingency: Total ₹{cost['miscellaneous_cost']:,.0f} (~₹{activities_per_day:,.0f} / day).
 
 STRICT REAL MONEY EXPENSE & ACCURACY RULES:
 1. GEOGRAPHICALLY ACCURATE LOCAL ATTRACTIONS: In 'attractions', provide genuine, iconic attractions that are located STRICTLY within {destination}. If destination is Varkala, provide real Varkala spots (e.g. Varkala Cliff, Papanasam Beach, Janardhana Swami Temple, Kappil Beach & Backwaters, Sivagiri Mutt). NEVER include spots from distant states or other cities (e.g., do NOT list Hampi or Ooty for Varkala).
-2. REALISTIC HOTEL NAMES & GOOGLE RATINGS: In 'recommended_hotels', provide 3 REAL, authentically existing hotels/resorts in {destination} with their authentic Google star rating matching ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (★ 4.X Google, ~₹X,XXX/night) — key highlight'.
+2. REALISTIC HOTEL NAMES & GOOGLE RATINGS: {"Since this is a DAY TRIP, set 'recommended_hotels' to an empty array [] — no overnight stay." if is_day_trip else f"In 'recommended_hotels', provide 3 REAL, authentically existing hotels/resorts in {destination} with their authentic Google star rating matching ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (★ 4.X Google, ~₹X,XXX/night) — key highlight'."}.
 3. REALISTIC DINING SPOTS & GOOGLE RATINGS: In 'recommended_restaurants', provide 3 REAL, authentically existing restaurants/cafes in {destination} with their authentic Google star rating matching ~₹{food_per_meal:,.0f}/meal. Format each string as: 'Restaurant Name (★ 4.X Google, ~₹XXX/person) — signature dish'.
 4. REALISTIC EXPENSE TAGS IN ITINERARY: In 'ai_itinerary', every morning, afternoon, and evening plan MUST state explicit, realistic costs or entry fees where money is spent (e.g. 'Morning: Visit local landmark [Entry fee ~₹345/person]. Afternoon: Regional lunch [~₹250/meal]. Evening: Sunset beach stroll [Free]'). If an activity has no fee, label it '[Free entry]'.
 5. PROPER CASING & FINANCIAL INTEGRITY: Always use Title Case for destination and all named entities. Daily pacing must stay within total budget ₹{budget:,.0f}.
@@ -1204,66 +1221,126 @@ Return JSON.
             fallback["generation_mode"] = "offline"
             return fallback
 
-    def generate_chat_response(self, user_message: str) -> dict:
+    def generate_chat_response(
+        self,
+        user_message: str,
+        history: Optional[list] = None,
+        user_name: Optional[str] = None,
+    ) -> dict:
         """
-        Generate intelligent, rapid, and crisp conversational response for travel companion.
+        Generate warm, deeply analyzed, structured travel advice as DASAPPAN (RAG Mode).
+        Always grounds recommendations in verified tourism intelligence, greets warmly with
+        'Namaskaram *username*!', covers worldwide destinations, structures replies cleanly,
+        and asks exactly one focused question.
         """
-        prompt = f"""You are TripGenius AI, a fast, friendly, and knowledgeable personal travel assistant.
-Traveler message: "{user_message}"
+        tourism_rag = get_tourism_rag_service()
+        msg_clean = user_message.strip()
+        msg_lower = msg_clean.lower()
+        display_name = (user_name or "").strip()
+        greeting_prefix = (
+            f"Namaskaram {display_name}! 🙏" if display_name else "Namaskaram! 🙏"
+        )
 
-CRITICAL INSTRUCTIONS:
-- Keep your response brief, conversational, and directly helpful (2 to 4 sentences maximum by default).
-- If the user introduces themselves or shares their name, greet them warmly by name first.
-- If they ask about a destination, give 2-3 top highlights and a quick insider tip.
-- Do NOT output large walls of text or full day-by-day itineraries UNLESS the user explicitly asks for a full day-by-day itinerary.
-- Keep tone warm, inspiring, and concise."""
-
-        try:
-            response = self.client.models.generate_content(
-                model=self.model_name, contents=prompt
+        # 1. Pure greeting check: instant return, 0 lag
+        greeting_words = {
+            "hai",
+            "hi",
+            "hello",
+            "hey",
+            "namaskaram",
+            "namaste",
+            "vanakkam",
+            "halo",
+        }
+        tokens = set(re.findall(r"\b\w+\b", msg_lower))
+        if tokens.issubset(greeting_words) or msg_lower in [
+            "hi",
+            "hai",
+            "hello",
+            "hey",
+            "namaskaram",
+            "namaste",
+            "vanakkam",
+            "good morning",
+            "good evening",
+        ]:
+            return tourism_rag.generate_grounded_response(
+                user_message, history, user_name=user_name
             )
-            reply_text = response.text.strip()
-            return {"reply": reply_text, "source": "gemini"}
-        except Exception as err:
-            logger.warning(
-                "Gemini chat error: %s. Using intelligent offline travel knowledge.",
-                err,
-            )
 
-            # Smart concise contextual response based on destination keywords
-            msg_lower = user_message.lower()
-            if "munnar" in msg_lower:
-                reply = (
-                    "🌿 **Munnar** is gorgeous right now! Top highlights are the Kolukkumalai sunrise, Eravikulam National Park, and Mattupetty Dam. "
-                    "Plan for 3 days with a budget around ₹4,000/day, and don't miss freshly brewed cardamom tea and hot appams!"
-                )
-            elif "coorg" in msg_lower:
-                reply = (
-                    "☕ **Coorg (Kodagu)** is perfect for a 3-day getaway! Be sure to visit Abbey Falls, Raja's Seat for sunset, and the Dubare Elephant Camp. "
-                    "Make sure to try authentic Pandi curry or Akki rotis with single-origin Arabica coffee."
-                )
-            elif "ooty" in msg_lower:
-                reply = (
-                    "🚂 **Ooty** offers wonderful crisp mountain air (14°C - 20°C). Don't miss the UNESCO Nilgiri Toy Train, the Botanical Gardens, and Doddabetta Peak. "
-                    "Carry a light jacket and indulge in homemade fudge and tea!"
-                )
-            elif "varkala" in msg_lower:
-                reply = (
-                    "🌊 **Varkala** is pure coastal bliss! Spend your days between the North Cliff sunset cafes, holy Papanasam Beach, and kayaking in Kappil Lake. "
-                    "Grab a fresh seafood thali at Darjeeling Cafe or Cafe del Mar overlooking the Arabian Sea."
-                )
-            elif "goa" in msg_lower:
-                reply = (
-                    "🌴 **Goa** has the perfect mix of relaxation and energy! Explore Aguada Fort, sunset at Vagator, and the historic Latin Quarter of Fontainhas. "
-                    "Try butter garlic crab at Britto's or authentic Goan fish curry rice in Assagao."
-                )
-            else:
-                reply = (
-                    f"✈️ Hello! I'd love to help plan your trip for **{user_message.strip()}**! "
-                    "Tell me your preferred travel style (beach, mountains, culture, or adventure) and how many days you have, and I'll tailor the ideal itinerary for you!"
+        # 2. Retrieve verified RAG facts from local knowledge base
+        rag_context = tourism_rag.retrieve_context_for_query(
+            user_message, history
+        )
+
+        # 3. Format history for context
+        history_formatted = ""
+        if history and isinstance(history, list):
+            recent_turns = history[-5:]
+            history_lines = []
+            for item in recent_turns:
+                r = item.get("role", "user")
+                c = item.get("content", "")
+                speaker = "Traveler" if r == "user" else "DASAPPAN"
+                history_lines.append(f"{speaker}: {c}")
+            if history_lines:
+                history_formatted = (
+                    "Recent Conversation Context:\n"
+                    + "\n".join(history_lines)
+                    + "\n\n"
                 )
 
-            return {"reply": reply, "source": "knowledge_engine"}
+        prompt = f"""You are DASAPPAN, the Next-Gen Travel AI Engine 2.0 on Trip Geni — a world-wise, charismatic, and extraordinarily knowledgeable personal travel companion and concierge.
+You possess deep, authentic intelligence about travel across India (from the ancient ghats of Varanasi, tea hills of Munnar, serene waters of Varkala and Thenkasi, to Himachal and Goa) and worldwide (Paris, Tokyo, Bali, Swiss Alps, New York, and beyond).
+
+{history_formatted}Traveler: "{user_message}"
+
+{rag_context}
+
+MISSION & PRINCIPLES FOR NEXT-GEN TRAVEL AI ENGINE 2.0:
+1. PERSONAL & WARM GREETING:
+   - Greet warmly with "{greeting_prefix}" at the beginning of your conversation or when changing topics.
+   - Speak with the warm, experienced, and enthusiastic persona of Dasappan.
+
+2. FLUID, CONVERSATIONAL & NATURAL INTELLIGENCE (NO RIGID RAG TEMPLATES):
+   - Never force responses into a rigid formula or robotic emoji checklist.
+   - Match the traveler's question with natural, engaging, masterfully organized advice.
+   - If the traveler mentions a destination and duration (e.g. "Varanasi 5 days", "Munnar 3 days", "Paris 4 days"):
+     * Provide a vivid, well-structured Day-by-Day Journey (e.g. Day 1: Arrival & Evening Ganga Aarti, Day 2: Dawn Boat Ride & Ancient Temples, etc.) with specific morning, afternoon, and evening highlights.
+     * Include authentic street food spots, iconic local dishes (e.g. Kachori Gali, Tamatar Chaat, Banarasi Thandai), and hidden gems.
+     * Include realistic budget guidelines in Indian Rupees (₹) for stays, transport, food, and activities.
+     * Offer practical local insider tips (best times to avoid crowds, boat hire rates, cultural etiquette).
+   - If the traveler asks a specific question (e.g. food, budget, best season, packing, transit), provide an insightful, direct, and conversational answer with rich facts and concrete details.
+
+3. PRICING & LOCAL CONTEXT:
+   - Always state all costs, stays, tickets, and travel estimates in Indian Rupees (₹).
+   - Give realistic, up-to-date numbers so the traveler can immediately act on your plan.
+
+4. ENGAGING CLOSING:
+   - Conclude naturally with an insightful recommendation or a friendly question tailored directly to their journey to help refine the plan further."""
+
+        # 4. Attempt Gemini generation with fast timeout; fall back seamlessly to RAG engine on any rate limit or delay
+        for model in self.fallback_models:
+            try:
+                config = {"max_output_tokens": 1800, "temperature": 0.75}
+                response = self.client.models.generate_content(
+                    model=model, contents=prompt, config=config
+                )
+                if response and response.text:
+                    reply_text = response.text.strip()
+                    if not reply_text.startswith("Namaskaram"):
+                        reply_text = f"{greeting_prefix}\n\n{reply_text}"
+                    return {"reply": reply_text, "source": "gemini_2_engine"}
+            except Exception as err:
+                logger.warning(
+                    "Gemini generation attempt with %s failed: %s", model, err
+                )
+                continue
+
+        # 5. High-Precision Offline Travel Engine Fallback
+        return tourism_rag.generate_grounded_response(
+            user_message, history, user_name=user_name
+        )
 
 
 # ==================================================

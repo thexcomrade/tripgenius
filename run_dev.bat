@@ -1,13 +1,13 @@
 @echo off
 echo ==========================================
-echo Starting TripGenius Backend and Frontend...
+echo Starting Trip Geni Backend and Frontend...
 echo ==========================================
 
 REM Start FastAPI Backend
-start "TripGenius Backend (FastAPI)" cmd /k "cd /d %~dp0backend && %~dp0.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+start "Trip Geni Backend (FastAPI)" cmd /k "cd /d %~dp0backend && %~dp0.venv\Scripts\python.exe -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
 
 REM Start Next.js Frontend
-start "TripGenius Frontend (Next.js)" cmd /k "cd /d %~dp0frontend && npm run dev"
+start "Trip Geni Frontend (Next.js)" cmd /k "cd /d %~dp0frontend && npm run dev"
 
 echo.
 echo Both servers have been launched!

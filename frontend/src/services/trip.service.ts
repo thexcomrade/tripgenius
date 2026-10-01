@@ -30,6 +30,25 @@ export interface TripCreateRequest {
   interests: string[];
   transportation_mode?: string;
   preferred_accommodation?: string;
+  ai_itinerary?: any;
+  itinerary_summary?: string;
+  attractions?: any[];
+  recommended_hotels?: any[];
+  recommended_restaurants?: any[];
+  local_cuisines?: string[];
+  beverages_to_try?: string[];
+  weather_summary?: any;
+  weather_alerts?: string[];
+  packing_checklist?: string[];
+  travel_tips?: string[];
+  estimated_trip_cost?: number;
+  accommodation_cost?: number;
+  food_cost?: number;
+  transportation_cost?: number;
+  miscellaneous_cost?: number;
+  sustainability_score?: number;
+  carbon_footprint_estimate?: number;
+  eco_friendly_recommendations?: string[];
 }
 
 export interface TripResponse {
@@ -116,6 +135,26 @@ class TripService {
   async deleteTrip(tripId: string): Promise<void> {
     try {
       await this.api.delete(`/api/trips/${tripId}`);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async bulkDeleteTrips(tripIds: string[]): Promise<any> {
+    try {
+      const response = await this.api.post("/api/trips/bulk-delete", {
+        trip_ids: tripIds,
+      });
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async deleteAllTrips(): Promise<any> {
+    try {
+      const response = await this.api.delete("/api/trips/delete-all");
+      return response.data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -256,7 +295,7 @@ class TripService {
       }
       if (!axiosError.response) {
         return new Error(
-          "Unable to reach the travel service. Please check your connection or ensure the backend is running.",
+          "Could not connect to the Trip Geni server. Please make sure the backend is running (python -m uvicorn app.main:app) and try again.",
         );
       }
 

@@ -11,6 +11,7 @@ coverage of the 5 core sections:
 5. Eco & Sustainability Report
 """
 
+import re
 from io import BytesIO
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,8 @@ from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT, TA_RIGHT
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import inch
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
     HRFlowable,
@@ -33,6 +36,63 @@ from reportlab.platypus import (
     Table,
     TableStyle,
 )
+
+# ----------------------------------------------------
+# UNICODE FONT REGISTRATION (NATIVE RUPEE SYMBOL SUPPORT)
+# ----------------------------------------------------
+MAIN_FONT = "Helvetica"
+MAIN_FONT_BOLD = "Helvetica-Bold"
+HAS_UNICODE_RUPEE = False
+
+
+def _init_pdf_fonts():
+    global MAIN_FONT, MAIN_FONT_BOLD, HAS_UNICODE_RUPEE
+    # TrueType fonts supporting Unicode & Indian Rupee symbol (U+20B9)
+    candidates = [
+        ("SegoeUI", Path("C:/Windows/Fonts/segoeui.ttf"), "SegoeUI-Bold", Path("C:/Windows/Fonts/segoeuib.ttf")),
+        ("NotoSans", Path("C:/Windows/Fonts/NotoSans-Regular.ttf"), "NotoSans-Bold", Path("C:/Windows/Fonts/NotoSans-Bold.ttf")),
+        ("Roboto", Path("C:/Windows/Fonts/Roboto-Regular.ttf"), "Roboto-Bold", Path("C:/Windows/Fonts/Roboto-Bold_2.ttf")),
+        ("DejaVuSans", Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"), "DejaVuSans-Bold", Path("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf")),
+    ]
+    for reg_name, reg_path, bold_name, bold_path in candidates:
+        if reg_path.exists() and bold_path.exists():
+            try:
+                pdfmetrics.registerFont(TTFont(reg_name, str(reg_path)))
+                pdfmetrics.registerFont(TTFont(bold_name, str(bold_path)))
+                MAIN_FONT = reg_name
+                MAIN_FONT_BOLD = bold_name
+                HAS_UNICODE_RUPEE = True
+                break
+            except Exception:
+                continue
+
+
+_init_pdf_fonts()
+
+
+def sanitize_pdf_text(text: Any) -> str:
+    """
+    Cleans text for ReportLab PDF rendering:
+    1. If the registered font does not support native Rupee, fall back to 'Rs. '.
+    2. Strips multi-byte color emojis that cause black boxes/tofu (■) in PDF output.
+    """
+    if not text:
+        return ""
+    str_val = str(text)
+    if not HAS_UNICODE_RUPEE:
+        str_val = str_val.replace("₹", "Rs. ")
+
+    # Strip emoji Unicode ranges that lack glyphs in standard vector font tables
+    emoji_pattern = re.compile(
+        "[\U00010000-\U0010ffff"  # Supplemental Multilingual Plane (emojis)
+        "\u2600-\u27bf"           # Miscellaneous Symbols & Dingbats
+        "\ufe00-\ufe0f"           # Variation Selectors
+        "\u200d"                  # Zero-width joiner
+        "]+",
+        flags=re.UNICODE,
+    )
+    cleaned = emoji_pattern.sub("", str_val)
+    return re.sub(r" +", " ", cleaned).strip()
 
 
 class NumberedCanvas(canvas.Canvas):
@@ -58,13 +118,13 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count: int):
         self.saveState()
-        self.setFont("Helvetica", 8)
+        self.setFont(MAIN_FONT, 8)
         self.setFillColor(colors.HexColor("#64748B"))
 
         # Running Top Header on pages > 1
         if self._pageNumber > 1:
             self.drawString(
-                54, 750, "TripGenius AI Travel Studio  •  Personalized Travel Plan"
+                54, 750, "Trip Geni AI Travel Studio  •  Personalized Travel Plan"
             )
             self.setStrokeColor(colors.HexColor("#E2E8F0"))
             self.setLineWidth(0.5)
@@ -78,7 +138,7 @@ class NumberedCanvas(canvas.Canvas):
         self.drawString(
             54,
             32,
-            "TripGenius  |  Confidential Traveler Itinerary  |  tripgenius.ai",
+            "Trip Geni  |  Confidential Traveler Itinerary  |  tripgeni.ai",
         )
         page_str = f"Page {self._pageNumber} of {page_count}"
         self.drawRightString(558, 32, page_str)
@@ -107,7 +167,7 @@ class TripPDFGenerator:
         self.title_style = ParagraphStyle(
             "DocTitle",
             parent=self.styles["Heading1"],
-            fontName="Helvetica-Bold",
+            fontName=MAIN_FONT_BOLD,
             fontSize=22,
             leading=26,
             textColor=self.PRIMARY_DARK,
@@ -117,7 +177,7 @@ class TripPDFGenerator:
         self.subtitle_style = ParagraphStyle(
             "DocSubtitle",
             parent=self.styles["Normal"],
-            fontName="Helvetica",
+            fontName=MAIN_FONT,
             fontSize=10,
             leading=14,
             textColor=self.TEXT_MUTED,
@@ -127,7 +187,7 @@ class TripPDFGenerator:
         self.section_heading = ParagraphStyle(
             "SectionHeading",
             parent=self.styles["Heading2"],
-            fontName="Helvetica-Bold",
+            fontName=MAIN_FONT_BOLD,
             fontSize=13,
             leading=16,
             textColor=self.PRIMARY_COLOR,
@@ -139,7 +199,7 @@ class TripPDFGenerator:
         self.sub_heading = ParagraphStyle(
             "SubHeading",
             parent=self.styles["Heading3"],
-            fontName="Helvetica-Bold",
+            fontName=MAIN_FONT_BOLD,
             fontSize=10.5,
             leading=13,
             textColor=self.PRIMARY_DARK,
@@ -151,7 +211,7 @@ class TripPDFGenerator:
         self.body_style = ParagraphStyle(
             "DocBody",
             parent=self.styles["Normal"],
-            fontName="Helvetica",
+            fontName=MAIN_FONT,
             fontSize=9,
             leading=12.5,
             textColor=self.TEXT_DARK,
@@ -161,13 +221,13 @@ class TripPDFGenerator:
         self.body_bold = ParagraphStyle(
             "DocBodyBold",
             parent=self.body_style,
-            fontName="Helvetica-Bold",
+            fontName=MAIN_FONT_BOLD,
         )
 
         self.meta_badge = ParagraphStyle(
             "MetaBadge",
             parent=self.styles["Normal"],
-            fontName="Helvetica-Bold",
+            fontName=MAIN_FONT_BOLD,
             fontSize=8.5,
             leading=11,
             textColor=self.PRIMARY_DARK,
@@ -177,38 +237,96 @@ class TripPDFGenerator:
         self.meta_label = ParagraphStyle(
             "MetaLabel",
             parent=self.styles["Normal"],
-            fontName="Helvetica",
+            fontName=MAIN_FONT,
             fontSize=7.5,
             leading=10,
             textColor=self.TEXT_MUTED,
             alignment=TA_CENTER,
         )
 
-    def _find_destination_image(self, destination: str) -> Path | None:
-        """Search frontend public/destinations directory for destination image."""
-        clean_name = destination.lower().strip().replace(" ", "")
+    def _find_destination_image(
+        self, destination: str, image_url: str | None = None
+    ) -> Path | None:
+        """
+        Search frontend public/destinations directory for destination image.
+        Supports explicit image_url from client, destination keyword mapping,
+        direct filename matching, and guaranteed fallback to travel.jpg.
+        """
         candidates = [
-            # Standard frontend public folder
             Path(__file__).resolve().parents[3] / "frontend" / "public" / "destinations",
             Path(__file__).resolve().parents[2] / "frontend" / "public" / "destinations",
             Path.cwd() / "frontend" / "public" / "destinations",
             Path.cwd().parent / "frontend" / "public" / "destinations",
+            Path("d:/tripgenius/frontend/public/destinations"),
         ]
 
+        # 1. If client provided explicit image_url (e.g. "/destinations/varanasi.jpg" or "travel.jpg")
+        if image_url:
+            filename = Path(str(image_url).strip()).name
+            for folder in candidates:
+                if folder.exists():
+                    p = folder / filename
+                    if p.exists():
+                        return p
+
+        # 2. Check destination substrings and aliases (matching itineraryHelper.ts)
+        dest_lower = (destination or "").lower()
+
+        keyword_map = [
+            (["varanasi", "kashi", "banaras", "benares", "assi"], "varanasi.jpg"),
+            (["ooty", "nilgiri"], "ooty.jpg"),
+            (["varkala"], "varkala.jpg"),
+            (["delhi", "newdelhi"], "delhi.jpg"),
+            (["munnar"], "munnar.jpg"),
+            (["goa"], "goa.jpg"),
+            (["paris", "france"], "paris.jpg"),
+            (["tokyo", "japan"], "tokyo.jpg"),
+            (["bali", "indonesia"], "bali.jpg"),
+            (["dubai", "uae"], "dubai.jpg"),
+            (["thenkasi", "tenkasi", "courtallam", "kutralam"], "thenkasi.jpg"),
+            (["coorg", "madikeri", "kodagu"], "coorg.jpg"),
+            (["kodaikanal", "kodai"], "kodaikanal.jpg"),
+            (["alleppey", "alappuzha"], "alleppey.jpg"),
+            (["wayanad"], "wayanad.jpg"),
+            (["mysore", "mysuru"], "mysore.jpg"),
+            (["hampi"], "hampi.jpg"),
+            (["gokarna"], "gokarna.jpg"),
+            (["thekkady"], "thekkady.jpg"),
+            (["kovalam"], "kovalam.jpg"),
+            (["manali"], "manali.jpg"),
+        ]
+
+        for keywords, target_file in keyword_map:
+            if any(k in dest_lower for k in keywords):
+                for folder in candidates:
+                    if folder.exists():
+                        p = folder / target_file
+                        if p.exists():
+                            return p
+
+        # 3. Direct filename match
+        clean_name = re.sub(r"[^\w]", "", dest_lower)
         for folder in candidates:
             if not folder.exists():
                 continue
-            # Try exact matches
             for ext in [".jpg", ".jpeg", ".png"]:
                 p = folder / f"{clean_name}{ext}"
                 if p.exists():
                     return p
-                # Also try matching first word e.g. "goa" in "Goa Beach"
-                first_word = clean_name.split()[0] if clean_name else ""
-                if first_word:
-                    p2 = folder / f"{first_word}{ext}"
+                # Check first word
+                words = dest_lower.split()
+                if words:
+                    p2 = folder / f"{words[0]}{ext}"
                     if p2.exists():
                         return p2
+
+        # 4. Universal high-resolution travel photography fallback
+        for folder in candidates:
+            if folder.exists():
+                travel_p = folder / "travel.jpg"
+                if travel_p.exists():
+                    return travel_p
+
         return None
 
     def _process_cover_image(self, img_path: Path) -> BytesIO | None:
@@ -283,7 +401,8 @@ class TripPDFGenerator:
         # 0. HEADER & COVER IMAGE
         # ----------------------------------------------------
         destination = trip.get("destination", "Destination")
-        img_path = self._find_destination_image(destination)
+        img_url = trip.get("image_url") or trip.get("cover_image")
+        img_path = self._find_destination_image(destination, img_url)
         cover_buffer = None
         if img_path:
             cover_buffer = self._process_cover_image(img_path)
@@ -301,7 +420,7 @@ class TripPDFGenerator:
         desc = (
             trip.get("destination_summary")
             or trip.get("itinerary_summary")
-            or f"Meticulously curated bespoke journey to {destination} powered by TripGenius AI."
+            or f"Meticulously curated bespoke journey to {destination} powered by Trip Geni AI."
         )
         story.append(Paragraph(desc, self.subtitle_style))
 
@@ -353,6 +472,23 @@ class TripPDFGenerator:
         story.append(Paragraph("1. Day-by-Day Timeline", self.section_heading))
 
         itinerary = trip.get("ai_itinerary", [])
+        if not isinstance(itinerary, list) or len(itinerary) == 0:
+            try:
+                from app.services.ai_service import get_ai_service
+                offline_plan = get_ai_service().generate_offline_trip_plan(
+                    destination=destination,
+                    duration_days=duration_days,
+                    budget=trip.get("budget", 25000),
+                    interests=trip.get("interests", ["Sightseeing"]),
+                    travelers_count=trip.get("travelers_count", 2),
+                    travel_style=trip.get("travel_style", "Balanced"),
+                    transportation_mode=trip.get("transportation_mode", "Car"),
+                    preferred_accommodation=trip.get("preferred_accommodation", "Standard Hotel"),
+                )
+                itinerary = offline_plan.get("ai_itinerary", [])
+            except Exception:
+                itinerary = []
+
         if isinstance(itinerary, list) and len(itinerary) > 0:
             for idx, day_info in enumerate(itinerary, start=1):
                 day_num = day_info.get("day_number") or day_info.get("day") or idx
@@ -374,17 +510,17 @@ class TripPDFGenerator:
                 # Slots: morning, afternoon, evening
                 slot_rows = []
                 for slot_name, slot_label in [
-                    ("morning", "🌅 Morning"),
-                    ("afternoon", "☀️ Afternoon"),
-                    ("evening", "🌇 Evening"),
-                    ("night", "🌙 Night"),
+                    ("morning", '<font color="#0284C7">&bull;</font> Morning'),
+                    ("afternoon", '<font color="#0284C7">&bull;</font> Afternoon'),
+                    ("evening", '<font color="#0284C7">&bull;</font> Evening'),
+                    ("night", '<font color="#0284C7">&bull;</font> Night'),
                 ]:
                     slot_content = day_info.get(slot_name)
                     if slot_content:
                         if isinstance(slot_content, dict):
-                            act_title = slot_content.get("activity") or slot_content.get("title") or ""
-                            act_desc = slot_content.get("description") or ""
-                            act_loc = slot_content.get("location") or ""
+                            act_title = sanitize_pdf_text(slot_content.get("activity") or slot_content.get("title") or "")
+                            act_desc = sanitize_pdf_text(slot_content.get("description") or "")
+                            act_loc = sanitize_pdf_text(slot_content.get("location") or "")
                             act_time = slot_content.get("time") or ""
 
                             details = f"<b>{act_title}</b>"
@@ -401,7 +537,7 @@ class TripPDFGenerator:
                         elif isinstance(slot_content, str):
                             slot_rows.append([
                                 Paragraph(f"<b>{slot_label}</b>", self.body_bold),
-                                Paragraph(slot_content, self.body_style),
+                                Paragraph(sanitize_pdf_text(slot_content), self.body_style),
                             ])
 
                 # Generic activities list fallback
@@ -410,8 +546,8 @@ class TripPDFGenerator:
                     for a_idx, act in enumerate(activities, start=1):
                         act_text = act if isinstance(act, str) else act.get("activity", str(act))
                         slot_rows.append([
-                            Paragraph(f"<b>Activity {a_idx}</b>", self.body_bold),
-                            Paragraph(act_text, self.body_style),
+                            Paragraph(f'<b><font color="#0284C7">&bull;</font> Activity {a_idx}</b>', self.body_bold),
+                            Paragraph(sanitize_pdf_text(act_text), self.body_style),
                         ])
 
                 if slot_rows:
@@ -533,7 +669,7 @@ class TripPDFGenerator:
             story.append(Spacer(1, 6))
             rental_callout_data = [
                 [
-                    Paragraph("<b>🚗 Rental Vehicle Rate Intelligence</b>", self.body_bold),
+                    Paragraph("<b>Rental Vehicle Rate Intelligence</b>", self.body_bold),
                     Paragraph(
                         f"<b>{rental_details.get('vehicle_type')}</b> ({rental_details.get('example_models')})<br/>"
                         f"• <b>Base Rental:</b> ~₹{rental_details.get('daily_rate'):,}/day × {rental_details.get('rental_days')} days = "
@@ -587,7 +723,7 @@ class TripPDFGenerator:
         ]
         packing_p = Paragraph(
             "<b>Recommended Packing Items:</b><br/>"
-            + "<br/>".join([f"☑ {item}" for item in packing_items]),
+            + "<br/>".join([f"• {item}" for item in packing_items]),
             self.body_style,
         )
 
@@ -636,7 +772,7 @@ class TripPDFGenerator:
             ],
             [
                 Paragraph("<b>Green Travel Best Practices</b>", self.body_bold),
-                Paragraph("<br/>".join([f"🌱 {rec}" for rec in eco_recs[:4]]), self.body_style),
+                Paragraph("<br/>".join([f"• {rec}" for rec in eco_recs[:4]]), self.body_style),
             ],
         ]
 

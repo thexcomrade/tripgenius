@@ -17,7 +17,7 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    APP_NAME: str = Field(default="TripGenius")
+    APP_NAME: str = Field(default="Trip Geni")
     APP_ENV: str = Field(default="development")
     APP_DEBUG: bool = Field(default=True)
 
@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = Field(default="HS256")
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=1440)
 
-    DATABASE_URL: str = Field(default="sqlite:///./tripgenius.db")
+    DATABASE_URL: str = Field(default="sqlite:///./tripgeni.db")
 
     TOURISM_DATASET_PATH: str = Field(default="database/tourism.csv")
 
@@ -37,9 +37,16 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = Field(default="http://localhost:3000")
 
-    FRONTEND_URL: str = Field(default="http://localhost:3000")
-
     LOG_LEVEL: str = Field(default="INFO")
+
+    # SMTP Email Configuration
+    SMTP_HOST: str = Field(default="smtp.gmail.com")
+    SMTP_PORT: int = Field(default=587)
+    SMTP_USER: str = Field(default="")
+    SMTP_PASSWORD: str = Field(default="")
+    SMTP_FROM_EMAIL: str = Field(default="noreply@tripgeni.com")
+    SMTP_FROM_NAME: str = Field(default="Trip Geni Security")
+    SMTP_TLS: bool = Field(default=True)
 
     @property
     def tourism_dataset_path(self) -> Path:

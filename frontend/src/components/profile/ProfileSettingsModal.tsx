@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Eye, EyeOff, Mail, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
 import authService from "../../services/auth.service";
 
@@ -29,15 +30,26 @@ export default function ProfileSettingsModal({
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [generatedOtp, setGeneratedOtp] = useState("");
-  const [enteredOtp, setEnteredOtp] = useState("");
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [maskedEmail, setMaskedEmail] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [countdown, setCountdown] = useState(0);
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Active User State for Switch Account
   const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setInterval(() => setCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [countdown]);
 
   useEffect(() => {
     if (isOpen) {
@@ -47,8 +59,14 @@ export default function ProfileSettingsModal({
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      setEnteredOtp("");
+      setShowCurrentPassword(false);
+      setShowNewPassword(false);
+      setShowConfirmPassword(false);
+      setVerificationCode("");
       setOtpSent(false);
+      setMaskedEmail("");
+      setSendingOtp(false);
+      setCountdown(0);
 
       const stored = localStorage.getItem("tripgenius_user");
       if (stored) {
@@ -88,11 +106,22 @@ export default function ProfileSettingsModal({
     router.push("/");
   }
 
-  function handleSendOtp() {
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    setGeneratedOtp(code);
-    setOtpSent(true);
-    toast.success(`Verification code sent: ${code}`, { duration: 6000 });
+  async function handleRequestOtp() {
+    setPasswordError("");
+    setSendingOtp(true);
+    try {
+      const res = await authService.sendPasswordOtp();
+      setOtpSent(true);
+      setMaskedEmail(res.email);
+      setCountdown(60);
+      toast.success(`Verification code sent to ${res.email}!`);
+    } catch (err: any) {
+      const msg = err?.message || "Failed to send verification code. Please check your connection.";
+      setPasswordError(msg);
+      toast.error(msg);
+    } finally {
+      setSendingOtp(false);
+    }
   }
 
   async function handlePasswordSubmit(e: React.FormEvent) {
@@ -111,8 +140,8 @@ export default function ProfileSettingsModal({
       setPasswordError("New passwords do not match.");
       return;
     }
-    if (otpSent && enteredOtp.trim() !== generatedOtp) {
-      setPasswordError("Invalid 6-digit verification code. Please check and retry.");
+    if (!verificationCode || verificationCode.trim().length !== 6) {
+      setPasswordError("Please request and enter the 6-digit verification code sent to your registered email.");
       return;
     }
 
@@ -121,6 +150,7 @@ export default function ProfileSettingsModal({
       await authService.changePassword({
         current_password: currentPassword,
         new_password: newPassword,
+        verification_code: verificationCode.trim(),
       });
 
       setPasswordSuccess(true);
@@ -130,7 +160,7 @@ export default function ProfileSettingsModal({
         setPasswordSuccess(false);
       }, 1800);
     } catch (err: any) {
-      const msg = err?.message || "Failed to update password. Please check your current password.";
+      const msg = err?.message || "Failed to update password. Please check your current password and verification code.";
       setPasswordError(msg);
       toast.error(msg);
     } finally {
@@ -398,14 +428,26 @@ export default function ProfileSettingsModal({
                   >
                     Current Password
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    placeholder="Enter existing password"
-                    style={inputStyle}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showCurrentPassword ? "text" : "password"}
+                      required
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      placeholder="Enter existing password"
+                      style={{ ...inputStyle, paddingRight: "42px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurrentPassword((prev) => !prev)}
+                      aria-label={showCurrentPassword ? "Hide current password" : "Show current password"}
+                      style={eyeButtonStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#38BDF8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                    >
+                      {showCurrentPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
                 <div style={{ marginBottom: "14px" }}>
@@ -420,17 +462,29 @@ export default function ProfileSettingsModal({
                   >
                     New Password (min 8 characters)
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Enter strong new password"
-                    style={inputStyle}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      required
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter strong new password"
+                      style={{ ...inputStyle, paddingRight: "42px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword((prev) => !prev)}
+                      aria-label={showNewPassword ? "Hide new password" : "Show new password"}
+                      style={eyeButtonStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#38BDF8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                    >
+                      {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
-                <div style={{ marginBottom: "16px" }}>
+                <div style={{ marginBottom: "20px" }}>
                   <label
                     style={{
                       display: "block",
@@ -442,24 +496,36 @@ export default function ProfileSettingsModal({
                   >
                     Confirm New Password
                   </label>
-                  <input
-                    type="password"
-                    required
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Re-enter new password"
-                    style={inputStyle}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-enter new password"
+                      style={{ ...inputStyle, paddingRight: "42px" }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword((prev) => !prev)}
+                      aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                      style={eyeButtonStyle}
+                      onMouseEnter={(e) => (e.currentTarget.style.color = "#38BDF8")}
+                      onMouseLeave={(e) => (e.currentTarget.style.color = "#94A3B8")}
+                    >
+                      {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    </button>
+                  </div>
                 </div>
 
-                {/* FREE INSTANT OTP VERIFICATION */}
+                {/* Email Verification Code Section */}
                 <div
                   style={{
-                    background: "rgba(14, 165, 233, 0.08)",
-                    border: "1px solid rgba(14, 165, 233, 0.25)",
-                    borderRadius: "12px",
-                    padding: "14px",
                     marginBottom: "20px",
+                    padding: "14px",
+                    borderRadius: "14px",
+                    background: "rgba(14, 165, 233, 0.06)",
+                    border: "1px solid rgba(56, 189, 248, 0.2)",
                   }}
                 >
                   <div
@@ -470,61 +536,93 @@ export default function ProfileSettingsModal({
                       marginBottom: "8px",
                     }}
                   >
-                    <span style={{ fontSize: "0.85rem", color: "#38BDF8", fontWeight: 600 }}>
-                      🛡️ Security Verification Code
-                    </span>
-                    <button
-                      type="button"
-                      onClick={handleSendOtp}
+                    <label
                       style={{
-                        background: "rgba(14, 165, 233, 0.2)",
-                        border: "1px solid rgba(14, 165, 233, 0.4)",
-                        color: "#38BDF8",
-                        padding: "3px 10px",
-                        borderRadius: "6px",
-                        fontSize: "0.78rem",
-                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        color: "#E2E8F0",
+                        fontSize: "0.82rem",
                         fontWeight: 600,
                       }}
                     >
-                      {otpSent ? "Regenerate OTP" : "Get Free OTP Code"}
+                      <ShieldCheck size={16} color="#38BDF8" />
+                      Email Verification Code
+                    </label>
+
+                    <button
+                      type="button"
+                      onClick={handleRequestOtp}
+                      disabled={sendingOtp || countdown > 0}
+                      style={{
+                        background: countdown > 0 ? "rgba(255,255,255,0.06)" : "#0EA5E9",
+                        color: countdown > 0 ? "#94A3B8" : "#FFFFFF",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "6px 12px",
+                        fontSize: "0.78rem",
+                        fontWeight: 600,
+                        cursor: sendingOtp || countdown > 0 ? "not-allowed" : "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        transition: "all 0.15s ease",
+                      }}
+                    >
+                      <Mail size={13} />
+                      {sendingOtp
+                        ? "Sending..."
+                        : countdown > 0
+                        ? `Resend in ${countdown}s`
+                        : otpSent
+                        ? "Resend Code"
+                        : "Send Code to Email"}
                     </button>
                   </div>
 
-                  {otpSent ? (
-                    <div>
-                      <div
-                        style={{
-                          background: "rgba(0,0,0,0.3)",
-                          padding: "8px 12px",
-                          borderRadius: "8px",
-                          color: "#F8FAFC",
-                          fontSize: "0.85rem",
-                          marginBottom: "8px",
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <span>Your 6-Digit Code:</span>
-                        <strong style={{ color: "#38BDF8", letterSpacing: "3px", fontSize: "1.05rem" }}>
-                          {generatedOtp}
-                        </strong>
-                      </div>
-                      <input
-                        type="text"
-                        maxLength={6}
-                        value={enteredOtp}
-                        onChange={(e) => setEnteredOtp(e.target.value.replace(/\D/g, ""))}
-                        placeholder="Enter 6-digit OTP code above"
-                        style={{ ...inputStyle, textAlign: "center", letterSpacing: "4px" }}
-                      />
+                  {otpSent && maskedEmail && (
+                    <div
+                      style={{
+                        marginBottom: "10px",
+                        fontSize: "0.78rem",
+                        color: "#34D399",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <span>✉️</span>
+                      <span>Code sent to <strong>{maskedEmail}</strong> (valid for 10 mins)</span>
                     </div>
-                  ) : (
-                    <p style={{ fontSize: "0.78rem", color: "#94A3B8", margin: 0 }}>
-                      Click &apos;Get Free OTP Code&apos; to generate your 100% free identity verification code.
-                    </p>
                   )}
+
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={verificationCode}
+                    onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                    placeholder="Enter 6-digit code"
+                    style={{
+                      ...inputStyle,
+                      textAlign: "center",
+                      letterSpacing: "4px",
+                      fontSize: "1.1rem",
+                      fontWeight: 700,
+                      background: "rgba(15, 23, 42, 0.8)",
+                      border: "1px solid rgba(56, 189, 248, 0.35)",
+                    }}
+                  />
+                  <p
+                    style={{
+                      fontSize: "0.72rem",
+                      color: "#94A3B8",
+                      marginTop: "6px",
+                      marginBottom: 0,
+                    }}
+                  >
+                    Click &ldquo;Send Code to Email&rdquo; to receive your 6-digit verification code.
+                  </p>
                 </div>
 
                 <div style={{ display: "flex", gap: "10px" }}>
@@ -698,4 +796,21 @@ const inputStyle = {
   color: "#FFFFFF",
   fontSize: "0.92rem",
   outline: "none",
+};
+
+const eyeButtonStyle = {
+  position: "absolute" as const,
+  right: "12px",
+  top: "50%",
+  transform: "translateY(-50%)",
+  background: "none",
+  border: "none",
+  color: "#94A3B8",
+  cursor: "pointer",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "4px",
+  borderRadius: "4px",
+  transition: "color 0.15s ease",
 };

@@ -179,7 +179,12 @@ def detect_rental_category(transport_mode: str | None, travelers_count: int = 1)
         "tempo", "traveller", "bus", "coach", "tour bus", "van"
     ]
 
-    is_rental = any(kw in mode for kw in rental_keywords) or travelers_count >= 10
+    # Check if transport mode matches rental keywords, exact IDs, or high traveler counts
+    is_rental = (
+        mode in ["bike", "car"]
+        or any(kw in mode for kw in rental_keywords)
+        or travelers_count >= 10
+    )
     if not is_rental:
         # Also check common transportation strings like "car" or "two wheeler"
         if mode in ["car", "own car"]:
