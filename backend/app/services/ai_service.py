@@ -403,16 +403,23 @@ Return JSON.
         if verified and verified.get("attractions"):
             return verified["attractions"]
 
+        q_clean = destination.lower().strip()
+        is_varanasi_dest = any(k in q_clean for k in ["varanasi", "kashi", "banaras", "benares"])
+
         # 2. Search destination specifically within the tourism dataset
         dest_matches = self.recommendation_service.search_destination(destination)
         attractions: list[str] = []
 
-        q_clean = destination.lower().strip()
         for item in dest_matches:
             place_name = item.get("place_name", "")
             district = item.get("district", "")
             state = item.get("state", "")
             desc = item.get("description", "") or item.get("activities", "")
+
+            # Strict Guard: Never allow Varanasi / Kashi items unless destination is specifically Varanasi
+            item_text = f"{place_name} {district} {state} {desc}".lower()
+            if not is_varanasi_dest and any(v in item_text for v in ["varanasi", "kashi vishwanath", "assi ghat", "dashashwamedh", "sarnath", "ganga aarti"]):
+                continue
 
             if place_name:
                 dist_clean = district.lower()
@@ -433,25 +440,15 @@ Return JSON.
         if len(attractions) >= 2:
             return attractions[:10]
 
-        # 3. If any destination matches were found, use top matches
-        if dest_matches:
-            for m in dest_matches[:8]:
-                p = m.get("place_name", "")
-                d = m.get("district", "") or m.get("state", "") or destination.title()
-                desc = m.get("description", "") or m.get("activities", "")
-                if p and not any(a.startswith(p) for a in attractions):
-                    formatted = f"{p} ({d}) — {desc}" if desc else f"{p} ({d})"
-                    attractions.append(formatted)
-            if len(attractions) >= 2:
-                return attractions[:10]
-
-        # 4. Fallback: clean Title-cased attractions
+        # 3. Fallback: clean Title-cased attractions scoped strictly to the chosen destination
         dest_title = destination.strip().title()
         return [
             f"{dest_title} Historic Heritage Old Town Walk",
             f"{dest_title} Panoramic Sunset Viewpoint",
             f"{dest_title} Central Market & Cultural Promenade",
             f"{dest_title} Nature Trail & Botanical Enclave",
+            f"{dest_title} Scenic Waterfront & Promenade",
+            f"{dest_title} Regional Cultural Centre & Artisan Hub",
         ]
 
     # ==================================================
@@ -1201,6 +1198,20 @@ Return JSON.
                 base_response["gemini_response"] = parsed_ai_response
                 base_response["generation_mode"] = "ai_synthesized"
 
+            # Strict guard: If destination is NOT Varanasi, ensure Varanasi items never appear in attractions
+            q_dest = destination.lower().strip()
+            if not any(k in q_dest for k in ["varanasi", "kashi", "banaras", "benares"]):
+                varanasi_terms = ["varanasi", "kashi vishwanath", "assi ghat", "dashashwamedh", "sarnath", "ganga aarti"]
+                if "attractions" in base_response and isinstance(base_response["attractions"], list):
+                    clean_attrs = [
+                        a for a in base_response["attractions"]
+                        if not any(v in str(a).lower() for v in varanasi_terms)
+                    ]
+                    if len(clean_attrs) >= 2:
+                        base_response["attractions"] = clean_attrs
+                    else:
+                        base_response["attractions"] = self.generate_attractions(destination, interests)
+
             return self.format_trip_response(base_response)
 
         except Exception as error:
@@ -1290,8 +1301,22 @@ Return JSON.
                     + "\n\n"
                 )
 
-        prompt = f"""You are DASAPPAN, the Next-Gen Travel AI Engine 2.0 on Trip Geni — a world-wise, charismatic, and extraordinarily knowledgeable personal travel companion and concierge.
-You possess deep, authentic intelligence about travel across India (from the ancient ghats of Varanasi, tea hills of Munnar, serene waters of Varkala and Thenkasi, to Himachal, Rajasthan, and Goa) and worldwide (Paris, Tokyo, Bali, Swiss Alps, New York, and beyond).
+        # Check if user was already greeted
+        already_greeted = False
+        if history and isinstance(history, list) and len(history) > 0:
+            for h in history:
+                if isinstance(h, dict) and ("namaskaram" in str(h.get("content", "")).lower() or h.get("role") == "assistant"):
+                    already_greeted = True
+                    break
+
+        display_name = (user_name or "").strip()
+        greeting_prefix = (
+            "" if already_greeted
+            else (f"Namaskaram {display_name}! 🙏" if display_name else "Namaskaram! 🙏")
+        )
+
+        prompt = f"""You are DASAPPAN, the Next-Gen Travel AI Engine 3.0 Pro on Trip Geni — a charismatic, deeply authentic, and helpful travel companion.
+You possess authentic intelligence about travel across India (Varanasi, Munnar, Thenkasi, Varkala, Coorg, Ooty, Hampi, Goa, etc.) and worldwide (Paris, Tokyo, Bali, Dubai, etc.).
 
 {history_formatted}Traveler: "{user_message}"
 
@@ -1299,36 +1324,39 @@ You possess deep, authentic intelligence about travel across India (from the anc
 
 CRITICAL CONVERSATIONAL INTELLIGENCE & PLANNING RULES:
 1. GREETING & PERSONA:
-   - Greet warmly with "{greeting_prefix}" when starting a topic or addressing the traveler.
-   - Speak with the warm, experienced, and enthusiastic persona of Dasappan. Never be robotic.
+   - If the traveler has ALREADY been greeted in the conversation, NEVER repeat "Namaskaram" or any formal greeting. Talk naturally and directly like a close friend.
+   - If this is the very first turn and traveler says hi/hello, greet warmly with "{greeting_prefix}".
 
-2. ACTIVE INTENT ANALYSIS & CONSULTATIVE DISCOVERY:
-   Case A: DESTINATION MENTIONED WITHOUT KEY DETAILS (e.g. Traveler just says "Varanasi", "Munnar", "Goa", "I want to visit Paris"):
-   - Enthusiastically acknowledge and praise the destination with authentic local flavor (e.g. for Varanasi: mention the sacred Ganges, timeless ghats, and evening aartis).
-   - RECOGNIZE that essential planning details are missing to create the ideal itinerary.
-   - Actively ASK the traveler to collect the missing details:
-     * 🗓️ How many days are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)
-     * 👥 How many travelers / group type? (Solo, couple, family, or friends?)
-     * 💰 Approximate budget tier? (Budget backpacker, comfortable heritage stay, or luxury?)
-     * ✨ Any must-have experiences? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)
-   - Conclude by assuring them: "Share these details with me, and I'll craft your complete personalized day-by-day plan with timings, stays, food spots, and costs in ₹!"
+2. PROGRESSIVE MULTI-TURN DISCOVERY (One Question at a Time):
+   Case A: DESTINATION MENTIONED WITHOUT DETAILS (e.g. Traveler just says "Varanasi", "Munnar", "Thenkasi", "Goa"):
+   - React with natural human delight: "Oh, [Destination]!! 🌟"
+   - Provide a vivid, evocative 2-LINE description drawn from verified travel facts (e.g. for Varanasi: ancient sacred ghats, mesmerizing evening Ganga aarti, dawn boat rides).
+   - Then ask ONLY: "How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)"
+   - NEVER dump a long bullet list of questions in one single message! Ask one comfortable question per message so travelers enjoy conversing with Dasappan.
 
-   Case B: TRIP PARAMETERS PROVIDED (e.g. Traveler provides days, group, or budget, such as "5 days, 2 people, comfort budget, want boat ride and aarti" or "Varanasi 5 days"):
-   - DO NOT repeat the questions! Immediately synthesize a COMPLETE, rich, formatted text itinerary:
+   Case B: TRAVELERS ANSWERED (e.g. "2 people", "couple", "solo", "family"):
+   - Acknowledge warmly with travel flavor.
+   - Then ask: "How many days are you planning to spend? (Most travelers find 3 to 4 days ideal to explore without rushing)."
+
+   Case C: DAYS / DURATION ANSWERED (e.g. "3 days", "4 days"):
+   - Acknowledge the duration enthusiastically.
+   - Then ask: "What kind of budget or style do you have in mind? (e.g. Budget backpacker, comfortable heritage stays, or luxury in ₹)?"
+
+   Case D: ALL ESSENTIALS GATHERED OR FULL PROMPT GIVEN (e.g. "Plan a 3-day scenic trip to Thenkasi under ₹12,000"):
+   - Synthesize a COMPLETE, tailored text itinerary STRICTLY matching the requested number of days (if 3 days requested, generate Day 1, Day 2, Day 3):
      * Inspiring trip title
-     * Detailed Day-by-Day Journey (Day 1, Day 2, etc.) with specific morning, afternoon, and evening experiences
+     * Day-by-Day Journey (Day 1, Day 2, ...) with morning, afternoon, evening activities
      * Recommended authentic stays with realistic nightly rates in ₹
-     * Famous local street food spots & iconic dishes (exact names: Ram Bhandar, Kashi Chaat Bhandar, Blue Lassi, etc.)
-     * Realistic total estimated budget breakdown in ₹ (stays, transit, meals, activities)
-     * Local insider tips (best boat timings, avoiding temple queues, photography rules)
-     * Friendly follow-up asking if they'd like adjustments or specific hotel bookings.
+     * Famous local street food spots & iconic dishes (exact names)
+     * Realistic total estimated budget breakdown in ₹
+     * Dasappan's Local Insider Secret
+     * Wrap up by asking if they'd like specific hotel options or transit details.
 
-   Case C: SPECIFIC QUESTION (e.g. food, weather, stays, packing, transit):
-   - Answer directly, thoroughly, and conversationally with exact facts, places, and ₹ costs!
+   Case E: AFFIRMATION / FOLLOW-UP (e.g. "yes", "sure", "hotels", "transit"):
+   - Seamlessly continue from the last topic! If you previously asked if they want hotel/transit details, immediately provide the specific verified stays with ₹ rates and train/flight details. NEVER reset the conversation or ask for their destination again!
 
 3. LOCAL CURRENCY & PRICING:
-   - Always state all costs, stays, tickets, and travel estimates in Indian Rupees (₹).
-   - Never use rigid canned emoji checklists (like 🎯 The Vibe / 🗺️ Highlights / 🍲 Must-Eat / 💰 Expected Cost). Use natural, engaging markdown with fluid paragraphs, bold highlights, and clean bullet lists."""
+   - Always state all costs, stays, tickets, and travel estimates in Indian Rupees (₹)."""
 
         # 4. Attempt Gemini generation with fast timeout; fall back seamlessly to RAG engine on any rate limit or delay
         for model in self.fallback_models:
@@ -1339,7 +1367,7 @@ CRITICAL CONVERSATIONAL INTELLIGENCE & PLANNING RULES:
                 )
                 if response and response.text:
                     reply_text = response.text.strip()
-                    if not reply_text.startswith("Namaskaram"):
+                    if not already_greeted and not reply_text.startswith("Namaskaram"):
                         reply_text = f"{greeting_prefix}\n\n{reply_text}"
                     return {"reply": reply_text, "source": "gemini_2_engine"}
             except Exception as err:

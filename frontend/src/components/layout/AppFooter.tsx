@@ -23,11 +23,12 @@ export default function AppFooter() {
       }}
     >
       <div
+        className="footer-content-container"
         style={{
-          width: "100%",
-          maxWidth: "1680px",
+          width: "80%",
+          maxWidth: "1240px",
           margin: "0 auto",
-          padding: "36px clamp(16px, 3.5vw, 44px) 18px clamp(16px, 3.5vw, 44px)",
+          padding: "36px clamp(16px, 2.5vw, 32px) 18px clamp(16px, 2.5vw, 32px)",
         }}
       >
         <div

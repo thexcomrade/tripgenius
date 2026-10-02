@@ -87,6 +87,7 @@ export default function RegisterPage() {
           JSON.stringify({
             uid: profile.id,
             full_name: profile.full_name,
+            username: profile.username || "thexcomrade",
             email: profile.email,
             is_verified: profile.is_verified,
             eco_score: profile.eco_travel_score,

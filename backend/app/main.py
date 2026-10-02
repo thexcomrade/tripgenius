@@ -119,6 +119,15 @@ async def get_weather(city: str = "Thiruvananthapuram") -> dict:
         }
 
 
+from app.services.focus_points_service import get_focus_points_service
+
+
+@app.get("/api/destinations/focus-points")
+async def get_destination_focus_points(destination: str = "") -> dict:
+    svc = get_focus_points_service()
+    return svc.get_focus_points(destination)
+
+
 @app.get("/")
 async def root() -> dict:
 

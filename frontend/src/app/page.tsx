@@ -270,8 +270,8 @@ export default function HomePage() {
       <section
         style={{
           position: "relative",
-          padding: "90px 24px 70px 24px",
-          maxWidth: "1440px",
+          padding: "70px 0 60px 0",
+          maxWidth: "100%",
           margin: "0 auto",
           textAlign: "center",
         }}
@@ -295,33 +295,23 @@ export default function HomePage() {
 
         <div style={{ display: "inline-flex", marginBottom: "24px" }}>
           <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
-            Next-Gen Travel AI Engine 2.0
+            Next-Gen Travel AI Engine 3.0 Pro
           </Badge>
         </div>
 
         <h1
           style={{
-            fontSize: "clamp(2.4rem, 5.5vw, 4.4rem)",
-            fontWeight: 500,
-            lineHeight: 1.18,
-            letterSpacing: "-0.035em",
+            fontSize: "clamp(2.4rem, 5.5vw, 4.2rem)",
+            fontWeight: 600,
+            lineHeight: 1.16,
+            letterSpacing: "-0.032em",
             maxWidth: "1050px",
             margin: "0 auto 24px auto",
-            color: "#F8FAFC",
+            color: "#FFFFFF",
           }}
         >
-          Plan{" "}
-          <span
-            style={{
-              fontWeight: 300,
-              color: "#E2E8F0",
-              letterSpacing: "-0.02em",
-            }}
-          >
-            Extraordinary
-          </span>{" "}
-          Journeys with{" "}
-          <span className="gradient-text" style={{ fontWeight: 700 }}>
+          Plan Extraordinary Journeys with{" "}
+          <span className="gradient-text" style={{ fontWeight: 600 }}>
             Intelligent Precision
           </span>
         </h1>
@@ -410,7 +400,7 @@ export default function HomePage() {
 
       {/* VALUE PROPOSITION GRID */}
       <section
-        style={{ maxWidth: "1440px", margin: "0 auto", padding: "40px 24px" }}
+        style={{ maxWidth: "100%", margin: "0 auto", padding: "30px 0" }}
       >
         <SectionHeader
           badge="Intelligent Architecture"
@@ -476,9 +466,9 @@ export default function HomePage() {
       {/* CURATED DESTINATIONS SPOTLIGHT */}
       <section
         style={{
-          maxWidth: "1440px",
-          margin: "40px auto",
-          padding: "40px 24px",
+          maxWidth: "100%",
+          margin: "20px auto",
+          padding: "30px 0",
         }}
       >
         <SectionHeader
@@ -498,13 +488,7 @@ export default function HomePage() {
           }
         />
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
-            gap: "24px",
-          }}
-        >
+        <div className="grid-3-col">
           {trendingDestinations.map((dest) => (
             <div
               key={dest.name}
@@ -542,7 +526,26 @@ export default function HomePage() {
                 <div
                   style={{ position: "absolute", top: "14px", left: "14px" }}
                 >
-                  <Badge variant="amber" size="sm">
+                  <Badge
+                    variant="overlay"
+                    size="sm"
+                    style={{
+                      letterSpacing: "0.03em",
+                      textTransform: "uppercase",
+                      fontSize: "0.72rem",
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: "#38BDF8",
+                        display: "inline-block",
+                        marginRight: "6px",
+                        boxShadow: "0 0 6px #38BDF8",
+                      }}
+                    />
                     {dest.tag}
                   </Badge>
                 </div>
@@ -630,9 +633,9 @@ export default function HomePage() {
       {/* SOCIAL PROOF & TESTIMONIALS */}
       <section
         style={{
-          maxWidth: "1440px",
-          margin: "40px auto",
-          padding: "40px 24px",
+          maxWidth: "100%",
+          margin: "20px auto",
+          padding: "30px 0",
         }}
       >
         <div
@@ -871,9 +874,9 @@ export default function HomePage() {
       {/* CALL TO ACTION BANNER */}
       <section
         style={{
-          maxWidth: "1440px",
-          margin: "60px auto 30px auto",
-          padding: "0 24px",
+          maxWidth: "100%",
+          margin: "40px auto 30px auto",
+          padding: "0",
         }}
       >
         <div

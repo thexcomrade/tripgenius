@@ -72,6 +72,7 @@ export default function RootLayout({
         />
         <AppNavbar />
         <main
+          className="app-main-wrapper"
           style={{
             minHeight: "calc(100vh - 350px)",
             position: "relative",

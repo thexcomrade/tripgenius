@@ -210,13 +210,7 @@ export default function FavoritesPage() {
           <p style={{ color: "#94A3B8" }}>Loading favorites...</p>
         </div>
       ) : filteredTrips.length > 0 ? (
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-            gap: "24px",
-          }}
-        >
+        <div className="grid-3-col">
           {filteredTrips.map((trip, idx) => {
             const img =
               DESTINATION_IMAGES[trip.destination] ||

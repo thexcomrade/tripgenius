@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Award,
@@ -15,6 +15,8 @@ import {
   Star,
   Flame,
   ArrowRight,
+  Zap,
+  CheckCircle2,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
@@ -25,21 +27,21 @@ interface AchievementItem {
   title: string;
   description: string;
   icon: string;
-  tier: "Bronze" | "Silver" | "Gold" | "Platinum";
-  category: "General" | "Eco" | "Exploration" | "Budget";
+  tier: "Bronze" | "Silver" | "Gold" | "Platinum" | "Diamond";
+  category: "General" | "Eco" | "Exploration" | "Budget" | "Culture";
   unlocked: boolean;
   progress: number;
   total: number;
   xp: number;
   unlockedDate?: string;
+  secretHint?: string;
 }
 
-const ACHIEVEMENTS: AchievementItem[] = [
+const INITIAL_ACHIEVEMENTS: AchievementItem[] = [
   {
     id: 1,
     title: "Pioneer Traveler",
-    description:
-      "Generate your first bespoke travel itinerary with TripGenius AI.",
+    description: "Generate your first bespoke travel itinerary with TripGenius AI Engine.",
     icon: "✈️",
     tier: "Bronze",
     category: "General",
@@ -47,13 +49,12 @@ const ACHIEVEMENTS: AchievementItem[] = [
     progress: 1,
     total: 1,
     xp: 100,
-    unlockedDate: "Jan 15, 2026",
+    unlockedDate: "Verified",
   },
   {
     id: 2,
     title: "Green Pathfinder",
-    description:
-      "Synthesize an itinerary with a sustainability score above 85/100.",
+    description: "Synthesize an itinerary with a sustainability eco score above 85/100.",
     icon: "🌱",
     tier: "Gold",
     category: "Eco",
@@ -61,40 +62,51 @@ const ACHIEVEMENTS: AchievementItem[] = [
     progress: 1,
     total: 1,
     xp: 350,
-    unlockedDate: "Feb 02, 2026",
+    unlockedDate: "Verified",
   },
   {
     id: 3,
     title: "Western Ghats Connoisseur",
-    description:
-      "Plan trips to Munnar, Coorg, and Ooty within one travel season.",
+    description: "Plan trips to Munnar, Coorg, or Ooty with high scenic rating.",
     icon: "⛰️",
     tier: "Silver",
     category: "Exploration",
-    unlocked: false,
-    progress: 2,
+    unlocked: true,
+    progress: 3,
     total: 3,
     xp: 250,
+    unlockedDate: "Verified",
   },
   {
     id: 4,
-    title: "Frugal Nomad",
-    description:
-      "Plan a comprehensive 3+ day trip with an estimated cost under ₹10,000.",
-    icon: "💰",
-    tier: "Silver",
-    category: "Budget",
+    title: "Bucket List Collector",
+    description: "Save 3 or more curated sanctuaries to your personal bucket list.",
+    icon: "❤️",
+    tier: "Bronze",
+    category: "General",
     unlocked: true,
-    progress: 1,
-    total: 1,
-    xp: 200,
-    unlockedDate: "Mar 10, 2026",
+    progress: 3,
+    total: 3,
+    xp: 150,
+    unlockedDate: "Verified",
   },
   {
     id: 5,
+    title: "Frugal Nomad",
+    description: "Plan 2 comprehensive trips with an estimated cost under ₹15,000.",
+    icon: "💰",
+    tier: "Silver",
+    category: "Budget",
+    unlocked: false,
+    progress: 1,
+    total: 2,
+    xp: 200,
+    secretHint: "Calibrate stay & transit under ₹15k",
+  },
+  {
+    id: 6,
     title: "Carbon Reducer",
-    description:
-      "Select low-emission transit (Train or EV) across 3 generated journeys.",
+    description: "Select low-emission transit (Scenic Train, Bus, or EV) across 3 journeys.",
     icon: "🍃",
     tier: "Gold",
     category: "Eco",
@@ -102,112 +114,323 @@ const ACHIEVEMENTS: AchievementItem[] = [
     progress: 2,
     total: 3,
     xp: 300,
-  },
-  {
-    id: 6,
-    title: "Bucket List Collector",
-    description:
-      "Save 5 or more curated destinations to your personal favorites.",
-    icon: "❤️",
-    tier: "Bronze",
-    category: "General",
-    unlocked: true,
-    progress: 5,
-    total: 5,
-    xp: 150,
-    unlockedDate: "Mar 18, 2026",
+    secretHint: "Select Train or EV in 1 more plan",
   },
   {
     id: 7,
-    title: "Culinary Explorer",
-    description:
-      "Explore traditional local food recommendations across 4 distinct regions.",
-    icon: "🍜",
-    tier: "Silver",
-    category: "Exploration",
+    title: "Spiritual & Heritage Seeker",
+    description: "Explore sacred ghats, temple corridors, and ancient civilizations like Varanasi or Hampi.",
+    icon: "🛕",
+    tier: "Gold",
+    category: "Culture",
     unlocked: false,
-    progress: 3,
-    total: 4,
-    xp: 250,
+    progress: 1,
+    total: 2,
+    xp: 350,
+    secretHint: "Plan a trip to Kashi or Hampi ruins",
   },
   {
     id: 8,
-    title: "Master Globetrotter",
-    description:
-      "Generate 15 complete itineraries and visit all top sanctuaries.",
-    icon: "👑",
+    title: "Sacred Ganga Dawn Pilgrim",
+    description: "Witness the Subah-e-Banaras dawn rowboat cruise and Dashashwamedh Aarti in Varanasi.",
+    icon: "🛶",
+    tier: "Gold",
+    category: "Culture",
+    unlocked: false,
+    progress: 0,
+    total: 1,
+    xp: 400,
+    secretHint: "Craft a cultural itinerary for Varanasi",
+  },
+  {
+    id: 9,
+    title: "Courtallam Waterfalls Chaser",
+    description: "Plan a rejuvenating waterfall trip to Thenkasi & Courtallam during peak Saaral season.",
+    icon: "🌊",
+    tier: "Silver",
+    category: "Exploration",
+    unlocked: false,
+    progress: 0,
+    total: 1,
+    xp: 300,
+    secretHint: "Explore Thenkasi mineral water cascades",
+  },
+  {
+    id: 10,
+    title: "Culinary Trailblazer",
+    description: "Savor or bookmark 4 verified regional food trails (Border Parotta, Banarasi Chaat, Malabar Thali, Kodava Curry).",
+    icon: "🍲",
+    tier: "Gold",
+    category: "Culture",
+    unlocked: false,
+    progress: 2,
+    total: 4,
+    xp: 350,
+    secretHint: "Discover local delicacies in 2 more escapes",
+  },
+  {
+    id: 11,
+    title: "Highland Peak Conqueror",
+    description: "Summit cloud viewpoints above 2,000m (Kolukkumalai, Doddabetta, or Tadiandamol).",
+    icon: "🧗‍♂️",
+    tier: "Silver",
+    category: "Exploration",
+    unlocked: false,
+    progress: 1,
+    total: 3,
+    xp: 300,
+    secretHint: "Trek the highest tea estates & peaks",
+  },
+  {
+    id: 12,
+    title: "Zero Carbon Champion",
+    description: "Complete 5 zero-emission trips using trains, EV mobility, or walking eco-trails.",
+    icon: "⚡",
     tier: "Platinum",
+    category: "Eco",
+    unlocked: false,
+    progress: 2,
+    total: 5,
+    xp: 600,
+    secretHint: "Maintain eco score above 90/100",
+  },
+  {
+    id: 13,
+    title: "Grand Heritage Maven",
+    description: "Synthesize itineraries across 3 UNESCO World Heritage architectural marvels.",
+    icon: "🏛️",
+    tier: "Platinum",
+    category: "Exploration",
+    unlocked: false,
+    progress: 1,
+    total: 3,
+    xp: 500,
+    secretHint: "Explore Hampi, Taj Mahal, or Paris",
+  },
+  {
+    id: 14,
+    title: "Solo Wanderer",
+    description: "Plan a solo adventure itinerary tailored with offbeat walking trails and quiet homestays.",
+    icon: "🎒",
+    tier: "Bronze",
+    category: "General",
+    unlocked: false,
+    progress: 0,
+    total: 1,
+    xp: 200,
+    secretHint: "Select 'Solo Traveler' in AI Planner",
+  },
+  {
+    id: 15,
+    title: "Master Explorer Crest",
+    description: "Earn 10 total milestones to claim the ultimate Platinum Explorer Crest and VIP traveler rank.",
+    icon: "👑",
+    tier: "Diamond",
     category: "General",
     unlocked: false,
     progress: 4,
-    total: 15,
-    xp: 500,
+    total: 10,
+    xp: 1000,
+    secretHint: "Unlock 6 more milestones to earn this crown",
   },
 ];
 
 export default function AchievementsPage() {
-  const [filter, setFilter] = useState<
-    "All" | "Unlocked" | "In Progress" | "Eco"
-  >("All");
+  const [filter, setFilter] = useState<"All" | "Unlocked" | "In Progress" | "Locked" | "Eco" | "Exploration">("All");
+  const [achievements, setAchievements] = useState<AchievementItem[]>(INITIAL_ACHIEVEMENTS);
 
-  const filtered = ACHIEVEMENTS.filter((item) => {
+  useEffect(() => {
+    // Sync with actual local storage activity
+    try {
+      const rawSaved = localStorage.getItem("saved_trips");
+      const tripCount = rawSaved ? JSON.parse(rawSaved).length : 2;
+
+      setAchievements((prev) =>
+        prev.map((a) => {
+          if (a.id === 1) return { ...a, unlocked: tripCount >= 1, progress: Math.min(1, tripCount) };
+          if (a.id === 15) {
+            const unlockedTotal = prev.filter((item) => item.unlocked && item.id !== 15).length;
+            return { ...a, progress: unlockedTotal, unlocked: unlockedTotal >= 10 };
+          }
+          return a;
+        }),
+      );
+    } catch {
+      // fallback
+    }
+  }, []);
+
+  const filtered = achievements.filter((item) => {
     if (filter === "Unlocked") return item.unlocked;
-    if (filter === "In Progress") return !item.unlocked;
+    if (filter === "In Progress") return !item.unlocked && item.progress > 0;
+    if (filter === "Locked") return !item.unlocked;
     if (filter === "Eco") return item.category === "Eco";
+    if (filter === "Exploration") return item.category === "Exploration" || item.category === "Culture";
     return true;
   });
 
-  const unlockedCount = ACHIEVEMENTS.filter((a) => a.unlocked).length;
-  const totalXP = ACHIEVEMENTS.filter((a) => a.unlocked).reduce(
-    (sum, a) => sum + a.xp,
-    0,
-  );
+  const unlockedCount = achievements.filter((a) => a.unlocked).length;
+  const totalXP = achievements
+    .filter((a) => a.unlocked)
+    .reduce((sum, a) => sum + a.xp, 0);
+
+  const level = totalXP >= 2000 ? 5 : totalXP >= 1400 ? 4 : totalXP >= 800 ? 3 : totalXP >= 400 ? 2 : 1;
+  const levelTitle =
+    level === 5
+      ? "Level 5: Grand Legend Pathfinder"
+      : level === 4
+      ? "Level 4: Global Expedition Master"
+      : level === 3
+      ? "Level 3: Western Ghats Pathfinder"
+      : level === 2
+      ? "Level 2: Eco Explorer"
+      : "Level 1: Novice Voyager";
+
+  const nextLevelXP = 2500;
+  const progressPct = Math.min(100, Math.round((totalXP / nextLevelXP) * 100));
 
   const getTierBadge = (tier: string) => {
     switch (tier) {
+      case "Diamond":
+        return (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              fontWeight: 800,
+              background: "linear-gradient(135deg, rgba(56, 189, 248, 0.3), rgba(168, 85, 247, 0.3))",
+              border: "1px solid rgba(168, 85, 247, 0.5)",
+              color: "#E0E7FF",
+              boxShadow: "0 0 14px rgba(168, 85, 247, 0.4)",
+            }}
+          >
+            💎 Diamond Tier
+          </span>
+        );
       case "Platinum":
         return (
-          <Badge variant="purple" size="sm">
-            Platinum Tier
-          </Badge>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              background: "rgba(168, 85, 247, 0.20)",
+              border: "1px solid rgba(168, 85, 247, 0.50)",
+              color: "#E9D5FF",
+              boxShadow: "0 0 12px rgba(168, 85, 247, 0.35)",
+            }}
+          >
+            ★ Platinum
+          </span>
         );
       case "Gold":
         return (
-          <Badge variant="amber" size="sm">
-            Gold Tier
-          </Badge>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              background: "rgba(245, 158, 11, 0.20)",
+              border: "1px solid rgba(245, 158, 11, 0.50)",
+              color: "#FEF3C7",
+              boxShadow: "0 0 12px rgba(245, 158, 11, 0.30)",
+            }}
+          >
+            ★ Gold Tier
+          </span>
         );
       case "Silver":
         return (
-          <Badge variant="neutral" size="sm">
-            Silver Tier
-          </Badge>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              background: "rgba(148, 163, 184, 0.20)",
+              border: "1px solid rgba(148, 163, 184, 0.40)",
+              color: "#F8FAFC",
+            }}
+          >
+            ★ Silver Tier
+          </span>
         );
       default:
         return (
-          <Badge variant="neutral" size="sm">
-            Bronze Tier
-          </Badge>
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "4px",
+              padding: "4px 10px",
+              borderRadius: "8px",
+              fontSize: "0.75rem",
+              fontWeight: 700,
+              background: "rgba(217, 119, 6, 0.20)",
+              border: "1px solid rgba(217, 119, 6, 0.40)",
+              color: "#FED7AA",
+            }}
+          >
+            ★ Bronze Tier
+          </span>
         );
     }
   };
 
   return (
     <div
-      className="page-container"
-      style={{ display: "flex", flexDirection: "column", gap: "36px" }}
+      style={{
+        width: "92%",
+        maxWidth: "1360px",
+        margin: "0 auto",
+        padding: "28px 16px",
+        display: "flex",
+        flexDirection: "column",
+        gap: "32px",
+      }}
     >
       {/* LEVEL & XP PROGRESS BANNER */}
       <section
         style={{
           background:
-            "linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(14, 165, 233, 0.15) 50%, rgba(15, 23, 42, 0.85) 100%)",
-          border: "1px solid rgba(245, 158, 11, 0.30)",
-          borderRadius: "28px",
+            "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.90) 100%)",
+          border: "1px solid rgba(56, 189, 248, 0.35)",
+          borderRadius: "24px",
           padding: "36px 32px",
-          boxShadow: "0 16px 48px rgba(0, 0, 0, 0.40)",
+          boxShadow: "0 16px 48px rgba(0, 0, 0, 0.45)",
+          position: "relative",
+          overflow: "hidden",
         }}
       >
+        {/* GLOW DECORATION */}
+        <div
+          style={{
+            position: "absolute",
+            top: "-50px",
+            right: "-50px",
+            width: "250px",
+            height: "250px",
+            background: "radial-gradient(circle, rgba(14, 165, 233, 0.25) 0%, transparent 70%)",
+            filter: "blur(40px)",
+            pointerEvents: "none",
+          }}
+        />
+
         <div
           style={{
             display: "flex",
@@ -216,6 +439,8 @@ export default function AchievementsPage() {
             flexWrap: "wrap",
             gap: "20px",
             marginBottom: "24px",
+            position: "relative",
+            zIndex: 1,
           }}
         >
           <div>
@@ -227,12 +452,8 @@ export default function AchievementsPage() {
                 marginBottom: "8px",
               }}
             >
-              <Badge
-                variant="amber"
-                size="sm"
-                icon={<Award size={12} fill="#FBBF24" />}
-              >
-                Traveler Gamification
+              <Badge variant="overlay" size="sm" icon={<Award size={13} color="#FBBF24" />}>
+                Traveler Gamification & Honors
               </Badge>
               <span
                 style={{
@@ -242,6 +463,10 @@ export default function AchievementsPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "4px",
+                  background: "rgba(245, 158, 11, 0.15)",
+                  padding: "3px 10px",
+                  borderRadius: "999px",
+                  border: "1px solid rgba(245, 158, 11, 0.30)",
                 }}
               >
                 <Flame size={14} fill="#F59E0B" /> 2 Week Streak
@@ -252,57 +477,64 @@ export default function AchievementsPage() {
                 fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
                 fontWeight: 900,
                 color: "#FFFFFF",
-                letterSpacing: "-0.5px",
+                letterSpacing: "-0.03em",
+                margin: "4px 0",
               }}
             >
-              Level 3: Western Ghats Pathfinder
+              {levelTitle}
             </h1>
             <p
               style={{
                 color: "#94A3B8",
-                fontSize: "0.98rem",
-                marginTop: "4px",
+                fontSize: "0.95rem",
+                margin: 0,
+                maxWidth: "600px",
               }}
             >
-              Earn XP by synthesizing custom itineraries, lowering carbon
-              impact, and saving escapes.
+              Earn travel experience points (XP) by synthesizing itineraries, selecting green transit, and exploring regional heritage.
             </p>
           </div>
 
           <div style={{ textAlign: "right" }}>
             <span
-              style={{ fontSize: "2.4rem", fontWeight: 900, color: "#FBBF24" }}
+              style={{
+                fontSize: "2.6rem",
+                fontWeight: 900,
+                color: "#38BDF8",
+                letterSpacing: "-0.03em",
+              }}
             >
               {totalXP}{" "}
-              <span style={{ fontSize: "1.1rem", fontWeight: 600 }}>XP</span>
+              <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#94A3B8" }}>
+                XP
+              </span>
             </span>
-            <p style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
-              Next Level at 1,500 XP
+            <p style={{ fontSize: "0.82rem", color: "#64748B", margin: "2px 0 0 0" }}>
+              Next Rank at {nextLevelXP} XP
             </p>
           </div>
         </div>
 
         {/* PROGRESS BAR */}
-        <div>
+        <div style={{ position: "relative", zIndex: 1 }}>
           <div
             style={{
               display: "flex",
               justifyContent: "space-between",
-              fontSize: "0.82rem",
+              fontSize: "0.85rem",
               color: "#CBD5E1",
               marginBottom: "8px",
             }}
           >
-            <span>Progress to Level 4 (Globetrotter)</span>
+            <span>Progress to Next Rank</span>
             <span>
-              <strong>{Math.round((totalXP / 1500) * 100)}%</strong> ({totalXP}{" "}
-              / 1,500 XP)
+              <strong style={{ color: "#38BDF8" }}>{progressPct}%</strong> ({totalXP} / {nextLevelXP} XP)
             </span>
           </div>
           <div
             style={{
               width: "100%",
-              height: "10px",
+              height: "12px",
               borderRadius: "999px",
               background: "rgba(255, 255, 255, 0.08)",
               overflow: "hidden",
@@ -310,10 +542,12 @@ export default function AchievementsPage() {
           >
             <div
               style={{
-                width: `${Math.min(100, (totalXP / 1500) * 100)}%`,
+                width: `${progressPct}%`,
                 height: "100%",
-                background: "linear-gradient(90deg, #F59E0B 0%, #0EA5E9 100%)",
+                background: "linear-gradient(90deg, #0EA5E9 0%, #10B981 100%)",
                 borderRadius: "999px",
+                boxShadow: "0 0 12px rgba(16, 185, 129, 0.5)",
+                transition: "width 0.6s ease",
               }}
             />
           </div>
@@ -331,11 +565,11 @@ export default function AchievementsPage() {
         }}
       >
         <div>
-          <h2 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#FFFFFF" }}>
-            Milestones & Badges ({unlockedCount}/{ACHIEVEMENTS.length} Unlocked)
+          <h2 style={{ fontSize: "1.5rem", fontWeight: 800, color: "#FFFFFF", margin: 0 }}>
+            Milestones & Honors ({unlockedCount}/{achievements.length} Unlocked • {achievements.length - unlockedCount} to Earn)
           </h2>
-          <p style={{ color: "#94A3B8", fontSize: "0.9rem" }}>
-            Unlock rewards as you explore regional destinations sustainably.
+          <p style={{ color: "#94A3B8", fontSize: "0.88rem", marginTop: "4px" }}>
+            Unlock achievements as you discover new sanctuaries and travel responsibly.
           </p>
         </div>
 
@@ -345,18 +579,23 @@ export default function AchievementsPage() {
             background: "rgba(255, 255, 255, 0.05)",
             borderRadius: "12px",
             padding: "4px",
-            border: "1px solid rgba(255, 255, 255, 0.08)",
+            border: "1px solid rgba(255, 255, 255, 0.10)",
+            flexWrap: "wrap",
+            gap: "4px",
           }}
         >
-          {(["All", "Unlocked", "In Progress", "Eco"] as const).map((tab) => (
+          {(["All", "Unlocked", "In Progress", "Locked", "Eco", "Exploration"] as const).map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setFilter(tab)}
               style={{
-                padding: "6px 14px",
+                padding: "7px 14px",
                 borderRadius: "8px",
-                background: filter === tab ? "#0EA5E9" : "transparent",
+                background:
+                  filter === tab
+                    ? "linear-gradient(135deg, #0EA5E9 0%, #10B981 100%)"
+                    : "transparent",
                 color: filter === tab ? "#FFFFFF" : "#94A3B8",
                 border: "none",
                 fontSize: "0.85rem",
@@ -371,14 +610,8 @@ export default function AchievementsPage() {
         </div>
       </div>
 
-      {/* ACHIEVEMENTS GRID */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-          gap: "20px",
-        }}
-      >
+      {/* ACHIEVEMENTS GRID — 3 BOXES IN A ROW */}
+      <div className="grid-3-col">
         {filtered.map((item) => (
           <GlassCard
             key={item.id}
@@ -388,10 +621,23 @@ export default function AchievementsPage() {
               flexDirection: "column",
               justifyContent: "space-between",
               gap: "18px",
-              opacity: item.unlocked ? 1 : 0.75,
+              opacity: item.unlocked ? 1 : 0.88,
               border: item.unlocked
-                ? "1px solid rgba(14, 165, 233, 0.25)"
-                : "1px solid rgba(255, 255, 255, 0.06)",
+                ? "1px solid rgba(14, 165, 233, 0.35)"
+                : item.progress > 0
+                ? "1px solid rgba(245, 158, 11, 0.35)"
+                : "1px solid rgba(255, 255, 255, 0.08)",
+              background: item.unlocked
+                ? "rgba(15, 23, 42, 0.85)"
+                : item.progress > 0
+                ? "rgba(15, 23, 42, 0.70)"
+                : "rgba(15, 23, 42, 0.45)",
+              boxShadow: item.unlocked
+                ? "0 8px 24px rgba(14, 165, 233, 0.15)"
+                : item.progress > 0
+                ? "0 8px 24px rgba(245, 158, 11, 0.10)"
+                : "none",
+              transition: "transform 0.2s ease, border-color 0.2s ease",
             }}
           >
             <div>
@@ -405,22 +651,49 @@ export default function AchievementsPage() {
               >
                 <div
                   style={{
-                    width: "48px",
-                    height: "48px",
+                    width: "50px",
+                    height: "50px",
                     borderRadius: "14px",
                     background: item.unlocked
-                      ? "linear-gradient(135deg, rgba(14, 165, 233, 0.2), rgba(20, 184, 166, 0.2))"
+                      ? "linear-gradient(135deg, rgba(14, 165, 233, 0.25), rgba(20, 184, 166, 0.25))"
+                      : item.progress > 0
+                      ? "rgba(245, 158, 11, 0.15)"
                       : "rgba(255, 255, 255, 0.04)",
                     border: item.unlocked
-                      ? "1px solid rgba(14, 165, 233, 0.4)"
-                      : "1px solid rgba(255, 255, 255, 0.1)",
+                      ? "1px solid rgba(14, 165, 233, 0.45)"
+                      : item.progress > 0
+                      ? "1px solid rgba(245, 158, 11, 0.35)"
+                      : "1px solid rgba(255, 255, 255, 0.10)",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    fontSize: "1.6rem",
+                    fontSize: "1.7rem",
+                    boxShadow: item.unlocked
+                      ? "0 0 16px rgba(14, 165, 233, 0.25)"
+                      : "none",
+                    position: "relative",
                   }}
                 >
                   {item.icon}
+                  {!item.unlocked && item.progress === 0 && (
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "-4px",
+                        right: "-4px",
+                        width: "18px",
+                        height: "18px",
+                        borderRadius: "50%",
+                        background: "#0F172A",
+                        border: "1px solid rgba(245, 158, 11, 0.6)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Lock size={10} color="#FBBF24" />
+                    </div>
+                  )}
                 </div>
                 {getTierBadge(item.tier)}
               </div>
@@ -440,10 +713,27 @@ export default function AchievementsPage() {
                   color: "#94A3B8",
                   fontSize: "0.85rem",
                   lineHeight: 1.6,
+                  margin: 0,
                 }}
               >
                 {item.description}
               </p>
+
+              {item.secretHint && !item.unlocked && (
+                <div
+                  style={{
+                    marginTop: "8px",
+                    fontSize: "0.76rem",
+                    color: "#FBBF24",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                  }}
+                >
+                  <Sparkles size={11} color="#FBBF24" />
+                  <span>Tip: {item.secretHint}</span>
+                </div>
+              )}
             </div>
 
             <div>
@@ -469,14 +759,64 @@ export default function AchievementsPage() {
                         fontWeight: 600,
                         display: "flex",
                         alignItems: "center",
-                        gap: "4px",
+                        gap: "5px",
                       }}
                     >
-                      <Check size={14} /> Unlocked on {item.unlockedDate}
+                      <CheckCircle2 size={15} color="#34D399" /> Unlocked & Active
                     </span>
-                    <Badge variant="amber" size="sm">
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        background: "rgba(56, 189, 248, 0.15)",
+                        border: "1px solid rgba(56, 189, 248, 0.35)",
+                        color: "#38BDF8",
+                        borderRadius: "999px",
+                        padding: "3px 10px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                      }}
+                    >
                       +{item.xp} XP
-                    </Badge>
+                    </span>
+                  </div>
+                ) : item.progress === 0 ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                    }}
+                  >
+                    <span
+                      style={{
+                        fontSize: "0.8rem",
+                        color: "#FBBF24",
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "5px",
+                      }}
+                    >
+                      <Lock size={13} color="#FBBF24" /> Locked Reward
+                    </span>
+                    <span
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "3px",
+                        background: "rgba(245, 158, 11, 0.15)",
+                        border: "1px solid rgba(245, 158, 11, 0.35)",
+                        color: "#FBBF24",
+                        borderRadius: "999px",
+                        padding: "3px 10px",
+                        fontSize: "0.78rem",
+                        fontWeight: 700,
+                      }}
+                    >
+                      +{item.xp} XP
+                    </span>
                   </div>
                 ) : (
                   <div>
@@ -489,10 +829,10 @@ export default function AchievementsPage() {
                         marginBottom: "6px",
                       }}
                     >
-                      <span>
-                        Progress: {item.progress}/{item.total}
+                      <span style={{ color: "#38BDF8", fontWeight: 600 }}>
+                        {item.progress}/{item.total} Completed
                       </span>
-                      <span>+{item.xp} XP reward</span>
+                      <span style={{ color: "#FBBF24", fontWeight: 700 }}>+{item.xp} XP reward</span>
                     </div>
                     <div
                       style={{
@@ -505,9 +845,9 @@ export default function AchievementsPage() {
                     >
                       <div
                         style={{
-                          width: `${(item.progress / item.total) * 100}%`,
+                          width: `${Math.min(100, Math.round((item.progress / item.total) * 100))}%`,
                           height: "100%",
-                          background: "#0EA5E9",
+                          background: "linear-gradient(90deg, #0EA5E9, #10B981)",
                           borderRadius: "999px",
                         }}
                       />

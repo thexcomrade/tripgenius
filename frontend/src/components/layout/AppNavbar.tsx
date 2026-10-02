@@ -115,10 +115,12 @@ export default function AppNavbar() {
       }}
     >
       <div
+        className="navbar-content-container"
         style={{
-          maxWidth: "1520px",
+          width: "80%",
+          maxWidth: "1240px",
           margin: "0 auto",
-          padding: "14px 24px",
+          padding: "14px clamp(16px, 2.5vw, 32px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",

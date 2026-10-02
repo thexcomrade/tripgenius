@@ -683,36 +683,61 @@ class TourismRAGService:
         self, user_message: str, history: Optional[list] = None, user_name: Optional[str] = None
     ) -> dict[str, str]:
         """
-        Synthesizes a warm, structured, 0-lag response in DASAPPAN's voice,
-        strictly grounded in authentic travel facts and deep intent analysis.
-        Greets warmly with Namaskaram *username*!
+        Synthesizes a warm, conversational, 0-lag response in DASAPPAN's authentic voice.
+        Follows progressive multi-turn consultative discovery:
+        1. Never repeats formal greetings if already greeted in history.
+        2. Reacts with authentic delight: 'Oh, {Destination}!! 🌟' followed by a 2-line vivid description.
+        3. Collects essential details one comfortable question at a time across multiple messages.
+        4. Smoothly handles affirmations ('yes', 'sure') and context follow-ups.
         """
         msg = user_message.strip()
         msg_lower = msg.lower()
 
-        # Format personalized greeting
+        # Check if conversation already has prior messages
+        already_greeted = False
+        if history and isinstance(history, list) and len(history) > 0:
+            for h in history:
+                if isinstance(h, dict) and "namaskaram" in str(h.get("content", "")).lower():
+                    already_greeted = True
+                    break
+                elif isinstance(h, dict) and h.get("role") == "assistant":
+                    already_greeted = True
+                    break
+
         display_name = (user_name or "").strip()
-        greeting_prefix = f"Namaskaram {display_name}! 🙏" if display_name else "Namaskaram! 🙏"
-
-        # Collect history text
-        history_text = ""
-        if history:
-            history_text = " ".join([str(h.get("content", "")).lower() for h in history[-4:]])
-        full_context = f"{history_text} {msg_lower}"
-
-        # 1. Pure greeting check (e.g. "hai", "hello", "hi", "namaskaram", "hey")
-        greeting_words = {"hai", "hi", "hello", "hey", "namaskaram", "namaste", "vanakkam", "halo", "yo", "morning", "evening"}
-        words_set = set(re.findall(r"\b\w+\b", msg_lower))
-
-        is_pure_greeting = (
-            words_set.issubset(greeting_words)
-            or msg_lower in ["hi", "hai", "hello", "hey", "namaskaram", "namaste", "vanakkam", "good morning", "good evening"]
+        greeting_prefix = (
+            "" if already_greeted
+            else (f"Namaskaram {display_name}! 🙏\n\n" if display_name else "Namaskaram! 🙏\n\n")
         )
 
-        if is_pure_greeting:
+        # Collect history text for context
+        history_text = ""
+        last_assistant_msg = ""
+        if history and isinstance(history, list):
+            history_text = " ".join([str(h.get("content", "")).lower() for h in history[-6:]])
+            for h in reversed(history):
+                if isinstance(h, dict) and h.get("role") == "assistant":
+                    last_assistant_msg = str(h.get("content", "")).lower()
+                    break
+
+        full_context = f"{history_text} {msg_lower}"
+
+        # 1. Pure greeting check (only on first contact or explicit standalone hello)
+        greeting_words = {"hai", "hi", "hello", "hey", "namaskaram", "namaste", "vanakkam", "halo", "yo"}
+        words_set = set(re.findall(r"\b\w+\b", msg_lower))
+
+        if words_set.issubset(greeting_words) or msg_lower in ["hi", "hai", "hello", "hey", "namaskaram", "namaste", "good morning", "good evening"]:
+            if already_greeted:
+                return {
+                    "reply": (
+                        f"Hello {display_name or 'there'}! 😊 Ready for the next adventure.\n\n"
+                        "Tell me your destination or whatever is on your mind, and let's plan it out together!"
+                    ),
+                    "source": "rag_knowledge_engine",
+                }
             return {
                 "reply": (
-                    f"{greeting_prefix} DASAPPAN here, your AI travel companion.\n\n"
+                    f"Namaskaram {display_name}! 🙏 DASAPPAN here, your AI travel companion.\n\n"
                     "How may I help you today?\n\n"
                     "Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal plan with verified stays and costs in ₹.\n\n"
                     "❓ Where would you like to travel, or what would you like me to plan for you?"
@@ -720,89 +745,188 @@ class TourismRAGService:
                 "source": "rag_knowledge_engine",
             }
 
-        # 2. Check for destination match
-        dest_data = self.resolve_destination(full_context)
+        # 2. Resolve destination (from current message first, then conversation history)
+        dest_data = self.resolve_destination(msg_lower)
+        if not dest_data:
+            dest_data = self.resolve_destination(full_context)
 
+        # Fallback to general destination name if matched in common keywords
+        generic_dest_name = None
+        if not dest_data:
+            common_destinations = [
+                "varanasi", "kashi", "banaras", "thenkasi", "tenkasi", "courtallam",
+                "munnar", "vattavada", "varkala", "coorg", "ooty", "wayanad", "kodaikanal",
+                "hampi", "goa", "alleppey", "mysore", "jaipur", "agra", "manali",
+                "paris", "tokyo", "bali", "dubai", "ladakh", "delhi"
+            ]
+            for cd in common_destinations:
+                if cd in msg_lower:
+                    generic_dest_name = cd.title()
+                    break
+                elif cd in full_context:
+                    generic_dest_name = cd.title()
+                    break
+
+        # 3. Contextual Affirmations ("yes", "sure", "tell me hotels", "refine it")
+        is_affirmation = msg_lower in [
+            "yes", "yeah", "yep", "sure", "please", "ok", "okay", "yes please",
+            "tell me", "hotels", "stays", "transit", "train", "flight"
+        ] or msg_lower.startswith("yes ") or msg_lower.startswith("sure ")
+
+        if is_affirmation and dest_data:
+            cname = dest_data["canonical_name"]
+            stays = "\n".join([f"• **{s.split('(~')[0].strip()}** (~{s.split('(~')[1] if '(~' in s else s})" for s in dest_data["stay_options"]])
+            transit = dest_data["transit"]
+            tip = dest_data["insider_tip"]
+            return {
+                "reply": (
+                    f"Here are the hand-picked stays and transit details for **{cname}**:\n\n"
+                    f"🏨 **Verified Stays**:\n{stays}\n\n"
+                    f"🚗 **How to Reach & Local Transit**:\n{transit}\n\n"
+                    f"💡 **DASAPPAN's Insider Secret**: {tip}\n\n"
+                    f"Would you like me to recommend the best local food spots or map out a detailed day-by-day plan next?"
+                ),
+                "source": "rag_knowledge_engine",
+            }
+
+        # 4. Handle specific queries (Food, Weather, Budget, Stays)
         if dest_data:
             cname = dest_data["canonical_name"]
+            dest_short = cname.split("(")[0].strip()
 
-            # Analyze user's specific intent:
-            # - Is user asking about food?
-            if any(w in msg_lower for w in ["food", "eat", "dishes", "cuisine", "restaurant", "parotta", "salna"]):
+            if any(w in msg_lower for w in ["food", "eat", "dishes", "cuisine", "restaurant", "parotta", "chaat", "lassi"]):
                 foods = "\n".join([f"• {f}" for f in dest_data["food_specialities"]])
                 return {
                     "reply": (
-                        f"{greeting_prefix} Here are the authentic must-try food specialities in **{cname}**:\n\n"
+                        f"Here are the authentic must-try food specialities in **{dest_short}**:\n\n"
                         f"{foods}\n\n"
                         f"💡 **DASAPPAN's Foodie Tip**: {dest_data['insider_tip']}\n\n"
-                        f"❓ Would you like recommended restaurants or budget stays nearby?"
+                        f"Would you like recommended stays nearby or shall we plan the itinerary?"
                     ),
                     "source": "rag_knowledge_engine",
                 }
 
-            # - Is user asking about budget or cost?
-            if any(w in msg_lower for w in ["budget", "cost", "price", "how much", "rate", "rupee", "cheap"]):
-                stays = "\n".join([f"• {s}" for s in dest_data["stay_options"]])
+            if any(w in msg_lower for w in ["weather", "best time", "season", "climate", "rain", "when to visit"]):
                 return {
                     "reply": (
-                        f"{greeting_prefix} Here is a realistic budget blueprint for **{cname}**:\n\n"
-                        f"💰 **Estimated Daily Budget**: {dest_data['budget_per_day']}\n\n"
-                        f"🏨 **Stay Options**:\n{stays}\n\n"
-                        f"🚗 **Transit**: {dest_data['transit']}\n\n"
-                        f"❓ How many days are you planning for this trip, and how many people are traveling?"
-                    ),
-                    "source": "rag_knowledge_engine",
-                }
-
-            # - Is user asking about best time / weather?
-            if any(w in msg_lower for w in ["weather", "best time", "season", "climate", "rain", "monsoon", "when to visit"]):
-                return {
-                    "reply": (
-                        f"{greeting_prefix} The best time to visit **{cname}**:\n\n"
-                        f"📅 **Optimal Season**: {dest_data['best_season']}\n\n"
-                        f"✨ **Vibe**: {dest_data['vibe']}\n\n"
+                        f"Here is the climate & travel season overview for **{dest_short}**:\n\n"
+                        f"📅 **Best Season**: {dest_data['best_season']}\n\n"
+                        f"✨ **Atmosphere**: {dest_data['vibe']}\n\n"
                         f"💡 **Insider Tip**: {dest_data['insider_tip']}\n\n"
-                        f"❓ What month are you thinking of traveling in?"
+                        f"How many days are you planning to visit?"
                     ),
                     "source": "rag_knowledge_engine",
                 }
 
-            # Check if duration / days are provided in query or history
-            days_match = re.search(r"\b(\d+)\s*(?:day|days|d)\b", full_context)
-            has_days = bool(days_match)
-            num_days = int(days_match.group(1)) if days_match else None
+        # 5. Progressive Consultative Flow (Multi-turn conversational discovery)
+        active_dest_data = dest_data
+        active_dest_name = (
+            active_dest_data["canonical_name"].split("(")[0].strip()
+            if active_dest_data
+            else generic_dest_name
+        )
 
-            has_travelers = any(w in full_context for w in ["solo", "couple", "family", "friends", "group", "people", "person", "pax"])
-            has_budget = any(w in full_context for w in ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap", "cost"])
+        if active_dest_name:
+            # Check for travelers
+            travelers_match = re.search(
+                r"\b(\d+)\s*(?:people|persons?|travelers?|pax|adults?|members?)\b",
+                full_context
+            )
+            has_solo = any(w in full_context for w in ["solo", "alone", "myself", "just me", "single"])
+            has_couple = any(w in full_context for w in ["couple", "two of us", "2 of us", "with my wife", "with my husband", "with my partner"])
+            has_family = any(w in full_context for w in ["family", "kids", "parents"])
+            has_friends = any(w in full_context for w in ["friends", "buddies", "college", "colleagues"])
+            has_travelers = bool(travelers_match or has_solo or has_couple or has_family or has_friends or (
+                "traveler" in last_assistant_msg and re.search(r"^\b\d+\b$", msg_lower)
+            ))
 
-            # CASE A: User just mentioned destination without enough trip parameters -> Ask questions to collect info
-            if not has_days and not has_travelers and not any(w in msg_lower for w in ["food", "weather", "stay", "hotel", "reach", "transit"]):
+            # Check for days / duration
+            days_match = re.search(r"\b(\d+)\s*(?:day|days|d|night|nights|n)\b", full_context)
+            has_days = bool(days_match or (
+                "how many days" in last_assistant_msg and re.search(r"^\b\d+\b$", msg_lower)
+            ))
+            num_days = int(days_match.group(1)) if days_match else (
+                int(msg_lower.strip()) if ("how many days" in last_assistant_msg and msg_lower.strip().isdigit()) else None
+            )
+
+            # Check for budget
+            has_budget = any(w in full_context for w in ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap", "cost", "10000", "15000", "12000", "20000", "25000", "under"])
+
+            # STEP A: Destination just mentioned -> Warm reaction + 2-line description + Ask travelers
+            dest_in_current_msg = (active_dest_name.lower() in msg_lower)
+            if dest_in_current_msg and not has_travelers and not has_days:
+                tagline = active_dest_data["tagline"] if active_dest_data else f"A breathtaking travel haven"
+                vibe = active_dest_data["vibe"] if active_dest_data else f"Rich culture, picturesque landscapes, and memorable local experiences"
+
                 return {
                     "reply": (
-                        f"{greeting_prefix}\n\n"
-                        f"**{cname}** is an extraordinary choice! {dest_data['tagline']}.\n\n"
-                        f"{dest_data['vibe']}.\n\n"
-                        f"To help me craft your complete, personalized day-by-day itinerary with verified stays and costs in ₹, could you tell me:\n\n"
-                        f"• 🗓️ **How many days** are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)\n"
-                        f"• 👥 **How many travelers** will be joining? (Solo, couple, family, or friends?)\n"
-                        f"• 💰 What is your approximate **budget tier**? (Budget backpacker, comfortable heritage stay, or luxury?)\n"
-                        f"• ✨ Any **must-have experiences**? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)\n\n"
-                        f"Drop your details below, and I'll synthesize a comprehensive day-by-day plan with timings, authentic stays, food spots, and costs in ₹ for you!"
+                        f"Oh, {active_dest_name}!! 🌟\n\n"
+                        f"{tagline}. {vibe}.\n\n"
+                        f"How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)"
                     ),
                     "source": "rag_consultative_engine",
                 }
 
-            # CASE B: Days or parameters are provided -> Generate complete text plan
-            itinerary_list = dest_data.get("itinerary_5day") if (num_days and num_days >= 4 and "itinerary_5day" in dest_data) else dest_data.get("itinerary_2day", [])
-            itinerary_str = "\n".join([f"• **{step.split(':')[0]}**: {':'.join(step.split(':')[1:]).strip() if ':' in step else step}" for step in itinerary_list])
-            foods_str = "\n".join([f"• {f}" for f in dest_data["food_specialities"][:4]])
-            stays_str = "\n".join([f"• {s}" for s in dest_data["stay_options"][:3]])
+            # STEP B: Travelers provided, but duration missing -> Acknowledge travelers + Ask days
+            if has_travelers and not has_days:
+                group_phrase = (
+                    "A couple's journey" if has_couple
+                    else "A solo adventure" if has_solo
+                    else "A family holiday" if has_family
+                    else "A trip with friends" if has_friends
+                    else f"A trip for {travelers_match.group(0) if travelers_match else 'your group'}"
+                )
+                return {
+                    "reply": (
+                        f"Wonderful! {group_phrase} to **{active_dest_name}** will be an exceptional experience.\n\n"
+                        f"How many days are you planning to spend? (Most travelers find 3 to 4 days ideal to explore the key highlights and authentic spots comfortably)."
+                    ),
+                    "source": "rag_consultative_engine",
+                }
 
-            plan_title = f"{num_days or 3}-Day Bespoke {cname} Travel Plan"
+            # STEP C: Duration provided, but budget missing -> Acknowledge days + Ask budget
+            if has_days and not has_budget:
+                days_label = f"{num_days} days" if num_days else "Your planned duration"
+                return {
+                    "reply": (
+                        f"{days_label} is a fantastic timeframe for **{active_dest_name}**! That gives us ample time to experience the signature sights, authentic regional meals, and peaceful hidden corners.\n\n"
+                        f"What approximate budget tier or style do you have in mind? (e.g. Budget backpacker, comfortable heritage stays, or luxury in ₹)?"
+                    ),
+                    "source": "rag_consultative_engine",
+                }
+
+            # STEP D: All essential details gathered OR full prompt provided -> Generate tailored complete plan
+            chosen_days = num_days or 3
+
+            # Tailor itinerary strictly to chosen_days
+            itinerary_entries = []
+            if active_dest_data:
+                source_itin = active_dest_data.get(f"itinerary_{chosen_days}day") or active_dest_data.get("itinerary_5day") or active_dest_data.get("itinerary_2day") or []
+                if len(source_itin) >= chosen_days:
+                    itinerary_entries = source_itin[:chosen_days]
+                else:
+                    # Dynamically synthesize exact day count
+                    for day_idx in range(1, chosen_days + 1):
+                        if day_idx <= len(source_itin):
+                            itinerary_entries.append(source_itin[day_idx - 1])
+                        else:
+                            itinerary_entries.append(f"Day {day_idx}: Deep exploration of {active_dest_name}'s artisan markets, scenic viewpoints, and peaceful evening cultural trails.")
+            else:
+                for day_idx in range(1, chosen_days + 1):
+                    itinerary_entries.append(f"Day {day_idx}: Signature exploration of {active_dest_name}'s premier landmarks, authentic local food, and sunset panoramic views.")
+
+            itinerary_str = "\n".join([f"• **{step.split(':')[0]}**: {':'.join(step.split(':')[1:]).strip() if ':' in step else step}" for step in itinerary_entries])
+
+            stays_str = "\n".join([f"• {s}" for s in (active_dest_data.get("stay_options", [])[:3] if active_dest_data else [f"Comfort Stays in {active_dest_name} (~₹2,200 – ₹3,800/night)", f"Boutique Heritage Resort (~₹4,500 – ₹6,500/night)"])])
+            foods_str = "\n".join([f"• {f}" for f in (active_dest_data.get("food_specialities", [])[:4] if active_dest_data else [f"Local thali and regional delicacies", f"Traditional fresh street snacks", f"Famous hot filter coffee / regional tea"])])
+            budget_str = active_dest_data.get("budget_per_day", "₹2,000 – ₹3,500 per person per day") if active_dest_data else "₹2,000 – ₹3,500 per person per day"
+            transit_str = active_dest_data.get("transit", f"Direct road, train, and flight connections available to {active_dest_name}.") if active_dest_data else f"Easily accessible by rail, flight, and scenic road networks."
+            tip_str = active_dest_data.get("insider_tip", "Explore prime sights early in the morning around 6:30 AM to beat the crowds and enjoy the best light.") if active_dest_data else "Book popular heritage stays early and visit major viewpoints during golden hour."
+
+            plan_title = f"{chosen_days}-Day Bespoke {active_dest_name} Travel Plan"
 
             reply = (
-                f"{greeting_prefix}\n\n"
-                f"Here is your personalized **{plan_title}** — {dest_data['tagline']}:\n\n"
+                f"Here is your personalized **{plan_title}**:\n\n"
                 f"### 🗓️ Day-by-Day Journey\n"
                 f"{itinerary_str}\n\n"
                 f"### 🏨 Recommended Stays\n"
@@ -810,38 +934,25 @@ class TourismRAGService:
                 f"### 🍲 Iconic Food & Dining\n"
                 f"{foods_str}\n\n"
                 f"### 💰 Estimated Budget Guidelines\n"
-                f"• **Daily Average**: {dest_data['budget_per_day']}\n"
-                f"• **Transit Details**: {dest_data['transit']}\n\n"
+                f"• **Daily Average**: {budget_str}\n"
+                f"• **Transit Details**: {transit_str}\n\n"
                 f"### 💡 Dasappan's Local Insider Secret\n"
-                f"{dest_data['insider_tip']}\n\n"
-                f"Would you like recommendations on specific hotel bookings or adjustments to this plan?"
+                f"{tip_str}\n\n"
+                f"Would you like recommendations on specific hotel bookings or flight/train transit details?"
             )
             return {"reply": reply, "source": "rag_knowledge_engine"}
 
-        # 3. No specific destination detected — analyze general travel query
-        if any(w in msg_lower for w in ["budget", "cost", "cheap", "10000", "5000", "20000", "under"]):
-            return {
-                "reply": (
-                    f"{greeting_prefix} I can tailor an exact budget plan for you anywhere in India or abroad.\n\n"
-                    "To give you realistic numbers for stays, flights/trains, meals, and local transit:\n"
-                    "• What destination are you considering (e.g. Munnar, Thenkasi, Varkala, Ooty, Coorg, Goa, or Paris)?\n"
-                    "• How many days and how many travelers?\n\n"
-                    "❓ Tell me the place you have in mind!"
-                ),
-                "source": "rag_knowledge_engine",
-            }
-
+        # 6. General fallback when no destination is mentioned
         return {
             "reply": (
-                f"{greeting_prefix} I'd love to help you plan your travel.\n\n"
-                f"Could you tell me:\n"
-                f"• Which destination or region in the world are you targeting?\n"
-                f"• How many days do you have in mind?\n\n"
-                f"💡 Popular destinations right now: **Thenkasi & Courtallam**, **Munnar**, **Vattavada**, **Varkala**, **Coorg**, or **Paris**.\n\n"
-                f"❓ Which one shall we look into first?"
+                f"{greeting_prefix}"
+                "I'm ready to craft your personalized travel plan.\n\n"
+                "Which destination do you have in mind? (e.g. **Varanasi**, **Thenkasi**, **Munnar**, **Varkala**, **Coorg**, **Goa**, or **Paris**)?\n\n"
+                "❓ Just drop the city or region name, and we'll take it from there!"
             ),
             "source": "rag_knowledge_engine",
         }
+
 
 
 # Singleton accessor

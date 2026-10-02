@@ -428,6 +428,65 @@ VERIFIED_TRAVEL_DIRECTORY: dict[str, dict[str, list[str]]] = {
         "cuisines": ["Nasi Goreng with Chicken Satay & Peanut Sauce", "Bebek Betutu (Balinese spiced slow-cooked duck)", "Mie Goreng noodles"],
         "beverages": ["Fresh Young Coconut (Kelapa Muda)", "Kopi Luwak Civet Coffee", "Bintang Beer"],
     },
+    "varanasi": {
+        "attractions": [
+            "Dashashwamedh Ghat & Evening Ganga Aarti (Dashashwamedh Ghat, 4 km from Varanasi Cantt) — Ancient spiritual ghat with world-famous 7:00 PM priests' flame ceremony",
+            "Kashi Vishwanath Temple & Corridor (Lahori Tola, 1 km from Dashashwamedh) — One of 12 sacred Jyotirlingas, newly renovated golden spires & Ganga viewpoint",
+            "Assi Ghat & Subah-e-Banaras (Assi Ghat, Southernmost Ghat) — Sacred river confluence, dawn yoga, classical Hindustani concerts & morning boat point",
+            "Sarnath Buddhist Pilgrimage & Museum (Sarnath, 10 km North-East) — Site of Lord Buddha's first sermon, Dhamek Stupa & Lion Capital of Ashoka",
+            "Manikarnika Ghat (Manikarnika Ghat, between Dashashwamedh and Scindia) — Most revered cremation ghat embodying timeless spiritual cycles & moksha",
+            "Banaras Hindu University & New Vishwanath Temple (BHU Campus, Lanka, 7 km) — Asia's largest residential campus with soaring marble Shiva temple",
+            "Ramnagar Fort & Museum (Ramnagar, opposite Tulsi Ghat, Eastern bank) — 18th-century sandstone fortress of Kashi Naresh with royal vintage car collection",
+        ],
+        "hotels": [
+            "BrijRama Palace Varanasi (★ 4.8 Google, ~₹18,500/night) — 18th-century heritage palace directly on Darbhanga Ghat accessible by royal bajra boat",
+            "Taj Ganges Varanasi (★ 4.6 Google, ~₹11,000/night) — Set across 40 acres of lush orchards with luxury heritage suites & spa",
+            "Hotel Surya Kaiser Palace (★ 4.3 Google, ~₹3,400/night) — 1810 royal nepalese palace amidst serene Cantonment gardens with pool",
+            "Zostel Varanasi (★ 4.5 Google, ~₹1,200/night) — Artistic traveler hostel with rooftop terrace, walking tours & vibrant community events",
+            "Ganpati Guest House (★ 4.4 Google, ~₹2,200/night) — Colorfully painted riverside haveli on Meer Ghat with panoramic Ganges sun terrace",
+        ],
+        "restaurants": [
+            "Kashi Chaat Bhandar (★ 4.6 Google, ~₹120/person) — Legendary Godowlia stall famous for Tamatar Chaat, Palak Patta Chaat & Dahi Puri",
+            "Blue Lassi Shop (★ 4.5 Google, ~₹140/person) — Historic 1925 artisanal lassi bar near Manikarnika Ghat with 80+ handcrafted flavors",
+            "Deena Chaat Bhandar (★ 4.4 Google, ~₹130/person) — Renowned for Gulab Jamun, Golgappas & spiced Aloo Tikki in Dashashwamedh",
+            "Pappu Chai Stall (★ 4.7 Google, ~₹30/person) — Landmark Assi Ghat intellectual hub serving clay kulhad tea with lemon & spices",
+            "Baati Chokha Restaurant (★ 4.4 Google, ~₹250/person) — Authentic Purvanchali clay-oven baked Sattu Baati with Chokha & desi ghee",
+        ],
+        "cuisines": [
+            "Banarasi Tamatar Chaat (Warm spiced tomato reduction with roasted cumin & crispy sev)",
+            "Kachori Sabzi & Jalebi (Crispy urad dal stuffed poori with spicy hing potato curry)",
+            "Authentic Baati Chokha with roasted brinjal, tomato & desi cow ghee",
+            "Malaiyo / Nimish (Winter saffron foam dessert garnished with pistachios & silver vark)",
+            "Banarasi Meetha Paan (Betel leaf with gulkand, spices & candied fennel)",
+        ],
+        "beverages": [
+            "Thick Malai Lassi served in traditional earthen Kulhad",
+            "Hot Spiced Kulhad Chai with freshly crushed ginger & green cardamom",
+            "Kesaria Thandai with almonds, saffron & rose petals",
+            "Banarasi Bel Sharbat (Chilled wood-apple herbal nectar)",
+        ],
+    },
+    "thenkasi": {
+        "attractions": [
+            "Courtallam Main Falls / Peraruvi (Courtallam, 6 km from Thenkasi) — 60-meter medicinal cascade flowing through herbal Western Ghats forests",
+            "Five Falls / Aintharuvi (Courtallam Western Slopes, 4 km) — Iconic five distinct streams resembling the hooded serpent",
+            "Kasi Viswanathar Temple (Thenkasi Town Center) — 13th-century Pandyan temple featuring majestic 180-foot Rajagopuram",
+            "Gundar Dam & Reservoir (Sengottai, 14 km from Thenkasi) — Picturesque mountain reservoir surrounded by rubber plantations & cool breeze",
+            "Old Courtallam / Pazhaya Courtallam (Courtallam Hills, 7 km) — Tranquil forest falls perfect for natural hydrotherapy",
+        ],
+        "hotels": [
+            "Saaral Resorts Courtallam (★ 4.2 Google, ~₹3,800/night) — Premium hillside resort with swimming pool & Ayurvedic spa",
+            "Green Forest Resort Thenkasi (★ 4.1 Google, ~₹2,600/night) — Serene estate cottages surrounded by lush coconut groves",
+            "Kasi Residency Thenkasi (★ 4.0 Google, ~₹1,600/night) — Clean transit hotel walking distance from Thenkasi Junction & Temple",
+        ],
+        "restaurants": [
+            "Border Rahmath Hotel Sengottai (★ 4.6 Google, ~₹220/person) — Legendary culinary institution famous for spicy pepper chicken & parotta",
+            "Aintharuvi Chettinad Mess (★ 4.2 Google, ~₹160/person) — Authentic South Indian banana leaf meals & mutton sukka",
+            "Courtallam Sambar Stall (★ 4.4 Google, ~₹80/person) — Piping hot idlis and crispy medu vada soaked in herbal coriander sambar",
+        ],
+        "cuisines": ["Shenkottai Pepper Chicken with crispy layered Parotta", "Tirunelveli Wheat Halwa", "Courtallam Herbal Banana Leaf Meals"],
+        "beverages": ["Herbal Sukku Kaapi (Dry ginger & pepper coffee)", "Fresh Tender Coconut Water", "Nannari Sarbath"],
+    },
 }
 
 

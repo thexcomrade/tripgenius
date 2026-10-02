@@ -507,13 +507,7 @@ export default function ExplorePage() {
       {/* DESTINATIONS GRID */}
       <section>
         {filteredDestinations.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "24px",
-            }}
-          >
+          <div className="grid-3-col">
             {filteredDestinations.map((dest) => {
               const isFav = favorites.includes(dest.name);
               return (
@@ -563,7 +557,26 @@ export default function ExplorePage() {
                         left: "14px",
                       }}
                     >
-                      <Badge variant="neutral" size="sm">
+                      <Badge
+                        variant="overlay"
+                        size="sm"
+                        style={{
+                          letterSpacing: "0.03em",
+                          textTransform: "uppercase",
+                          fontSize: "0.72rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            background: "#38BDF8",
+                            display: "inline-block",
+                            marginRight: "6px",
+                            boxShadow: "0 0 6px #38BDF8",
+                          }}
+                        />
                         {dest.category}
                       </Badge>
                     </div>

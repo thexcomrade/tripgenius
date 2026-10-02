@@ -61,6 +61,7 @@ export default function AIChatPage() {
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("Traveler");
+  const [micError, setMicError] = useState<string | null>(null);
 
   // In-Built 2026 Voice Assistant States
   const [isListening, setIsListening] = useState(false);
@@ -243,27 +244,111 @@ export default function AIChatPage() {
     }
   }, [messages]);
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
+  const toggleListening = async () => {
+    cancelAutoSend();
+    setMicError(null);
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
       return;
     }
 
-    cancelAutoSend();
+    if (typeof window === "undefined") return;
 
-    if (isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-      setIsListening(false);
-    } else {
-      try {
-        latestTranscriptRef.current = "";
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (err) {
-        console.warn("Recognition start failed:", err);
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setMicError(
+        "Voice input is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari."
+      );
+      return;
+    }
+
+    // Proactively verify / request microphone permission
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
       }
+    } catch (micErr: any) {
+      console.warn("Microphone access error:", micErr);
+      if (
+        micErr.name === "NotAllowedError" ||
+        micErr.name === "PermissionDeniedError"
+      ) {
+        setMicError(
+          "Microphone permission was denied. Please allow microphone access in your browser address bar or settings to speak with Dasappan."
+        );
+        return;
+      }
+    }
+
+    try {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "en-US";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        latestTranscriptRef.current = "";
+        setMicError(null);
+      };
+
+      recognition.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        const clean = transcript.trim();
+        if (clean) {
+          setInput(clean);
+          latestTranscriptRef.current = clean;
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition error:", event.error);
+        setIsListening(false);
+        if (
+          event.error === "not-allowed" ||
+          event.error === "service-not-allowed"
+        ) {
+          setMicError(
+            "Microphone permission blocked. In Chrome/Edge, voice recognition requires a secure context (http://localhost:3000 or HTTPS) and microphone access enabled."
+          );
+        } else if (event.error === "network") {
+          setMicError("Speech recognition network error. Please check your internet connection.");
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        const text = latestTranscriptRef.current.trim();
+        if (text) {
+          handleSendMessageRef.current?.(text);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.warn("Recognition start failed:", err);
+      setIsListening(false);
+      setMicError("Unable to start recording. Please check your microphone device settings.");
     }
   };
 
@@ -407,10 +492,14 @@ export default function AIChatPage() {
     const dest = extractDestination(textToSend);
 
     try {
+      const host =
+        typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
       const apiBase =
-        process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        typeof window !== "undefined"
+          ? `${window.location.protocol}//${host}:8000`
+          : process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-      const historyPayload = messages.slice(-6).map((m) => ({
+      const historyPayload = messages.slice(-8).map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -445,46 +534,125 @@ export default function AIChatPage() {
       );
     }
 
-    // Intelligent client-side fallback matching Next-Gen Travel AI Engine 2.0
+    // Intelligent client-side fallback matching Next-Gen Travel AI Engine 3.0 Pro
     setTimeout(() => {
       let aiReply = "";
       const lower = textToSend.toLowerCase();
-      const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste"];
-      const daysMatch = lower.match(/\b(\d+)\s*(?:day|days|d)\b/);
+      const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste", "vanakkam"];
+      const daysMatch = lower.match(/\b(\d+)\s*[-–]?\s*(?:day|days|d)\b/);
       const numDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
-      const hasTravelers = ["solo", "couple", "family", "friends", "group", "people", "person", "pax"].some((w) => lower.includes(w));
-      const hasBudget = ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap"].some((w) => lower.includes(w));
+      const hasTravelers = ["solo", "couple", "family", "friends", "group", "people", "person", "pax", "adult"].some((w) => lower.includes(w));
+      const hasBudget = ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap", "10000", "12000", "15000", "20000", "under"].some((w) => lower.includes(w));
+
+      const alreadyGreeted = messages.length > 0;
+      const historyAll = messages.map((m) => m.content).join(" ");
+      const activeDest = dest || extractDestination(historyAll);
+      const isAffirmation = ["yes", "yeah", "yep", "sure", "please", "ok", "okay", "hotels", "stays", "transit"].some((w) => lower === w || lower.startsWith(w + " "));
 
       if (greetingWords.some((g) => lower === g || lower.startsWith(g + " "))) {
-        aiReply =
-          `Namaskaram ${userName}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
-          `How may I help you today?\n\n` +
-          `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal itinerary for you!\n\n` +
-          `❓ Where would you like to travel, or what can I help you plan?`;
-      } else if (dest && !numDays && !hasTravelers && !hasBudget) {
-        // Consultative discovery: User said a destination without enough details -> Ask questions!
-        aiReply =
-          `Namaskaram ${userName}! 🙏\n\n` +
-          `**${dest}** is an incredible choice! A deeply captivating journey awaits you.\n\n` +
-          `To help me craft your personalized, day-by-day plan with verified stays and costs in ₹, could you tell me:\n\n` +
-          `• 🗓️ **How many days** are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)\n` +
-          `• 👥 **How many travelers** will be joining you? (Solo, couple, family, or friends?)\n` +
-          `• 💰 What is your approximate **budget tier**? (Budget backpacker, comfortable heritage stay, or luxury?)\n` +
-          `• ✨ Any **must-have experiences**? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)\n\n` +
-          `Drop your details below, and I'll synthesize a comprehensive day-by-day plan with timings, authentic stays, food spots, and costs in ₹ for you!`;
-      } else if (dest && (numDays || hasTravelers || hasBudget)) {
-        // Full plan generation
-        const days = numDays || 5;
-        if (dest.toLowerCase().includes("varanasi") || dest.toLowerCase().includes("kashi") || dest.toLowerCase().includes("banaras")) {
+        if (alreadyGreeted) {
+          aiReply = `Hello ${userName}! 😊 Ready for the next adventure.\n\nTell me your destination or whatever travel vibe is on your mind, and let's plan it out!`;
+        } else {
           aiReply =
-            `Namaskaram ${userName}! 🙏\n\n` +
+            `Namaskaram ${userName}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
+            `How may I help you today?\n\n` +
+            `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal plan with verified stays and costs in ₹.\n\n` +
+            `❓ Where would you like to travel, or what can I help you plan?`;
+        }
+      } else if (isAffirmation && activeDest) {
+        if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("tenkasi")) {
+          aiReply =
+            `Here are the hand-picked stays and transit details for **Thenkasi & Courtallam**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Heritage Resort Courtallam** (~₹2,800 – ₹4,200/night)\n` +
+            `• **Five Falls Orchard Farmstay** (~₹2,200 – ₹3,500/night)\n` +
+            `• **Comfort Lodge near Tenkasi Junction** (~₹1,200 – ₹1,800/night)\n\n` +
+            `🚗 **How to Reach & Local Transit**:\n` +
+            `Tenkasi Junction (TSI) connects directly to Madurai, Chennai, and Kollam. Nearest airport is Trivandrum (TRV, 105 km) or Tuticorin (90 km).\n\n` +
+            `💡 **DASAPPAN's Foodie Secret**: You must stop at Border Rahmath Hotel in Shenkottai for authentic pepper country chicken and Ennai Parotta with spicy salna!\n\n` +
+            `Would you like me to map out a complete day-by-day plan or give you more details on waterfalls?`;
+        } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi")) {
+          aiReply =
+            `Here are the hand-picked stays and transit details for **Varanasi (Kashi)**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Heritage Riverside Haveli on Ghats** (~₹3,200 – ₹5,500/night)\n` +
+            `• **Boutique Comfort Stay near Godowlia** (~₹1,800 – ₹2,800/night)\n` +
+            `• **Assi Ghat Peaceful Homestay** (~₹1,200 – ₹2,000/night)\n\n` +
+            `🚗 **How to Reach & Local Transit**:\n` +
+            `Lal Bahadur Shastri Airport (VNS, Babatpur, 24 km) connects to all major metros. Varanasi Junction (BSB) is in the city center. E-rickshaws and hand-rowed wooden boats are best for moving around.\n\n` +
+            `💡 **DASAPPAN's Insider Secret**: Book Kashi Vishwanath Sugam Darshan online in advance to skip 3-hour long queues, and always take a hand-rowed boat at 5:30 AM rather than a noisy motorboat.\n\n` +
+            `Would you like me to recommend iconic street food spots (like Ram Bhandar & Blue Lassi) or plan your day-by-day itinerary?`;
+        } else {
+          aiReply =
+            `Here are the hand-picked stays and transit options for **${activeDest}**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Boutique Heritage Resort** (~₹3,500 – ₹5,500/night)\n` +
+            `• **Comfort Stay & Homestay** (~₹1,800 – ₹2,800/night)\n\n` +
+            `🚗 **Transit**: Connected by major rail, road, and nearby airport corridors.\n\n` +
+            `Would you like me to map out a complete day-by-day itinerary or share local food gems?`;
+        }
+      } else if (activeDest && !numDays && !hasTravelers && !hasBudget) {
+        // STEP 1: Destination mentioned -> "Oh, Varanasi!!" + 2-line description + Ask travelers count ONLY!
+        if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi") || activeDest.toLowerCase().includes("banaras")) {
+          aiReply =
+            `Oh, Varanasi!! 🌟\n\n` +
+            `The eternal spiritual heart of India on the banks of the sacred Ganges, where ancient river ghats and mesmerizing evening aartis come alive. A truly captivating journey into living heritage awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("courtallam")) {
+          aiReply =
+            `Oh, Thenkasi & Courtallam!! 🌟\n\n` +
+            `The refreshing spa of South India nestled at the foot of the Western Ghats, blessed with herbal waterfalls and legendary border cuisine. A revitalizing escape into nature awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else if (activeDest.toLowerCase().includes("munnar")) {
+          aiReply =
+            `Oh, Munnar!! 🌟\n\n` +
+            `The emerald tea paradise of the Western Ghats, wrapped in mist-kissed hills, cool mountain breeze, and sprawling tea estates. A scenic retreat into nature awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else {
+          aiReply =
+            `Oh, ${activeDest}!! 🌟\n\n` +
+            `An extraordinary destination known for stunning landscapes, rich culture, and unforgettable local experiences. An incredible journey awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        }
+      } else if (activeDest && hasTravelers && !numDays) {
+        // STEP 2: Travelers given -> Ask duration
+        const groupType = lower.includes("couple") ? "A couple's journey" : lower.includes("solo") ? "A solo adventure" : lower.includes("family") ? "A family holiday" : "A trip with friends";
+        aiReply =
+          `Wonderful! ${groupType} to **${activeDest}** will be an exceptional experience.\n\n` +
+          `How many days are you planning to spend? (Most travelers find 3 to 4 days ideal to explore the key highlights and authentic spots comfortably).`;
+      } else if (activeDest && numDays && !hasBudget && !lower.includes("under") && !lower.includes("plan")) {
+        // STEP 3: Days given -> Ask budget
+        aiReply =
+          `${numDays} days is a fantastic timeframe for **${activeDest}**! That gives us ample time to experience the signature sights, authentic regional meals, and peaceful hidden corners.\n\n` +
+          `What approximate budget tier or style do you have in mind? (e.g. Budget backpacker, comfortable heritage stays, or luxury in ₹)?`;
+      } else if (activeDest && (numDays || hasTravelers || hasBudget)) {
+        // STEP 4: Full plan generation strictly matching requested days
+        const days = numDays || 3;
+        if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("courtallam")) {
+          aiReply =
+            `Here is your tailored **${days}-Day Thenkasi & Courtallam Travel Blueprint**:\n\n` +
+            `### 🗓️ Curated ${days}-Day Itinerary\n` +
+            `• **Day 1: Waterfalls & Pandyan Heritage** — Morning herbal bath at Courtallam Main Falls and Five Falls (Aintharuvi). Visit 13th-century Kasi Viswanathar Temple. Evening country chicken & Ennai Parotta feast at Border Rahmath Hotel in Shenkottai.\n` +
+            `• **Day 2: Scenic Mountain Foothills & Dam Reservoir** — Scenic drive to Gundar Dam surrounded by rubber estates and misty hills. Relax at Old Falls (Pazhaya Courtallam) and enjoy herbal Sukku Kaapi with freshly made hot Tirunelveli Halwa.\n` +
+            (days >= 3 ? `• **Day 3: Eco Orchards & Village Discovery** — Visit Ayikudi sweet guava orchards and honey farms. Take a scenic border drive towards Sengottai and relax with panoramic Western Ghats vistas before departure.\n\n` : `\n\n`) +
+            `### 🏨 Stays & Dining\n` +
+            `• Heritage Resort Courtallam (~₹2,800 – ₹4,200/night)\n` +
+            `• Five Falls Orchard Farmstay (~₹2,200 – ₹3,500/night)\n` +
+            `• Authentic Tenkasi Parotta with spicy salna and country chicken\n\n` +
+            `### 💰 Estimated Budget (in ₹)\n` +
+            `• ~₹1,800 – ₹3,000 per person per day (stays, meals, and local transit)\n\n` +
+            `### 💡 Dasappan's Local Insider Secret\n` +
+            `Visit Five Falls early at 6:30 AM to beat the crowds and enjoy the pure forest mineral water at its best.\n\n` +
+            `Would you like me to refine this with specific hotel booking options or transit details?`;
+        } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi") || activeDest.toLowerCase().includes("banaras")) {
+          aiReply =
             `Here is your bespoke **${days}-Day Varanasi (Kashi) Spiritual & Cultural Immersion Plan**:\n\n` +
             `### 🗓️ Day-by-Day Journey\n` +
             `• **Day 1: Arrival & The Sacred Evening Ganga Aarti** — Settle into your riverside haveli. Stroll from Assi Ghat to Dashashwamedh Ghat. At dusk, witness the hypnotic Ganga Aarti from a wooden boat on the river.\n` +
             `• **Day 2: Subah-e-Banaras & Kashi Vishwanath Corridor** — 5:30 AM rowboat cruise from Assi to Manikarnika Ghat at sunrise. Breakfast at Ram Bhandar (kachori-jalebi). Darshan at Kashi Vishwanath Corridor and Annapurna Temple.\n` +
-            `• **Day 3: Sarnath & Buddhist Heritage** — Morning excursion to Sarnath (Dhamek Stupa & Archaeological Museum) where Lord Buddha gave his first sermon. Return for sunset reflections at Chet Singh Ghat.\n` +
-            `• **Day 4: Heritage Galis, Silk Weaving & Ramnagar Fort** — Explore Madanpura handloom silk-weaving lanes. Visit Kal Bhairav Temple. Take a local boat to 18th-century sandstone Ramnagar Fort across the river.\n` +
-            `• **Day 5: Northern Ghats & Culinary Farewell** — Gentle morning meditation at Panchganga Ghat. Savor famous Tamatar Chaat at Kashi Chaat Bhandar and clay-cup Blue Lassi before departure.\n\n` +
+            (days >= 3 ? `• **Day 3: Sarnath & Buddhist Heritage** — Morning excursion to Sarnath (Dhamek Stupa & Archaeological Museum) where Lord Buddha gave his first sermon. Return for sunset reflections at Chet Singh Ghat.\n` : ``) +
+            (days >= 4 ? `• **Day 4: Heritage Galis, Silk Weaving & Ramnagar Fort** — Explore Madanpura handloom silk-weaving lanes. Visit Kal Bhairav Temple. Take a local boat to 18th-century sandstone Ramnagar Fort across the river.\n` : ``) +
+            (days >= 5 ? `• **Day 5: Northern Ghats & Culinary Farewell** — Gentle morning meditation at Panchganga Ghat. Savor famous Tamatar Chaat at Kashi Chaat Bhandar and clay-cup Blue Lassi before departure.\n\n` : `\n\n`) +
             `### 🏨 Recommended Stays\n` +
             `• Heritage Riverside Haveli on Ghats (~₹3,200 – ₹5,500/night)\n` +
             `• Boutique Comfort Stay near Godowlia (~₹1,800 – ₹2,800/night)\n\n` +
@@ -500,12 +668,11 @@ export default function AIChatPage() {
             `Would you like hotel recommendations or help with temple darshan timings?`;
         } else {
           aiReply =
-            `Namaskaram ${userName}! 🙏\n\n` +
-            `Here is your tailored **${days}-Day ${dest} Travel Blueprint**:\n\n` +
+            `Here is your tailored **${days}-Day ${activeDest} Travel Blueprint**:\n\n` +
             `### 🗓️ Curated ${days}-Day Itinerary\n` +
             `• **Day 1: Arrival & Local Immersion** — Check in, explore central heritage streets, enjoy local sunset viewpoints and authentic regional dinner.\n` +
             `• **Day 2: Iconic Landmarks & Scenic Exploration** — Guided exploration of prime natural and architectural wonders, panoramic photo stops, and signature cultural visits.\n` +
-            `• **Day 3: Offbeat Trails & Cuisine** — Discover hidden nature trails, local artisan markets, and heritage dining.\n` +
+            (days >= 3 ? `• **Day 3: Offbeat Trails & Cuisine** — Discover hidden nature trails, local artisan markets, and heritage dining.\n` : `\n`) +
             (days > 3 ? `• **Days 4–${days}: Leisure & Unique Excursions** — Deep dive into neighboring villages, scenic valleys or waterfronts, and souvenir shopping.\n\n` : `\n`) +
             `### 🏨 Stays & Dining\n` +
             `• Boutique stays & eco-resorts: ~₹2,200 – ₹4,500/night\n` +
@@ -516,8 +683,8 @@ export default function AIChatPage() {
         }
       } else {
         aiReply =
-          `Namaskaram ${userName}! 🙏 I am here to help you plan an unforgettable trip.\n\n` +
-          `Tell me your dream destination (e.g. Varanasi, Munnar, Goa, Paris, Tokyo), or ask me anything about budgets, stays, or packing essentials!`;
+          `I am here to help you plan an unforgettable trip.\n\n` +
+          `Tell me your dream destination (e.g. Varanasi, Thenkasi, Munnar, Goa, Paris, Tokyo), or ask me anything about budgets, stays, or packing essentials!`;
       }
 
       const assistantMsg: ChatMessage = {
@@ -525,7 +692,7 @@ export default function AIChatPage() {
         role: "assistant",
         content: aiReply,
         timestamp: new Date().toISOString(),
-        suggestedDestination: dest,
+        suggestedDestination: dest || activeDest,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);

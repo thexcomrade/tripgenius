@@ -86,7 +86,7 @@ const TRANSPORT_MODES = [
   },
   {
     id: "Bike",
-    label: "Bike Rental",
+    label: "Bike",
     desc: "Two-wheeler rental across local spots",
     icon: "🏍️",
   },
@@ -155,20 +155,235 @@ const ACCOMMODATIONS = [
   },
 ];
 
-const INTEREST_TAGS = [
-  "Tea Gardens",
-  "Waterfalls",
-  "Mountain Treks",
-  "Wildlife Safaris",
-  "Beaches & Sunsets",
-  "Local Food Tasting",
-  "Historic Forts",
-  "Ayurvedic Spas",
-  "Birdwatching",
-  "Photography Spots",
-  "Handicrafts & Markets",
-  "Boating & Lakes",
+const DEFAULT_FOCUS_POINTS = [
+  "Scenic Landscapes & Horizons",
+  "Heritage, Temples & Forts",
+  "Local Food Tasting & Street Cuisines",
+  "Nature & Green Trails",
+  "Photography Spots & Sunsets",
+  "Handicrafts & Artisan Markets",
+  "Panoramic Viewpoints",
+  "Cultural Immersion & Traditions",
+  "Waterfalls & Scenic Lakes",
+  "Wildlife Safaris & Sanctuaries",
 ];
+
+const DESTINATION_FOCUS_POINTS_MAP: Record<string, string[]> = {
+  varanasi: [
+    "Ganga Aarti & Ghats",
+    "Ancient Temples & Jyotirlingas",
+    "Morning Ganges Boat Ride",
+    "Spiritual Walking Trails",
+    "Banarasi Street Food & Chaat",
+    "Banarasi Silk & Handlooms",
+    "Sarnath Buddhist Stupas & Museum",
+    "Subah-e-Banaras Classical Music",
+    "Ghat Photography & Sunrises",
+    "Heritage Havelis & Cultural Walks",
+  ],
+  munnar: [
+    "Tea Plantation Walks & Museum",
+    "Eravikulam National Park & Nilgiri Tahr",
+    "Attukad & Lakkam Waterfalls",
+    "Anamudi Peak & Mountain Treks",
+    "Mattupetty Dam & Speedboating",
+    "Kundala Lake Shikara Rides",
+    "Organic Spice Garden Tours",
+    "Top Station Panoramic Cloud Views",
+    "Authentic Kerala Sadhya Tasting",
+    "Valley Photography Spots",
+  ],
+  goa: [
+    "Golden Sand Beaches & Sunsets",
+    "Scuba Diving & Water Sports",
+    "Aguada & Chapora Forts",
+    "Old Goa UNESCO Heritage Churches",
+    "Beach Shacks & Nightlife",
+    "Fontainhas Latin Quarter Walk",
+    "Mandovi River Cruise & Music",
+    "Dudhsagar Waterfalls Trek",
+    "Goan Seafood & Feni Tasting",
+    "Spice Plantation Tour",
+  ],
+  thenkasi: [
+    "Herbal Waterfalls Hydrotherapy",
+    "Courtallam Main & Five Falls",
+    "Kasi Viswanathar Temple (180ft Gopuram)",
+    "Shenkottai Border Pepper Chicken",
+    "Gundar Dam & Western Ghats",
+    "Wild Forest Honey & Fruit Groves",
+    "Herbal Sukku Kaapi Trails",
+    "Spiritual & Nature Walks",
+  ],
+  courtallam: [
+    "Herbal Waterfalls Hydrotherapy",
+    "Courtallam Main & Five Falls",
+    "Old Courtallam & Tiger Falls",
+    "Kasi Viswanathar Temple (180ft Gopuram)",
+    "Shenkottai Border Pepper Chicken",
+    "Gundar Dam & Western Ghats",
+    "Wild Forest Honey & Fruit Groves",
+    "Herbal Sukku Kaapi Trails",
+  ],
+  varkala: [
+    "Varkala Red Cliff Walks",
+    "Papanasam Beach Holy Dip",
+    "Kappil Lake & Mangrove Kayaking",
+    "Janardhana Swamy 2000-Year Temple",
+    "Black Sand Beach Sunsets",
+    "Ayurvedic Massages & Spas",
+    "Cliffside Seafood Cafes",
+    "Surfing & Dolphin Spotting",
+  ],
+  ooty: [
+    "Government Botanical Garden",
+    "Nilgiri Mountain Toy Train",
+    "Doddabetta Peak Panoramas",
+    "Pykara Lake & Waterfalls",
+    "Ooty Lake Boating",
+    "Homemade Chocolate Tasting",
+    "Tea Factory & CTC Museum",
+    "Pine Forest Nature Walks",
+  ],
+  paris: [
+    "Eiffel Tower & Seine Cruise",
+    "Louvre & Musée d'Orsay Art",
+    "Montmartre & Sacré-Cœur",
+    "French Patisseries & Wine Bistros",
+    "Palace of Versailles Day Trip",
+    "Champs-Élysées & Arc de Triomphe",
+    "Latin Quarter & Historic Bookstores",
+    "Gourmet Cheese & Baguette Trails",
+  ],
+  tokyo: [
+    "Shinjuku & Shibuya Neon Crossings",
+    "Sensō-ji Historic Asakusa Temple",
+    "Tsukiji Outer Market Fresh Sushi",
+    "Akihabara Tech & Anime Culture",
+    "Tokyo Skytree Panoramic Observatories",
+    "Meiji Shrine & Forest Walk",
+    "Authentic Ramen & Izakaya Crawls",
+    "Cherry Blossom Parks & Gardens",
+  ],
+  dubai: [
+    "Burj Khalifa Observation Deck",
+    "Desert Safari & Dune Bashing",
+    "Dubai Mall & Fountain Show",
+    "Dubai Marina Yacht Cruise",
+    "Gold & Spice Souks Exploration",
+    "Palm Jumeirah & Beach Clubs",
+    "Traditional Abra Boat Crossing",
+    "Miracle Garden & Frame Views",
+  ],
+  coorg: [
+    "Coffee Plantation & Bean Roasting",
+    "Abbey & Iruppu Waterfalls",
+    "Namdroling Golden Temple (Bylakuppe)",
+    "Raja's Seat Sunset Viewpoint",
+    "Dubare Elephant Camp",
+    "Coorg Pandi Curry Tasting",
+    "Tadiandamol Peak Trek",
+    "Mandalpatti 4x4 Jeep Safari",
+  ],
+  wayanad: [
+    "Banasura Sagar Dam Speedboating",
+    "Edakkal Prehistoric Caves",
+    "Chembra Peak & Heart Lake Trek",
+    "Soochipara Waterfalls",
+    "Wayanad Wildlife Sanctuary Safari",
+    "Bamboo Forest Trails",
+    "Kuruva Island River Rafting",
+    "Pookode Lake Pedal Boating",
+  ],
+  kodaikanal: [
+    "Kodaikanal Star Lake Boating",
+    "Coaker's Walk Valley Vistas",
+    "Pillar Rocks & Guna Caves",
+    "Silver Cascade & Bear Shola Falls",
+    "Pine Forest Cinematic Trails",
+    "Bryant Park Floral Displays",
+    "Dolphin's Nose Cliff Trek",
+    "Homemade Chocolates & Spices",
+  ],
+  hampi: [
+    "Virupaksha Temple Heritage",
+    "Vijaya Vittala Stone Chariot",
+    "Matanga Hill Sunrise Panorama",
+    "Coracle Boat Ride on Tungabhadra",
+    "Royal Enclosure & Lotus Mahal",
+    "Sanapur Lake Bouldering & Cliff Jumps",
+    "Hippie Island Cafes & Biking",
+    "Sunset at Hemakuta Hill",
+  ],
+  jaipur: [
+    "Amber Fort & Palace Architecture",
+    "Hawa Mahal (Palace of Winds)",
+    "City Palace Royal Courtyards",
+    "Jantar Mantar Astronomical Marvel",
+    "Nahargarh Fort Sunset Views",
+    "Johari Bazaar Gem & Textile Shopping",
+    "Authentic Dal Baati Churma Feast",
+    "Chokhi Dhani Cultural Village",
+  ],
+  agra: [
+    "Taj Mahal Sunrise Experience",
+    "Agra Fort Mughal Palaces",
+    "Mehtab Bagh Reflection View",
+    "Fatehpur Sikri Imperial City",
+    "Petha Tasting in Sadar Bazaar",
+    "Mughlai Cuisine & Biryani Trail",
+    "Marble Inlay Handicraft Workshops",
+  ],
+  manali: [
+    "Solang Valley Paragliding & Zorbing",
+    "Rohtang Pass Snow Experience",
+    "Old Manali Cafes & Live Music",
+    "Hadimba Temple Cedar Forest",
+    "Jogini Waterfalls Nature Trek",
+    "Vashisht Natural Hot Springs",
+    "River Rafting in Beas River",
+    "Mall Road Shopping & Trout Fish",
+  ],
+  bali: [
+    "Ubud Monkey Forest & Rice Terraces",
+    "Tanah Lot & Uluwatu Sunset Temples",
+    "Mount Batur Sunrise Volcano Trek",
+    "Kecak Fire Dance Performance",
+    "Nusa Penida Kelingking Beach Tour",
+    "Tegallalang Giant Jungle Swing",
+    "Seminyak & Canggu Beach Clubs",
+    "Balinese Coffee & Luwak Tasting",
+  ],
+  singapore: [
+    "Gardens by the Bay & Supertree Grove",
+    "Marina Bay Sands SkyPark Observation",
+    "Sentosa Island & Universal Studios",
+    "Chinatown & Little India Food Trails",
+    "Jewel Changi Rain Vortex",
+    "Night Safari Wildlife Tram",
+    "Singapore Flyer Giant Wheel",
+    "Clarke Quay Riverside Dining",
+  ],
+  london: [
+    "Big Ben & Palace of Westminster",
+    "Tower of London & Tower Bridge",
+    "British Museum World Artifacts",
+    "London Eye Thames Panorama",
+    "Buckingham Palace Changing of Guard",
+    "West End Theatre Musicals",
+    "Borough Market Street Food",
+    "Hyde Park & Kensington Gardens",
+  ],
+  alleppey: [
+    "Traditional Houseboat Cruise",
+    "Backwater Kayaking & Canals",
+    "Marari Beach Serenity",
+    "Village Coir & Canoe Making",
+    "Toddy Shop Fresh Karimeen Fish",
+    "Kuttanad Below-Sea Farming",
+    "Alappuzha Lighthouse & Pier",
+  ],
+};
 
 const AI_GENERATION_STEPS = [
   "Connecting to TripGenius Neural Synthesizer...",
@@ -194,10 +409,63 @@ function PlannerContent() {
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
   const [customInterestInput, setCustomInterestInput] = useState("");
   const [customInterestsList, setCustomInterestsList] = useState<string[]>([]);
+  const [focusPoints, setFocusPoints] = useState<string[]>(DEFAULT_FOCUS_POINTS);
+  const [focusSource, setFocusSource] = useState<string>("default");
 
   const [loading, setLoading] = useState(false);
   const [aiProcessingStage, setAiProcessingStage] = useState(0);
   const [error, setError] = useState("");
+
+  // Dynamically calibrate Activity & Interest Focus Points based on Google Travel Ideas & Dataset
+  useEffect(() => {
+    const dest = destination.trim().toLowerCase();
+    if (!dest) {
+      setFocusPoints(DEFAULT_FOCUS_POINTS);
+      setFocusSource("default");
+      return;
+    }
+
+    // 1. Instant client-side lookup from Google Travel Ideas map (0ms latency)
+    let matchedPreset: string[] | null = null;
+    for (const [key, points] of Object.entries(DESTINATION_FOCUS_POINTS_MAP)) {
+      if (dest.includes(key) || key.includes(dest)) {
+        matchedPreset = points;
+        break;
+      }
+    }
+
+    if (matchedPreset) {
+      setFocusPoints(matchedPreset);
+      setFocusSource("google_ideas");
+    } else {
+      const destTitle = destination.trim();
+      setFocusPoints([
+        `${destTitle} Heritage & Historic Old Town`,
+        `${destTitle} Panoramic Sunset Viewpoints`,
+        `Regional Street Food & Local Cuisines`,
+        `Local Artisan Handicrafts & Bazaars`,
+        `${destTitle} Nature Trails & Green Enclaves`,
+        `Iconic Landmarks & Photo Spots`,
+        `Cultural Traditions & Folk Highlights`,
+        `Waterfront & Scenic Promenade`,
+      ]);
+      setFocusSource("synthesized");
+    }
+
+    // 2. Enrich from backend dataset API
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+    fetch(`${apiUrl}/api/destinations/focus-points?destination=${encodeURIComponent(destination.trim())}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && Array.isArray(data.focus_points) && data.focus_points.length > 0) {
+          setFocusPoints(data.focus_points);
+          setFocusSource(data.source || "dataset");
+        }
+      })
+      .catch(() => {
+        // preserve current instant lookup
+      });
+  }, [destination]);
 
   // Auth guard & destination param pre-fill
   useEffect(() => {
@@ -1342,29 +1610,61 @@ function PlannerContent() {
               </div>
 
               <div>
-                <label
+                <div
                   style={{
-                    display: "block",
-                    fontSize: "0.88rem",
-                    fontWeight: 600,
-                    color: "#CBD5E1",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "8px",
                     marginBottom: "12px",
                   }}
                 >
-                  Activity & Interest Focus{" "}
-                  {selectedInterests.length > 0 ? (
-                    <span style={{ color: "#38BDF8" }}>
-                      ({selectedInterests.length} selected)
-                    </span>
-                  ) : (
-                    <span style={{ color: "#94A3B8", fontWeight: 400 }}>
-                      (Optional — pick any or add your own ideas)
-                    </span>
-                  )}
-                </label>
+                  <label
+                    style={{
+                      fontSize: "0.92rem",
+                      fontWeight: 700,
+                      color: "#FFFFFF",
+                      margin: 0,
+                    }}
+                  >
+                    Activity & Interest Focus{" "}
+                    {destination ? (
+                      <span style={{ color: "#38BDF8" }}>for {destination}</span>
+                    ) : null}{" "}
+                    {selectedInterests.length > 0 ? (
+                      <span style={{ color: "#34D399", fontSize: "0.82rem" }}>
+                        ({selectedInterests.length} selected)
+                      </span>
+                    ) : (
+                      <span style={{ color: "#94A3B8", fontWeight: 400, fontSize: "0.82rem" }}>
+                        (Pick focus points or add your own)
+                      </span>
+                    )}
+                  </label>
+
+                  <Badge variant="overlay" size="sm">
+                    <span
+                      style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        background: "#38BDF8",
+                        display: "inline-block",
+                        marginRight: "6px",
+                        boxShadow: "0 0 6px #38BDF8",
+                      }}
+                    />
+                    {focusSource === "google_ideas"
+                      ? "Google Ideas & Verified Intelligence"
+                      : focusSource === "dataset"
+                      ? "Tourism Dataset Focus Points"
+                      : "Dynamic Focus Intelligence"}
+                  </Badge>
+                </div>
 
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {[...INTEREST_TAGS, ...customInterestsList].map((tag) => {
+                  {[...focusPoints, ...customInterestsList].map((tag) => {
                     const isSelected = selectedInterests.includes(tag);
                     const isCustom = customInterestsList.includes(tag);
                     return (
@@ -1376,11 +1676,11 @@ function PlannerContent() {
                           padding: "8px 16px",
                           borderRadius: "999px",
                           background: isSelected
-                            ? "linear-gradient(135deg, rgba(14, 165, 233, 0.3), rgba(20, 184, 166, 0.3))"
+                            ? "linear-gradient(135deg, rgba(14, 165, 233, 0.35), rgba(20, 184, 166, 0.35))"
                             : "rgba(255, 255, 255, 0.05)",
                           border: isSelected
                             ? "1px solid #38BDF8"
-                            : "1px solid rgba(255, 255, 255, 0.10)",
+                            : "1px solid rgba(255, 255, 255, 0.12)",
                           color: isSelected ? "#FFFFFF" : "#CBD5E1",
                           fontSize: "0.85rem",
                           fontWeight: 600,
@@ -1391,7 +1691,11 @@ function PlannerContent() {
                           transition: "all 0.2s ease",
                         }}
                       >
-                        {isSelected && <Check size={14} color="#38BDF8" />}
+                        {isSelected ? (
+                          <Check size={14} color="#38BDF8" />
+                        ) : (
+                          <Sparkles size={12} color="rgba(255, 255, 255, 0.3)" />
+                        )}
                         <span>{tag}</span>
                         {isCustom && (
                           <span
@@ -1429,7 +1733,7 @@ function PlannerContent() {
                     if (trimmed) {
                       if (
                         !customInterestsList.includes(trimmed) &&
-                        !INTEREST_TAGS.includes(trimmed)
+                        !focusPoints.includes(trimmed)
                       ) {
                         setCustomInterestsList((prev) => [...prev, trimmed]);
                       }
