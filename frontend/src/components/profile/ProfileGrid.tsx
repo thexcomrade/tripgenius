@@ -445,6 +445,10 @@ export default function ProfileGrid({
                             "tripgenius_generated_trip",
                             JSON.stringify(trip),
                           );
+                          localStorage.setItem(
+                            "latest_trip",
+                            JSON.stringify(trip),
+                          );
                           router.push("/trip/generated");
                         } else {
                           router.push(
@@ -705,6 +709,10 @@ export default function ProfileGrid({
                 onClick={() => {
                   localStorage.setItem(
                     "tripgenius_generated_trip",
+                    JSON.stringify(trip),
+                  );
+                  localStorage.setItem(
+                    "latest_trip",
                     JSON.stringify(trip),
                   );
                   router.push("/trip/generated");

@@ -230,6 +230,110 @@ const DESTINATIONS: DestinationItem[] = [
     season: "Nov – Mar",
     budgetEst: "₹45,000",
   },
+  {
+    id: 17,
+    name: "Egypt",
+    location: "Cairo & Giza, Egypt",
+    image: "/destinations/egypt.jpg",
+    category: "International / Abroad",
+    description:
+      "Majestic Pyramids of Giza, Great Sphinx, Nile River felucca cruises, and ancient pharaoh tombs. 4N/5D complete guided package.",
+    rating: 4.9,
+    season: "Oct – Apr",
+    budgetEst: "₹60,000",
+    featured: true,
+  },
+  {
+    id: 18,
+    name: "Vietnam",
+    location: "Da Nang, Phu Quoc & Hanoi, Vietnam",
+    image: "/destinations/vietnam.jpg",
+    category: "International / Abroad",
+    description:
+      "Golden Bridge in Ba Na Hills, pristine Phu Quoc island beaches, Hanoi train street, and lantern-lit ancient town. 3N/4D getaway.",
+    rating: 4.8,
+    season: "Nov – Apr",
+    budgetEst: "₹23,000",
+    featured: true,
+  },
+  {
+    id: 19,
+    name: "Uzbekistan",
+    location: "Samarkand & Bukhara, Uzbekistan",
+    image: "/destinations/uzbekistan.jpg",
+    category: "International / Abroad",
+    description:
+      "Silk Road splendour — turquoise majolica domes of Registan, Shah-i-Zinda necropolis, ancient Bukhara citadels, and rich plov gastronomy. 4N/5D holiday.",
+    rating: 4.9,
+    season: "Mar – Jun / Sep – Nov",
+    budgetEst: "₹39,900",
+    featured: true,
+  },
+  {
+    id: 20,
+    name: "Georgia",
+    location: "Tbilisi & Kazbegi, Georgia",
+    image: "/destinations/georgia.jpg",
+    category: "International / Abroad",
+    description:
+      "Breathtaking Greater Caucasus alpine vistas, historic Ananuri Fortress, Gergeti Trinity mountain church, and Old Tbilisi sulfur baths. 3N/4D tour.",
+    rating: 4.8,
+    season: "May – Oct",
+    budgetEst: "₹40,000",
+    featured: true,
+  },
+  {
+    id: 21,
+    name: "Azerbaijan",
+    location: "Baku & Caspian Coast, Azerbaijan",
+    image: "/destinations/azerbaijan.jpg",
+    category: "International / Abroad",
+    description:
+      "The Land of Fire — ancient Icherisheher walled fortress, futuristic Flame Towers, Gobustan mud volcanoes, and Caspian seaside promenade. 4N/5D package.",
+    rating: 4.8,
+    season: "Apr – Jun / Sep – Oct",
+    budgetEst: "₹25,800",
+    featured: true,
+  },
+  {
+    id: 22,
+    name: "Malaysia",
+    location: "Kuala Lumpur & Putrajaya, Malaysia",
+    image: "/destinations/malaysia.jpg",
+    category: "International / Abroad",
+    description:
+      "Sky-high Petronas Twin Towers, iconic pink domed Putra Mosque, sacred limestone Batu Caves, and bustling night street markets. 3N/4D holiday.",
+    rating: 4.8,
+    season: "All Year",
+    budgetEst: "₹22,500",
+    featured: true,
+  },
+  {
+    id: 23,
+    name: "Thailand",
+    location: "Bangkok, Chiang Mai & Phuket, Thailand",
+    image: "/destinations/thailand.jpg",
+    category: "International / Abroad",
+    description:
+      "Gilded Buddhist temples, emerald Buddha sanctuaries in Chiang Mai, tropical Phi Phi islands, and world-famous street food. 4N/5D escape.",
+    rating: 4.9,
+    season: "Nov – Apr",
+    budgetEst: "₹23,000",
+    featured: true,
+  },
+  {
+    id: 24,
+    name: "Lakshadweep",
+    location: "Agatti & Bangaram, Lakshadweep, India",
+    image: "/destinations/lakshadweep.jpg",
+    category: "Beaches",
+    description:
+      "Untouched Indian Ocean coral atolls — translucent turquoise lagoons, vibrant reef scuba diving, sea turtle snorkeling, and secluded white sandbanks. 3N/4D.",
+    rating: 4.9,
+    season: "Oct – May",
+    budgetEst: "₹13,500",
+    featured: true,
+  },
 ];
 
 const CATEGORIES = [
@@ -312,73 +416,90 @@ export default function ExplorePage() {
   const spotlight = DESTINATIONS[0];
 
   return (
-    <div
-      className="page-container"
-      style={{ display: "flex", flexDirection: "column", gap: "36px" }}
-    >
-      {/* SPOTLIGHT DESTINATION BANNER */}
+    <div style={{ width: "100%", display: "flex", flexDirection: "column" }}>
+      {/* SPOTLIGHT DESTINATION FULL-WIDTH HERO BANNER */}
       <section
         style={{
           position: "relative",
-          borderRadius: "28px",
+          width: "100%",
+          minHeight: "460px",
           overflow: "hidden",
-          border: "1px solid rgba(255, 255, 255, 0.10)",
-          boxShadow: "0 16px 48px rgba(0, 0, 0, 0.40)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
+          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.65)",
         }}
       >
-        <div style={{ position: "relative", height: "360px", width: "100%" }}>
+        <div style={{ position: "relative", height: "480px", width: "100%" }}>
           <Image
             src={spotlight.image}
             alt={spotlight.name}
             fill
             priority
-            style={{ objectFit: "cover" }}
+            style={{ objectFit: "cover", objectPosition: "center 40%" }}
           />
           <div
             style={{
               position: "absolute",
               inset: 0,
               background:
-                "linear-gradient(to top, rgba(3, 7, 18, 0.95) 0%, rgba(3, 7, 18, 0.40) 60%, rgba(3, 7, 18, 0.15) 100%)",
+                "linear-gradient(to top, rgba(3, 7, 18, 0.98) 0%, rgba(3, 7, 18, 0.45) 55%, rgba(3, 7, 18, 0.2) 100%), linear-gradient(to right, rgba(3, 7, 18, 0.75) 0%, transparent 65%)",
             }}
           />
 
-          <div style={{ position: "absolute", top: "24px", left: "24px" }}>
-            <Badge
-              variant="amber"
-              size="md"
-              icon={<Star size={14} fill="#FBBF24" />}
-            >
-              Curator&apos;s Pick of the Month
-            </Badge>
+          <div
+            style={{
+              position: "absolute",
+              top: "32px",
+              left: "0",
+              right: "0",
+              maxWidth: "1440px",
+              margin: "0 auto",
+              padding: "0 clamp(20px, 4vw, 48px)",
+              pointerEvents: "none",
+            }}
+          >
+            <div style={{ pointerEvents: "auto" }}>
+              <Badge
+                variant="amber"
+                size="md"
+                icon={<Star size={14} fill="#FBBF24" />}
+              >
+                Curator&apos;s Pick of the Month
+              </Badge>
+            </div>
           </div>
 
           <div
             style={{
               position: "absolute",
-              bottom: "30px",
-              left: "30px",
-              right: "30px",
+              bottom: "40px",
+              left: "0",
+              right: "0",
+              maxWidth: "1440px",
+              margin: "0 auto",
+              padding: "0 clamp(20px, 4vw, 48px)",
             }}
           >
             <h1
               style={{
-                fontSize: "clamp(2rem, 4vw, 3.2rem)",
-                fontWeight: 650,
+                fontSize: "clamp(2.2rem, 4.5vw, 3.8rem)",
+                fontWeight: 700,
                 color: "#FFFFFF",
                 letterSpacing: "-0.03em",
-                marginBottom: "8px",
+                marginBottom: "10px",
+                lineHeight: 1.15,
+                textShadow: "0 4px 20px rgba(0,0,0,0.6)",
               }}
             >
               {spotlight.name} <span style={{ opacity: 0.6, fontWeight: 400 }}>•</span> {spotlight.location}
             </h1>
             <p
               style={{
-                color: "#CBD5E1",
-                fontSize: "1.05rem",
-                maxWidth: "700px",
+                color: "#E2E8F0",
+                fontSize: "1.1rem",
+                maxWidth: "750px",
                 lineHeight: 1.6,
-                marginBottom: "20px",
+                marginBottom: "24px",
+                textShadow: "0 2px 10px rgba(0,0,0,0.7)",
               }}
             >
               {spotlight.description}
@@ -386,38 +507,190 @@ export default function ExplorePage() {
             <div
               style={{
                 display: "flex",
-                gap: "12px",
+                gap: "14px",
                 alignItems: "center",
                 flexWrap: "wrap",
+                marginBottom: "16px",
               }}
             >
-              <Button
-                variant="primary"
-                size="md"
-                leftIcon={<Sparkles size={16} />}
+              <button
+                type="button"
                 onClick={() =>
                   router.push(
                     `/planner?destination=${encodeURIComponent(spotlight.name)}`,
                   )
                 }
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "10px",
+                  padding: "14px 28px",
+                  borderRadius: "14px",
+                  background:
+                    "linear-gradient(135deg, #0284C7 0%, #0EA5E9 50%, #38BDF8 100%)",
+                  color: "#FFFFFF",
+                  fontSize: "1rem",
+                  fontWeight: 700,
+                  letterSpacing: "-0.01em",
+                  border: "1px solid rgba(255, 255, 255, 0.35)",
+                  boxShadow:
+                    "0 0 28px rgba(14, 165, 233, 0.55), 0 8px 20px rgba(0, 0, 0, 0.4)",
+                  cursor: "pointer",
+                  transition: "all 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px) scale(1.02)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 36px rgba(14, 165, 233, 0.75), 0 12px 28px rgba(0, 0, 0, 0.5)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0) scale(1)";
+                  e.currentTarget.style.boxShadow =
+                    "0 0 28px rgba(14, 165, 233, 0.55), 0 8px 20px rgba(0, 0, 0, 0.4)";
+                }}
               >
-                Plan Trip to {spotlight.name}
-              </Button>
-              <span style={{ fontSize: "0.9rem", color: "#94A3B8" }}>
-                Recommended season:{" "}
-                <strong style={{ color: "#FFFFFF" }}>{spotlight.season}</strong>{" "}
-                • Avg Est:{" "}
-                <strong style={{ color: "#34D399" }}>
-                  {spotlight.budgetEst}
-                </strong>
-              </span>
+                <Sparkles size={18} fill="#FFFFFF" color="#FFFFFF" />
+                <span>Plan Trip to {spotlight.name}</span>
+                <ArrowRight size={17} color="#FFFFFF" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const el = document.getElementById("destinations-grid-anchor");
+                  if (el) el.scrollIntoView({ behavior: "smooth" });
+                }}
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  padding: "14px 22px",
+                  borderRadius: "14px",
+                  background: "rgba(255, 255, 255, 0.08)",
+                  backdropFilter: "blur(16px)",
+                  WebkitBackdropFilter: "blur(16px)",
+                  border: "1px solid rgba(255, 255, 255, 0.18)",
+                  color: "#F8FAFC",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  transition: "all 0.2s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.14)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                  e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.18)";
+                }}
+              >
+                <Compass size={17} color="#38BDF8" />
+                <span>Explore All Escapes</span>
+              </button>
+            </div>
+
+            {/* QUICK STATS PILLS */}
+            <div
+              style={{
+                display: "flex",
+                gap: "10px",
+                alignItems: "center",
+                flexWrap: "wrap",
+              }}
+            >
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 14px",
+                  borderRadius: "10px",
+                  background: "rgba(3, 7, 18, 0.75)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(255, 255, 255, 0.12)",
+                  fontSize: "0.85rem",
+                  color: "#CBD5E1",
+                }}
+              >
+                <Calendar size={14} color="#38BDF8" />
+                <span>
+                  Best Season:{" "}
+                  <strong style={{ color: "#FFFFFF" }}>{spotlight.season}</strong>
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 14px",
+                  borderRadius: "10px",
+                  background: "rgba(3, 7, 18, 0.75)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(52, 211, 153, 0.25)",
+                  fontSize: "0.85rem",
+                  color: "#CBD5E1",
+                }}
+              >
+                <DollarSign size={14} color="#34D399" />
+                <span>
+                  Avg Est:{" "}
+                  <strong style={{ color: "#34D399" }}>
+                    {spotlight.budgetEst}
+                  </strong>
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "6px 14px",
+                  borderRadius: "10px",
+                  background: "rgba(3, 7, 18, 0.75)",
+                  backdropFilter: "blur(12px)",
+                  WebkitBackdropFilter: "blur(12px)",
+                  border: "1px solid rgba(245, 158, 11, 0.25)",
+                  fontSize: "0.85rem",
+                  color: "#CBD5E1",
+                }}
+              >
+                <Star size={14} fill="#FBBF24" color="#FBBF24" />
+                <span>
+                  Rating:{" "}
+                  <strong style={{ color: "#FFFFFF" }}>
+                    {spotlight.rating}
+                  </strong>{" "}
+                  / 5.0
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
+      {/* MAIN EXPLORE CONTENT CONTAINER */}
+      <div
+        style={{
+          width: "94%",
+          maxWidth: "1440px",
+          margin: "0 auto",
+          padding: "36px 16px 64px",
+          display: "flex",
+          flexDirection: "column",
+          gap: "36px",
+        }}
+      >
+
       {/* SEARCH & CATEGORY FILTERING */}
       <section
+        id="destinations-grid-anchor"
         style={{ display: "flex", flexDirection: "column", gap: "20px" }}
       >
         <div
@@ -507,13 +780,7 @@ export default function ExplorePage() {
       {/* DESTINATIONS GRID */}
       <section>
         {filteredDestinations.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "24px",
-            }}
-          >
+          <div className="grid-3-col">
             {filteredDestinations.map((dest) => {
               const isFav = favorites.includes(dest.name);
               return (
@@ -563,7 +830,26 @@ export default function ExplorePage() {
                         left: "14px",
                       }}
                     >
-                      <Badge variant="neutral" size="sm">
+                      <Badge
+                        variant="overlay"
+                        size="sm"
+                        style={{
+                          letterSpacing: "0.03em",
+                          textTransform: "uppercase",
+                          fontSize: "0.72rem",
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: "6px",
+                            height: "6px",
+                            borderRadius: "50%",
+                            background: "#38BDF8",
+                            display: "inline-block",
+                            marginRight: "6px",
+                            boxShadow: "0 0 6px #38BDF8",
+                          }}
+                        />
                         {dest.category}
                       </Badge>
                     </div>
@@ -729,6 +1015,7 @@ export default function ExplorePage() {
           </GlassCard>
         )}
       </section>
+      </div>
     </div>
   );
 }

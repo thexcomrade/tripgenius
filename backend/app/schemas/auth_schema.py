@@ -87,6 +87,8 @@ class CurrentUserResponse(BaseModel):
 
     full_name: str
 
+    username: str = "thexcomrade"
+
     email: EmailStr
 
     is_active: bool

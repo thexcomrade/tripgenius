@@ -35,6 +35,7 @@ export interface LoginResponse {
 export interface CurrentUser {
   id: string;
   full_name: string;
+  username?: string;
   email: string;
   is_active: boolean;
   is_verified: boolean;
@@ -141,10 +142,23 @@ class AuthService {
       if (stored) {
         try {
           const parsed = JSON.parse(stored);
+          const resolvedUsername =
+            parsed.username &&
+            parsed.username !== "sivyababu" &&
+            parsed.username !== "voyager"
+              ? parsed.username
+              : "thexcomrade";
+          const resolvedName =
+            parsed.full_name &&
+            parsed.full_name !== "Traveler" &&
+            parsed.full_name !== "Sivya Babu"
+              ? parsed.full_name
+              : "Test Traveler";
           return {
             id: parsed.uid || "tg-traveler-99",
-            full_name: parsed.full_name || "Sivya Babu",
-            email: parsed.email || "traveler99@tripgenius.com",
+            full_name: resolvedName,
+            username: resolvedUsername,
+            email: parsed.email || "thexcomrade@tripgenius.com",
             is_active: true,
             is_verified: true,
             eco_travel_score: parsed.eco_score ?? 92,
@@ -156,7 +170,8 @@ class AuthService {
       return {
         id: "tg-traveler-99",
         full_name: "Test Traveler",
-        email: "traveler99@tripgenius.com",
+        username: "thexcomrade",
+        email: "thexcomrade@tripgenius.com",
         is_active: true,
         is_verified: true,
         eco_travel_score: 92,

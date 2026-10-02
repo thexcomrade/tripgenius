@@ -64,13 +64,15 @@ export default function ProfileHeader({
 
   const ecoRank = getEcoRank(user.eco_score || 92);
 
-  // Compute clean initials e.g. "SB" for Sivya Babu
+  // Compute clean initials e.g. "TT" for Test Traveler or "TC" for thexcomrade
   const getInitials = (name: string) => {
-    const parts = name.trim().split(" ");
+    const clean = (name || "").trim();
+    if (!clean) return "TC";
+    const parts = clean.split(/\s+/);
     if (parts.length >= 2) {
       return (parts[0][0] + parts[1][0]).toUpperCase();
     }
-    return name.slice(0, 2).toUpperCase() || "SB";
+    return clean.slice(0, 2).toUpperCase() || "TC";
   };
 
   return (
@@ -176,7 +178,7 @@ export default function ProfileHeader({
                       letterSpacing: "1px",
                     }}
                   >
-                    {getInitials(user.full_name || "Sivya Babu")}
+                    {getInitials(user.full_name || "Test Traveler")}
                   </span>
                 )}
               </div>
@@ -214,7 +216,7 @@ export default function ProfileHeader({
                       letterSpacing: "-0.5px",
                     }}
                   >
-                    {user.full_name || "Sivya Babu"}
+                    {user.full_name || "Test Traveler"}
                   </h1>
 
                   <span
@@ -246,7 +248,7 @@ export default function ProfileHeader({
                     color: "#94A3B8",
                   }}
                 >
-                  <span>@{user.username || "sivyababu"}</span>
+                  <span>@{user.username || "thexcomrade"}</span>
                   <span style={{ color: "#475569" }}>•</span>
                   <button
                     type="button"
@@ -266,7 +268,7 @@ export default function ProfileHeader({
                     }}
                     title="Click to copy Passport ID"
                   >
-                    <span>{user.tripgenius_id || "TG-SB8842"}</span>
+                    <span>{user.tripgenius_id || "TG-TC8842"}</span>
                     {copied ? (
                       <Check size={12} color="#34D399" />
                     ) : (

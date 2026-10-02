@@ -105,10 +105,10 @@ export default function ProfilePage() {
 
   const [user, setUser] = useState<UserProfile>({
     uid: generateUID(),
-    tripgenius_id: "TG-SB8842",
-    full_name: "Sivya Babu",
-    username: "sivyababu",
-    email: "sivya.babu@tripgenius.com",
+    tripgenius_id: "TG-TC8842",
+    full_name: "Test Traveler",
+    username: "thexcomrade",
+    email: "thexcomrade@tripgenius.com",
     bio: "Passionate traveler based in Trivandrum / Kochi. Loves mindful journeys, peaceful coastal getaways, and exploring authentic cultural sanctuaries.",
     country: "Trivandrum, Kerala, India",
     profile_image: "",
@@ -165,16 +165,35 @@ export default function ProfilePage() {
         const liveTotalTrips = parsedSaved.length > 0 ? parsedSaved.length : 3;
 
         const name =
-          parsed.full_name && parsed.full_name !== "Traveler"
+          parsed.full_name &&
+          parsed.full_name !== "Traveler" &&
+          parsed.full_name !== "Sivya Babu"
             ? parsed.full_name
-            : "Sivya Babu";
+            : "Test Traveler";
 
-        setUser({
+        const resolvedUsername =
+          parsed.username &&
+          parsed.username !== "voyager" &&
+          parsed.username !== "sivyababu"
+            ? parsed.username
+            : "thexcomrade";
+
+        const resolvedEmail =
+          parsed.email && !parsed.email.includes("sivya")
+            ? parsed.email
+            : "thexcomrade@tripgenius.com";
+
+        const resolvedId =
+          parsed.tripgenius_id && parsed.tripgenius_id !== "TG-SB8842"
+            ? parsed.tripgenius_id
+            : "TG-TC8842";
+
+        const profileData: UserProfile = {
           uid: parsed.uid ?? generateUID(),
-          tripgenius_id: parsed.tripgenius_id ?? "TG-SB8842",
+          tripgenius_id: resolvedId,
           full_name: name,
-          username: parsed.username && parsed.username !== "voyager" ? parsed.username : "sivyababu",
-          email: parsed.email || "sivya.babu@tripgenius.com",
+          username: resolvedUsername,
+          email: resolvedEmail,
           bio:
             parsed.bio &&
             !parsed.bio.includes("Dr. Sivya Menon") &&
@@ -202,25 +221,69 @@ export default function ProfilePage() {
                   "Local Food & Street Dining",
                   "Peaceful Wellness Retreats",
                 ],
-        });
+        };
+
+        setUser(profileData);
+
+        // Update localStorage if old username or placeholder existed
+        if (
+          parsed.username !== resolvedUsername ||
+          parsed.full_name === "Sivya Babu" ||
+          !parsed.username
+        ) {
+          localStorage.setItem(
+            "tripgenius_user",
+            JSON.stringify({ ...parsed, ...profileData }),
+          );
+        }
       } else {
         // Fallback for guest visitor
         if (storedUser) {
           const parsed = JSON.parse(storedUser);
           const name =
-            parsed.full_name && parsed.full_name !== "Traveler"
+            parsed.full_name &&
+            parsed.full_name !== "Traveler" &&
+            parsed.full_name !== "Sivya Babu"
               ? parsed.full_name
-              : "Sivya Babu";
+              : "Test Traveler";
+
+          const resolvedUsername =
+            parsed.username &&
+            parsed.username !== "voyager" &&
+            parsed.username !== "sivyababu"
+              ? parsed.username
+              : "thexcomrade";
+
+          const resolvedId =
+            parsed.tripgenius_id && parsed.tripgenius_id !== "TG-SB8842"
+              ? parsed.tripgenius_id
+              : "TG-TC8842";
+
+          const guestData = {
+            ...parsed,
+            full_name: name,
+            username: resolvedUsername,
+            tripgenius_id: resolvedId,
+            saved_trips: parsedSaved.length,
+          };
 
           setUser((prev) => ({
             ...prev,
-            ...parsed,
-            full_name: name,
-            saved_trips: parsedSaved.length,
+            ...guestData,
           }));
+
+          if (parsed.username !== resolvedUsername || !parsed.username) {
+            localStorage.setItem(
+              "tripgenius_user",
+              JSON.stringify(guestData),
+            );
+          }
         } else {
           setUser((prev) => ({
             ...prev,
+            full_name: "Test Traveler",
+            username: "thexcomrade",
+            tripgenius_id: "TG-TC8842",
             saved_trips: parsedSaved.length,
           }));
         }
@@ -239,6 +302,9 @@ export default function ProfilePage() {
     };
     setUser(updatedUser);
     localStorage.setItem("tripgenius_user", JSON.stringify(updatedUser));
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(new Event("storage"));
+    }
   }
 
   function handleDeleteSavedTrip(id: string) {

@@ -23,6 +23,36 @@ from app.services.tourism_rag_service import get_tourism_rag_service
 
 logger = logging.getLogger(__name__)
 
+EXPANDED_TRAVEL_DESTINATIONS: dict[str, str] = {
+    "abc": "Annapurna Base Camp, Nepal",
+    "abc trek": "Annapurna Base Camp Trek, Nepal",
+    "abc trekking": "Annapurna Base Camp Trek, Nepal",
+    "annapoorna": "Annapurna Base Camp, Nepal",
+    "annapoorna base camp": "Annapurna Base Camp, Nepal",
+    "annapoorna base camp trek": "Annapurna Base Camp Trek, Nepal",
+    "annapurna": "Annapurna Base Camp, Nepal",
+    "annapurna base camp": "Annapurna Base Camp, Nepal",
+    "annapurna trek": "Annapurna Base Camp Trek, Nepal",
+    "ebc": "Everest Base Camp, Nepal",
+    "ebc trek": "Everest Base Camp Trek, Nepal",
+    "ebc trekking": "Everest Base Camp Trek, Nepal",
+    "kgl": "Kashmir Great Lakes Trek, Jammu & Kashmir",
+    "kgl trek": "Kashmir Great Lakes Trek, Jammu & Kashmir",
+    "kedarkantha": "Kedarkantha Trek, Uttarakhand",
+    "kedarkantha trek": "Kedarkantha Trek, Uttarakhand",
+    "chadar": "Chadar Frozen River Trek, Zanskar Ladakh",
+    "chadar trek": "Chadar Frozen River Trek, Zanskar Ladakh",
+    "har ki dun": "Har Ki Dun Trek, Uttarakhand",
+    "valley of flowers": "Valley of Flowers, Uttarakhand",
+    "hampta pass": "Hampta Pass Trek, Himachal Pradesh",
+    "triund": "Triund Trek, Dharamshala",
+    "kheerganga": "Kheerganga Trek, Parvati Valley",
+    "brahmatal": "Brahmatal Trek, Uttarakhand",
+    "sandakphu": "Sandakphu Trek, Darjeeling",
+    "kumara parvatha": "Kumara Parvatha Trek, Coorg",
+    "kudremukh": "Kudremukh Trek, Chikmagalur",
+}
+
 
 class AIService:
     """
@@ -140,7 +170,7 @@ REALISTIC EXPENSE ARCHITECTURE (ALL FIGURES IN REAL MARKET INR):
 - Activities, Passes & Contingency: Total ₹{cost['miscellaneous_cost']:,.0f} (~₹{activities_per_day:,.0f} / day).
 
 STRICT REAL MONEY EXPENSE & ACCURACY RULES:
-1. GEOGRAPHICALLY ACCURATE LOCAL ATTRACTIONS: In 'attractions', provide genuine, iconic attractions that are located STRICTLY within {destination}. If destination is Varkala, provide real Varkala spots (e.g. Varkala Cliff, Papanasam Beach, Janardhana Swami Temple, Kappil Beach & Backwaters, Sivagiri Mutt). NEVER include spots from distant states or other cities (e.g., do NOT list Hampi or Ooty for Varkala).
+1. GEOGRAPHICALLY ACCURATE LOCAL ATTRACTIONS: In 'attractions', provide genuine, iconic attractions that are located STRICTLY within {destination}. If destination is Varkala, provide real Varkala spots (e.g. Varkala Cliff, Papanasam Beach, Janardhana Swami Temple, Kappil Beach & Backwaters, Sivagiri Mutt). Strictly list attractions located in the requested destination — NEVER hallucinate or substitute unrelated cities.
 2. REALISTIC HOTEL NAMES & GOOGLE RATINGS: {"Since this is a DAY TRIP, set 'recommended_hotels' to an empty array [] — no overnight stay." if is_day_trip else f"In 'recommended_hotels', provide 3 REAL, authentically existing hotels/resorts in {destination} with their authentic Google star rating matching ~₹{acc_per_night:,.0f}/night. Format each string as: 'Hotel Name (★ 4.X Google, ~₹X,XXX/night) — key highlight'."}.
 3. REALISTIC DINING SPOTS & GOOGLE RATINGS: In 'recommended_restaurants', provide 3 REAL, authentically existing restaurants/cafes in {destination} with their authentic Google star rating matching ~₹{food_per_meal:,.0f}/meal. Format each string as: 'Restaurant Name (★ 4.X Google, ~₹XXX/person) — signature dish'.
 4. REALISTIC EXPENSE TAGS IN ITINERARY: In 'ai_itinerary', every morning, afternoon, and evening plan MUST state explicit, realistic costs or entry fees where money is spent (e.g. 'Morning: Visit local landmark [Entry fee ~₹345/person]. Afternoon: Regional lunch [~₹250/meal]. Evening: Sunset beach stroll [Free]'). If an activity has no fee, label it '[Free entry]'.
@@ -309,16 +339,39 @@ Return JSON.
 
     def get_weather_context(self, destination: str) -> dict[str, Any]:
         dest_clean = destination.strip()
+        q = dest_clean.lower()
+
+        # Gateway city resolution for remote treks where OpenWeather lacks station IDs
+        weather_city = dest_clean
+        if any(a in q for a in ["annapurna", "annapoorna", "abc"]):
+            weather_city = "Pokhara"
+        elif any(e in q for e in ["everest", "ebc"]):
+            weather_city = "Kathmandu"
+        elif any(k in q for k in ["kedarkantha", "har ki dun", "valley of flowers", "brahmatal"]):
+            weather_city = "Dehradun"
+        elif "chadar" in q:
+            weather_city = "Leh"
+        elif "hampta" in q:
+            weather_city = "Manali"
+
         try:
-            data = self.weather_service.get_current_weather(dest_clean)
+            data = self.weather_service.get_current_weather(weather_city)
             if data and data.get("temperature") is not None and data.get("temperature") > 0:
+                data["city"] = dest_clean
                 return data
         except Exception as error:
-            logger.warning("Weather fetch failed for %s: %s", dest_clean, str(error))
+            logger.warning("Weather fetch failed for %s (query=%s): %s", dest_clean, weather_city, str(error))
 
-        # Intelligent climate synthesis fallback for regional/hill/beach locations
-        q = dest_clean.lower()
-        if any(h in q for h in ["chickmanglore", "chikmagalur", "chikkamagaluru", "munnar", "ooty", "kodaikanal", "coorg", "kodagu", "wayanad", "manali", "shimla", "darjeeling", "gangtok"]):
+        # Intelligent climate synthesis fallback for regional/hill/beach/trek locations
+        if any(t in q for t in ["annapurna", "annapoorna", "abc", "everest", "ebc", "chadar", "trek", "base camp"]):
+            temp = 10.5
+            cond = "Crisp Alpine Air"
+            desc = f"Clear high-altitude mountain atmosphere with crystalline glacier vistas across {dest_clean}"
+            hum = 52
+            wind = 12.0
+            rec = "High-altitude Himalayan climate. Layer with thermal innerwear, down jacket, sturdy waterproof boots, and UV sunglasses."
+            packing = ["Thermal innerwear & fleece", "Down windproof jacket", "Sturdy trekking boots", "Woolen beanie & gloves", "UV sunglasses & high-SPF sunscreen", "Water purification tablets", "Trekking poles"]
+        elif any(h in q for h in ["chickmanglore", "chikmagalur", "chikkamagaluru", "munnar", "ooty", "kodaikanal", "coorg", "kodagu", "wayanad", "manali", "shimla", "darjeeling", "gangtok"]):
             temp = 20.0
             cond = "Misty & Pleasant"
             desc = f"Cool highland breeze across green hills and plantations in {dest_clean}"
@@ -403,16 +456,23 @@ Return JSON.
         if verified and verified.get("attractions"):
             return verified["attractions"]
 
+        q_clean = destination.lower().strip()
+        is_varanasi_dest = any(k in q_clean for k in ["varanasi", "kashi", "banaras", "benares"])
+
         # 2. Search destination specifically within the tourism dataset
         dest_matches = self.recommendation_service.search_destination(destination)
         attractions: list[str] = []
 
-        q_clean = destination.lower().strip()
         for item in dest_matches:
             place_name = item.get("place_name", "")
             district = item.get("district", "")
             state = item.get("state", "")
             desc = item.get("description", "") or item.get("activities", "")
+
+            # Strict Guard: Never allow Varanasi / Kashi items unless destination is specifically Varanasi
+            item_text = f"{place_name} {district} {state} {desc}".lower()
+            if not is_varanasi_dest and any(v in item_text for v in ["varanasi", "kashi vishwanath", "assi ghat", "dashashwamedh", "sarnath", "ganga aarti"]):
+                continue
 
             if place_name:
                 dist_clean = district.lower()
@@ -433,25 +493,15 @@ Return JSON.
         if len(attractions) >= 2:
             return attractions[:10]
 
-        # 3. If any destination matches were found, use top matches
-        if dest_matches:
-            for m in dest_matches[:8]:
-                p = m.get("place_name", "")
-                d = m.get("district", "") or m.get("state", "") or destination.title()
-                desc = m.get("description", "") or m.get("activities", "")
-                if p and not any(a.startswith(p) for a in attractions):
-                    formatted = f"{p} ({d}) — {desc}" if desc else f"{p} ({d})"
-                    attractions.append(formatted)
-            if len(attractions) >= 2:
-                return attractions[:10]
-
-        # 4. Fallback: clean Title-cased attractions
+        # 3. Fallback: clean Title-cased attractions scoped strictly to the chosen destination
         dest_title = destination.strip().title()
         return [
             f"{dest_title} Historic Heritage Old Town Walk",
             f"{dest_title} Panoramic Sunset Viewpoint",
             f"{dest_title} Central Market & Cultural Promenade",
             f"{dest_title} Nature Trail & Botanical Enclave",
+            f"{dest_title} Scenic Waterfront & Promenade",
+            f"{dest_title} Regional Cultural Centre & Artisan Hub",
         ]
 
     # ==================================================
@@ -1094,6 +1144,7 @@ Return JSON.
         )
 
         return {
+            "destination": destination,
             "trip_title": f"{destination} Travel Experience",
             "destination_summary": self.generate_destination_summary(destination),
             "weather_summary": weather,
@@ -1130,6 +1181,16 @@ Return JSON.
     ) -> dict[str, Any]:
 
         self.validate_trip_input(destination, duration_days, budget)
+
+        # Normalize and expand destination aliases (e.g., "abc trekking" -> "Annapurna Base Camp, Nepal")
+        dest_raw = destination.strip()
+        dest_lower = dest_raw.lower()
+        if dest_lower in EXPANDED_TRAVEL_DESTINATIONS:
+            destination = EXPANDED_TRAVEL_DESTINATIONS[dest_lower]
+        elif any(k in dest_lower for k in ["abc trek", "abc trekking", "annapoorna base camp", "annapurna base camp"]):
+            destination = "Annapurna Base Camp, Nepal"
+        elif dest_lower == "abc":
+            destination = "Annapurna Base Camp, Nepal"
 
         cost_data = self.estimate_trip_cost(
             budget=budget,
@@ -1201,6 +1262,21 @@ Return JSON.
                 base_response["gemini_response"] = parsed_ai_response
                 base_response["generation_mode"] = "ai_synthesized"
 
+            # Strict guard: If destination is NOT Varanasi, ensure Varanasi items never appear in attractions
+            q_dest = destination.lower().strip()
+            if not any(k in q_dest for k in ["varanasi", "kashi", "banaras", "benares"]):
+                varanasi_terms = ["varanasi", "kashi vishwanath", "assi ghat", "dashashwamedh", "sarnath", "ganga aarti"]
+                if "attractions" in base_response and isinstance(base_response["attractions"], list):
+                    clean_attrs = [
+                        a for a in base_response["attractions"]
+                        if not any(v in str(a).lower() for v in varanasi_terms)
+                    ]
+                    if len(clean_attrs) >= 2:
+                        base_response["attractions"] = clean_attrs
+                    else:
+                        base_response["attractions"] = self.generate_attractions(destination, interests)
+
+            base_response["destination"] = destination
             return self.format_trip_response(base_response)
 
         except Exception as error:
@@ -1228,7 +1304,7 @@ Return JSON.
         user_name: Optional[str] = None,
     ) -> dict:
         """
-        Generate warm, deeply analyzed, structured travel advice as DASAPPAN (RAG Mode).
+        Generate warm, deeply analyzed, structured travel advice as PADAYAPPA (RAG Mode).
         Always grounds recommendations in verified tourism intelligence, greets warmly with
         'Namaskaram *username*!', covers worldwide destinations, structures replies cleanly,
         and asks exactly one focused question.
@@ -1281,7 +1357,7 @@ Return JSON.
             for item in recent_turns:
                 r = item.get("role", "user")
                 c = item.get("content", "")
-                speaker = "Traveler" if r == "user" else "DASAPPAN"
+                speaker = "Traveler" if r == "user" else "PADAYAPPA"
                 history_lines.append(f"{speaker}: {c}")
             if history_lines:
                 history_formatted = (
@@ -1290,8 +1366,22 @@ Return JSON.
                     + "\n\n"
                 )
 
-        prompt = f"""You are DASAPPAN, the Next-Gen Travel AI Engine 2.0 on Trip Geni — a world-wise, charismatic, and extraordinarily knowledgeable personal travel companion and concierge.
-You possess deep, authentic intelligence about travel across India (from the ancient ghats of Varanasi, tea hills of Munnar, serene waters of Varkala and Thenkasi, to Himachal, Rajasthan, and Goa) and worldwide (Paris, Tokyo, Bali, Swiss Alps, New York, and beyond).
+        # Check if user was already greeted
+        already_greeted = False
+        if history and isinstance(history, list) and len(history) > 0:
+            for h in history:
+                if isinstance(h, dict) and ("namaskaram" in str(h.get("content", "")).lower() or h.get("role") == "assistant"):
+                    already_greeted = True
+                    break
+
+        display_name = (user_name or "").strip()
+        greeting_prefix = (
+            "" if already_greeted
+            else (f"Namaskaram {display_name}! 🙏" if display_name else "Namaskaram! 🙏")
+        )
+
+        prompt = f"""You are PADAYAPPA, the Next-Gen Travel AI Engine 3.0 Pro on Trip Geni — a charismatic, deeply authentic, and helpful travel companion.
+You possess authentic intelligence about travel across India (Manali, Varanasi, Munnar, Thenkasi, Varkala, Coorg, Ooty, Hampi, Goa, etc.) and worldwide (Paris, Tokyo, Bali, Dubai, etc.).
 
 {history_formatted}Traveler: "{user_message}"
 
@@ -1299,47 +1389,62 @@ You possess deep, authentic intelligence about travel across India (from the anc
 
 CRITICAL CONVERSATIONAL INTELLIGENCE & PLANNING RULES:
 1. GREETING & PERSONA:
-   - Greet warmly with "{greeting_prefix}" when starting a topic or addressing the traveler.
-   - Speak with the warm, experienced, and enthusiastic persona of Dasappan. Never be robotic.
+   - If the traveler has ALREADY been greeted in the conversation, NEVER repeat "Namaskaram" or any formal greeting. Talk naturally and directly like a close friend.
+   - If this is the very first turn and traveler says hi/hello, greet warmly with "{greeting_prefix}".
 
-2. ACTIVE INTENT ANALYSIS & CONSULTATIVE DISCOVERY:
-   Case A: DESTINATION MENTIONED WITHOUT KEY DETAILS (e.g. Traveler just says "Varanasi", "Munnar", "Goa", "I want to visit Paris"):
-   - Enthusiastically acknowledge and praise the destination with authentic local flavor (e.g. for Varanasi: mention the sacred Ganges, timeless ghats, and evening aartis).
-   - RECOGNIZE that essential planning details are missing to create the ideal itinerary.
-   - Actively ASK the traveler to collect the missing details:
-     * 🗓️ How many days are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)
-     * 👥 How many travelers / group type? (Solo, couple, family, or friends?)
-     * 💰 Approximate budget tier? (Budget backpacker, comfortable heritage stay, or luxury?)
-     * ✨ Any must-have experiences? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)
-   - Conclude by assuring them: "Share these details with me, and I'll craft your complete personalized day-by-day plan with timings, stays, food spots, and costs in ₹!"
+2. PROGRESSIVE MULTI-TURN DISCOVERY (One Question at a Time):
+   Case A: DESTINATION MENTIONED WITHOUT DETAILS (e.g. Traveler just says "Varanasi", "Munnar", "Thenkasi", "Goa"):
+   - React with natural human delight: "Oh, [Destination]!! 🌟"
+   - Provide a vivid, evocative 2-LINE description drawn from verified travel facts (e.g. for Varanasi: ancient sacred ghats, mesmerizing evening Ganga aarti, dawn boat rides).
+   - Then ask ONLY: "How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)"
+   - NEVER dump a long bullet list of questions in one single message! Ask one comfortable question per message so travelers enjoy conversing with Padayappa.
 
-   Case B: TRIP PARAMETERS PROVIDED (e.g. Traveler provides days, group, or budget, such as "5 days, 2 people, comfort budget, want boat ride and aarti" or "Varanasi 5 days"):
-   - DO NOT repeat the questions! Immediately synthesize a COMPLETE, rich, formatted text itinerary:
-     * Inspiring trip title
-     * Detailed Day-by-Day Journey (Day 1, Day 2, etc.) with specific morning, afternoon, and evening experiences
-     * Recommended authentic stays with realistic nightly rates in ₹
-     * Famous local street food spots & iconic dishes (exact names: Ram Bhandar, Kashi Chaat Bhandar, Blue Lassi, etc.)
-     * Realistic total estimated budget breakdown in ₹ (stays, transit, meals, activities)
-     * Local insider tips (best boat timings, avoiding temple queues, photography rules)
-     * Friendly follow-up asking if they'd like adjustments or specific hotel bookings.
+   Case B: TRAVELERS ANSWERED (e.g. "2 people", "couple", "solo", "family"):
+   - Acknowledge warmly with travel flavor.
+   - Then ask: "How many days are you planning to spend? (Most travelers find 3 to 4 days ideal to explore without rushing)."
 
-   Case C: SPECIFIC QUESTION (e.g. food, weather, stays, packing, transit):
-   - Answer directly, thoroughly, and conversationally with exact facts, places, and ₹ costs!
+   Case C: DAYS / DURATION ANSWERED (e.g. "3 days", "4 days", "5 days"):
+   - Acknowledge the duration enthusiastically.
+   - Then ask: "What kind of budget or style do you have in mind? (e.g. Budget backpacker, comfortable heritage stays, or luxury in ₹)?"
+
+   Case D: ALL ESSENTIALS GATHERED OR FULL PROMPT GIVEN (e.g. "generate 3 day 2 night package", "generate the plan", "Plan a 3-day scenic trip"):
+   - NO UNWANTED PREAMBLE / CONVERSATIONAL CHAT FLUFF: When asked to generate a plan, DO NOT output conversational chatter like "Ah, 'generate the plan'! My favorite part!" or "Let's dive right back into crafting that perfect...". Start IMMEDIATELY with the clean markdown trip title on the very first line!
+   - NO EMOJIS IN HEADERS: NEVER use emoji stars (like ✨, 🌟, 🏔️) in the markdown title (###) or section headers, because emojis corrupt PDF rendering. Format the title cleanly:
+     ### [Destination]: [Inspiring Theme] ([N] Days, [N-1] Nights)
+   - RIGOROUS MATHEMATICAL BUDGET ACCURACY:
+     * If user states a per-head budget (e.g. "₹4,000 per head for family of 4"), compute accurately: 4 × ₹4,000 = ₹16,000 Total.
+     * State the exact arithmetic clearly:
+       **Total Estimated Budget for [N] people ([N] Days / [N-1] Nights):** ₹[Total] (approx. ₹[PerHead] per person)
+   - COMPLETE ALL DAYS WITHOUT TRUNCATION:
+     * If 3 days requested, you MUST generate Day 1, Day 2, AND Day 3 in full! NEVER stop or truncate before completing all requested days!
+     * Structure each day strictly and concisely:
+       **Day [N]: [Theme/Title]**
+       * **Morning:** [Specific morning activities & landmarks]
+       * **Afternoon:** [Afternoon activities & authentic lunch recommendation]
+       * **Evening:** [Evening stroll, sunset viewpoint & authentic dinner spot]
+   - RECOMMENDED STAYS:
+     * 2-3 verified hotels/homestays with realistic nightly rates in ₹
+   - AUTHENTIC REGIONAL FOOD & LOCAL SECRETS:
+     * Specific iconic dishes and famous local eateries
+   - PADAYAPPA'S LOCAL INSIDER SECRET
+   - End with a clean 1-line note that the traveler can click "Download PDF" above or ask to customize.
+
+   Case E: AFFIRMATION / FOLLOW-UP (e.g. "yes", "sure", "hotels", "transit"):
+   - Seamlessly continue from the last topic! If you previously asked if they want hotel/transit details, immediately provide the specific verified stays with ₹ rates and train/flight details. NEVER reset the conversation or ask for their destination again!
 
 3. LOCAL CURRENCY & PRICING:
-   - Always state all costs, stays, tickets, and travel estimates in Indian Rupees (₹).
-   - Never use rigid canned emoji checklists (like 🎯 The Vibe / 🗺️ Highlights / 🍲 Must-Eat / 💰 Expected Cost). Use natural, engaging markdown with fluid paragraphs, bold highlights, and clean bullet lists."""
+   - Always state all costs, stays, tickets, and travel estimates in Indian Rupees (₹)."""
 
         # 4. Attempt Gemini generation with fast timeout; fall back seamlessly to RAG engine on any rate limit or delay
         for model in self.fallback_models:
             try:
-                config = {"max_output_tokens": 1800, "temperature": 0.75}
+                config = {"max_output_tokens": 5000, "temperature": 0.75}
                 response = self.client.models.generate_content(
                     model=model, contents=prompt, config=config
                 )
                 if response and response.text:
                     reply_text = response.text.strip()
-                    if not reply_text.startswith("Namaskaram"):
+                    if not already_greeted and not reply_text.startswith("Namaskaram"):
                         reply_text = f"{greeting_prefix}\n\n{reply_text}"
                     return {"reply": reply_text, "source": "gemini_2_engine"}
             except Exception as err:

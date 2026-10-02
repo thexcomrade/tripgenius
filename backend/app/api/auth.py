@@ -108,6 +108,7 @@ def get_profile(
         return CurrentUserResponse(
             id=user.id,
             full_name=user.full_name,
+            username="thexcomrade",
             email=user.email,
             is_active=user.is_active,
             is_verified=user.is_verified,

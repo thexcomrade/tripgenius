@@ -428,13 +428,461 @@ VERIFIED_TRAVEL_DIRECTORY: dict[str, dict[str, list[str]]] = {
         "cuisines": ["Nasi Goreng with Chicken Satay & Peanut Sauce", "Bebek Betutu (Balinese spiced slow-cooked duck)", "Mie Goreng noodles"],
         "beverages": ["Fresh Young Coconut (Kelapa Muda)", "Kopi Luwak Civet Coffee", "Bintang Beer"],
     },
+    "varanasi": {
+        "attractions": [
+            "Dashashwamedh Ghat & Evening Ganga Aarti (Dashashwamedh Ghat, 4 km from Varanasi Cantt) — Ancient spiritual ghat with world-famous 7:00 PM priests' flame ceremony",
+            "Kashi Vishwanath Temple & Corridor (Lahori Tola, 1 km from Dashashwamedh) — One of 12 sacred Jyotirlingas, newly renovated golden spires & Ganga viewpoint",
+            "Assi Ghat & Subah-e-Banaras (Assi Ghat, Southernmost Ghat) — Sacred river confluence, dawn yoga, classical Hindustani concerts & morning boat point",
+            "Sarnath Buddhist Pilgrimage & Museum (Sarnath, 10 km North-East) — Site of Lord Buddha's first sermon, Dhamek Stupa & Lion Capital of Ashoka",
+            "Manikarnika Ghat (Manikarnika Ghat, between Dashashwamedh and Scindia) — Most revered cremation ghat embodying timeless spiritual cycles & moksha",
+            "Banaras Hindu University & New Vishwanath Temple (BHU Campus, Lanka, 7 km) — Asia's largest residential campus with soaring marble Shiva temple",
+            "Ramnagar Fort & Museum (Ramnagar, opposite Tulsi Ghat, Eastern bank) — 18th-century sandstone fortress of Kashi Naresh with royal vintage car collection",
+        ],
+        "hotels": [
+            "BrijRama Palace Varanasi (★ 4.8 Google, ~₹18,500/night) — 18th-century heritage palace directly on Darbhanga Ghat accessible by royal bajra boat",
+            "Taj Ganges Varanasi (★ 4.6 Google, ~₹11,000/night) — Set across 40 acres of lush orchards with luxury heritage suites & spa",
+            "Hotel Surya Kaiser Palace (★ 4.3 Google, ~₹3,400/night) — 1810 royal nepalese palace amidst serene Cantonment gardens with pool",
+            "Zostel Varanasi (★ 4.5 Google, ~₹1,200/night) — Artistic traveler hostel with rooftop terrace, walking tours & vibrant community events",
+            "Ganpati Guest House (★ 4.4 Google, ~₹2,200/night) — Colorfully painted riverside haveli on Meer Ghat with panoramic Ganges sun terrace",
+        ],
+        "restaurants": [
+            "Kashi Chaat Bhandar (★ 4.6 Google, ~₹120/person) — Legendary Godowlia stall famous for Tamatar Chaat, Palak Patta Chaat & Dahi Puri",
+            "Blue Lassi Shop (★ 4.5 Google, ~₹140/person) — Historic 1925 artisanal lassi bar near Manikarnika Ghat with 80+ handcrafted flavors",
+            "Deena Chaat Bhandar (★ 4.4 Google, ~₹130/person) — Renowned for Gulab Jamun, Golgappas & spiced Aloo Tikki in Dashashwamedh",
+            "Pappu Chai Stall (★ 4.7 Google, ~₹30/person) — Landmark Assi Ghat intellectual hub serving clay kulhad tea with lemon & spices",
+            "Baati Chokha Restaurant (★ 4.4 Google, ~₹250/person) — Authentic Purvanchali clay-oven baked Sattu Baati with Chokha & desi ghee",
+        ],
+        "cuisines": [
+            "Banarasi Tamatar Chaat (Warm spiced tomato reduction with roasted cumin & crispy sev)",
+            "Kachori Sabzi & Jalebi (Crispy urad dal stuffed poori with spicy hing potato curry)",
+            "Authentic Baati Chokha with roasted brinjal, tomato & desi cow ghee",
+            "Malaiyo / Nimish (Winter saffron foam dessert garnished with pistachios & silver vark)",
+            "Banarasi Meetha Paan (Betel leaf with gulkand, spices & candied fennel)",
+        ],
+        "beverages": [
+            "Thick Malai Lassi served in traditional earthen Kulhad",
+            "Hot Spiced Kulhad Chai with freshly crushed ginger & green cardamom",
+            "Kesaria Thandai with almonds, saffron & rose petals",
+            "Banarasi Bel Sharbat (Chilled wood-apple herbal nectar)",
+        ],
+    },
+    "thenkasi": {
+        "attractions": [
+            "Courtallam Main Falls / Peraruvi (Courtallam, 6 km from Thenkasi) — 60-meter medicinal cascade flowing through herbal Western Ghats forests",
+            "Five Falls / Aintharuvi (Courtallam Western Slopes, 4 km) — Iconic five distinct streams resembling the hooded serpent",
+            "Kasi Viswanathar Temple (Thenkasi Town Center) — 13th-century Pandyan temple featuring majestic 180-foot Rajagopuram",
+            "Gundar Dam & Reservoir (Sengottai, 14 km from Thenkasi) — Picturesque mountain reservoir surrounded by rubber plantations & cool breeze",
+            "Old Courtallam / Pazhaya Courtallam (Courtallam Hills, 7 km) — Tranquil forest falls perfect for natural hydrotherapy",
+        ],
+        "hotels": [
+            "Saaral Resorts Courtallam (★ 4.2 Google, ~₹3,800/night) — Premium hillside resort with swimming pool & Ayurvedic spa",
+            "Green Forest Resort Thenkasi (★ 4.1 Google, ~₹2,600/night) — Serene estate cottages surrounded by lush coconut groves",
+            "Kasi Residency Thenkasi (★ 4.0 Google, ~₹1,600/night) — Clean transit hotel walking distance from Thenkasi Junction & Temple",
+        ],
+        "restaurants": [
+            "Border Rahmath Hotel Sengottai (★ 4.6 Google, ~₹220/person) — Legendary culinary institution famous for spicy pepper chicken & parotta",
+            "Aintharuvi Chettinad Mess (★ 4.2 Google, ~₹160/person) — Authentic South Indian banana leaf meals & mutton sukka",
+            "Courtallam Sambar Stall (★ 4.4 Google, ~₹80/person) — Piping hot idlis and crispy medu vada soaked in herbal coriander sambar",
+        ],
+        "cuisines": ["Shenkottai Pepper Chicken with crispy layered Parotta", "Tirunelveli Wheat Halwa", "Courtallam Herbal Banana Leaf Meals"],
+        "beverages": ["Herbal Sukku Kaapi (Dry ginger & pepper coffee)", "Fresh Tender Coconut Water", "Nannari Sarbath"],
+    },
+    "egypt": {
+        "attractions": [
+            "Pyramids of Giza & Great Sphinx (Al Haram, Giza - 15 km from Cairo) — Iconic 4,500-year-old Wonder of the Ancient World & panoramic desert plateau",
+            "Grand Egyptian Museum (GEM) & Cairo Museum (Giza / Tahrir Square) — World's largest archaeological museum housing King Tutankhamun's gold treasures",
+            "Khan el-Khalili Historic Souk (Al-Gamaleya, Islamic Cairo) — Historic 14th-century bazaar, brass lanterns, spice stalls & El Fishawy cafe",
+            "Nile River Sunset Felucca Cruise (Zamalek / Maadi Dock, Cairo) — Traditional wooden sailboat gliding along the timeless Nile with city skyline views",
+            "Saqqara Step Pyramid of Djoser (Al Badrashin, 30 km South of Giza) — World's oldest stone pyramid complex & painted tomb mastabas",
+            "Citadel of Saladin & Mosque of Muhammad Ali (Al Abageyah, Mokattam Hills) — Medieval Islamic fortress with panoramic views over Cairo",
+            "Karnak Temple & Valley of the Kings (Luxor, Nile Corridor) — Monumental 134-column hypostyle hall & underground pharaonic royal tombs",
+        ],
+        "hotels": [
+            "Marriott Mena House Cairo (★ 4.7 Google, ~₹18,500/night) — Legendary luxury palace hotel overlooking the Pyramids of Giza from private gardens",
+            "Steigenberger Hotel El Tahrir (★ 4.5 Google, ~₹8,200/night) — Upscale modern hotel steps from Tahrir Square and Egyptian Museum",
+            "Kempinski Nile Hotel Cairo (★ 4.6 Google, ~₹12,800/night) — Boutique 5-star hotel in garden city with rooftop pool overlooking the Nile",
+            "Great Pyramid Inn Giza (★ 4.6 Google, ~₹4,500/night) — Charming terrace hotel directly facing the Sphinx and Pyramids sound & light show",
+            "Dahab Hostel Cairo (★ 4.3 Google, ~₹1,400/night) — Vibrant rooftop traveler hostel in downtown Cairo with palm terrace",
+        ],
+        "restaurants": [
+            "Koshary Abou Tarek (★ 4.4 Google, ~₹220/person) — World-famous 5-story Cairo landmark serving Egypt's national dish Koshary",
+            "Felfela Downtown Cairo (★ 4.2 Google, ~₹450/person) — Historic rustic eatery renowned for authentic taameya (Egyptian falafel) and foul mudammas",
+            "Naguib Mahfouz Cafe (★ 4.3 Google, ~₹650/person) — Atmospheric historic cafe tucked in Khan el-Khalili souk serving grilled kebabs and mint tea",
+            "Sequoia Nile Terrace Zamalek (★ 4.4 Google, ~₹1,200/person) — Trendy open-air riverside terrace serving Mediterranean grills & meze",
+            "Sobhy Kaber Cairo (★ 4.5 Google, ~₹550/person) — Celebrated authentic Cairo grill house serving molokhia soup and sizzling lamb chops",
+        ],
+        "cuisines": [
+            "Koshary (Layered rice, macaroni, lentils, chickpeas, topped with spicy tomato sauce & crispy fried onions)",
+            "Taameya (Egyptian fava bean falafel with sesame seeds & fresh pita)",
+            "Molokhia with Roasted Chicken (Silky jute leaf soup infused with garlic & coriander)",
+            "Egyptian Mixed Kebab & Kofta (Charcoal-grilled spiced minced lamb on flatbread)",
+            "Umm Ali (Traditional warm phyllo bread pudding baked with milk, raisins, pistachios & cream)",
+        ],
+        "beverages": [
+            "Karkadeh (Chilled Hibiscus Flower Tea)",
+            "Egyptian Mint Black Tea (Shay bil Nana)",
+            "Sahlab (Warm creamy orchid root pudding topped with cinnamon and crushed nuts)",
+            "Fresh Sugarcane Juice (Asab)",
+        ],
+    },
+    "vietnam": {
+        "attractions": [
+            "Golden Bridge at Sun World Ba Na Hills (Da Nang, 25 km West) — Giant stone hands holding a gleaming pedestrian sky bridge 1,400m above sea level",
+            "Ha Long Bay & Lan Ha Bay (Quang Ninh / Cat Ba) — UNESCO World Heritage emerald waters dotted with thousands of towering limestone karst islands",
+            "Hoi An Ancient Town (Quang Nam, 30 km South of Da Nang) — UNESCO lantern-lit riverside trading port with 16th-century Japanese Covered Bridge",
+            "Marble Mountains & Am Phu Cave (Ngu Hanh Son, Da Nang) — 5 limestone peaks housing Buddhist pagodas, hidden grottos & coastal lookouts",
+            "Hanoi Old Quarter & Train Street (Hoan Kiem, Hanoi) — 36 historic guild streets, colonial architecture & close-up train track cafes",
+            "Sao Beach & Starfish Beach (Phu Quoc Island) — Powder-white sand beaches, crystal turquoise water & starfish sanctuary",
+            "Dragon Bridge & Han River Night Walk (Da Nang Central) — Fire and water-breathing dragon bridge illuminated above the Han River",
+        ],
+        "hotels": [
+            "InterContinental Danang Sun Peninsula Resort (★ 4.8 Google, ~₹28,000/night) — Iconic Bill Bensley designed clifftop ultra-luxury rainforest resort",
+            "Salinda Resort Phu Quoc Island (★ 4.8 Google, ~₹9,500/night) — 5-star beachfront boutique resort with salt-filtered pool and lush tropical gardens",
+            "La Siesta Classic Ma May Hanoi (★ 4.8 Google, ~₹6,200/night) — Celebrated boutique hotel in the heart of Hanoi Old Quarter with rooftop sky bar",
+            "TMS Hotel Da Nang Beach (★ 4.5 Google, ~₹3,800/night) — Modern seafront hotel on My Khe Beach with 25th-floor rooftop infinity pool",
+            "Little Hoi An Central Boutique Hotel & Spa (★ 4.7 Google, ~₹3,200/night) — Charming riverside hotel with complimentary bicycles to the ancient quarter",
+        ],
+        "restaurants": [
+            "Madam Khanh - The Banh Mi Queen (★ 4.6 Google, ~₹90/person) — Legendary Hoi An street stall serving Vietnam's most celebrated banh mi baguettes",
+            "Pho Gia Truyen Bat Dan Hanoi (★ 4.4 Google, ~₹140/person) — Michelin Bib Gourmand wood-fired beef pho eatery with historic broth recipe",
+            "Bep Hen Restaurant Da Nang (★ 4.5 Google, ~₹280/person) — Cozy vintage Vietnamese home-style restaurant serving caramelized pork claypot & morning glory",
+            "Morning Glory Original Hoi An (★ 4.4 Google, ~₹380/person) — Famed courtyard restaurant serving Cao Lau noodles and white rose dumplings",
+            "Bun Cha Huong Lien Hanoi (★ 4.3 Google, ~₹180/person) — The iconic 'Obama-Bourdain' restaurant serving grilled pork patties with vermicelli & crab spring rolls",
+        ],
+        "cuisines": [
+            "Pho Bo (Fragrant Vietnamese beef noodle soup slow-simmered with star anise, cinnamon & fresh herbs)",
+            "Banh Mi (Crispy warm baguette stuffed with pate, grilled pork, pickled daikon & fresh cilantro)",
+            "Cao Lau (Chewy Hoi An noodles with barbecue pork, crispy wonton squares & local greens)",
+            "Bun Cha (Charcoal-grilled pork patties in savory broth served with rice vermicelli & fried spring rolls)",
+            "Goi Cuon (Fresh Vietnamese summer rolls wrapped with shrimp, pork, rice noodles & herbs)",
+        ],
+        "beverages": [
+            "Ca Phe Trung (Hanoi Egg Coffee whipped with sweetened condensed milk)",
+            "Ca Phe Sua Da (Vietnamese Iced Coffee with drip filter & condensed milk)",
+            "Nuoc Mia (Fresh crushed sugarcane juice with calamansi lime)",
+            "Fresh Coconut Water (Dua Tuoi)",
+        ],
+    },
+    "uzbekistan": {
+        "attractions": [
+            "Registan Square (Samarkand Central) — World's grandest Islamic ensemble with Ulugh Beg, Sher-Dor, and Tilya-Kori madrasahs covered in azure majolica",
+            "Shah-i-Zinda Necropolis (Samarkand, Afrosiyob Hill) — Awe-inspiring avenue of vibrant blue mosaic mausoleums and royal tombs from the 11th–15th century",
+            "Po-i-Kalyan Complex & Kalyan Minaret (Bukhara Old Town) — 48m brick minaret spared by Genghis Khan, majestic Kalyan Mosque & Mir-i-Arab Madrasah",
+            "Ark of Bukhara (Bukhara Historic Center) — Massive 5th-century fortified citadel of the Bukhara Emirs perched high above the desert city",
+            "Gur-e-Amir Mausoleum (Samarkand) — Gilded crypt and turquoise fluted dome of conqueror Amir Timur (Tamerlane)",
+            "Chorsu Bazaar & Tashkent Metro (Tashkent Central) — Massive blue-domed market with spices and nuts, and ornate marble Soviet-era metro stations",
+            "Lyabi-Hauz Ensemble (Bukhara Historic Center) — Peaceful medieval pond shaded by century-old mulberry trees, artisan carpets & open-air tea houses",
+        ],
+        "hotels": [
+            "Kosh Havuz Boutique Hotel Samarkand (★ 4.8 Google, ~₹5,800/night) — Atmospheric traditional courtyard hotel steps from Registan with rooftop view",
+            "Komil Bukhara Boutique Hotel (★ 4.8 Google, ~₹4,900/night) — 19th-century traditional Jewish merchant house with carved ganch plasterwork and Silk Road courtyards",
+            "L'etoile Hotel Samarkand (★ 4.6 Google, ~₹3,600/night) — Modern comfortable boutique hotel near ancient Afrosiyob excavations",
+            "Hotel Asia Bukhara (★ 4.3 Google, ~₹4,200/night) — Located right outside the historic gate with swimming pool and oriental arch design",
+            "Tashkent City Palace Hotel (★ 4.4 Google, ~₹6,500/night) — Central luxury hotel near Amir Timur Square",
+        ],
+        "restaurants": [
+            "Samarkand Osh Markazi (★ 4.7 Google, ~₹280/person) — Iconic giant wood-fired cauldrons churning out royal Samarkand beef plov with yellow carrots & quails eggs",
+            "Chinar Restaurant Bukhara (★ 4.5 Google, ~₹380/person) — Historic courtyard eatery serving juicy Shashlik kebabs, lagman hand-pulled noodles, and fresh samsas",
+            "Bibikhanum Teahouse Samarkand (★ 4.6 Google, ~₹260/person) — Rooftop chaikhana overlooking Bibi-Khanym Mosque serving spiced herbal tea & pumpkin manti",
+            "Chor Minor Cafe Bukhara (★ 4.4 Google, ~₹240/person) — Quaint tea garden directly facing the four-turreted Chor Minor monument",
+            "Sim Sim Restaurant Tashkent (★ 4.5 Google, ~₹550/person) — Magnificent Uzbek feast hall with live folklore music, tender lamb shanks & baked non bread",
+        ],
+        "cuisines": [
+            "Uzbek Plov / Osh (Fragrant devzira rice slow-cooked with tender beef, yellow carrots, chickpeas, raisins & cumin in a cast-iron kazan)",
+            "Tandir Samsa (Flaky clay-oven pastry filled with spiced minced lamb, onions & tail fat)",
+            "Shashlik (Succulent charcoal-grilled skewered lamb, beef, and lyulya kebab seasoned with coriander)",
+            "Manti (Giant steamed dumplings stuffed with spiced meat, pumpkin, served with sour cream smetana)",
+            "Lagman (Rich central Asian hand-pulled noodle soup with beef, bell peppers, tomatoes & herbs)",
+        ],
+        "beverages": [
+            "Kok-Chay (Green Tea brewed in ceramic pialas with saffron and lemon)",
+            "Ayran (Chilled salted yogurt drink infused with dill and mint)",
+            "Compote (Refreshing stewed dried apricot and cherry fruit cooler)",
+        ],
+    },
+    "georgia": {
+        "attractions": [
+            "Gergeti Trinity Church & Mount Kazbegi (Stepantsminda, Kazbegi) — Breathtaking 14th-century church perched at 2,170m against snow-capped 5,047m Mount Kazbegi",
+            "Old Tbilisi & Narikala Fortress (Tbilisi Historic District) — 4th-century mountain citadel, carved wooden balconies, and cable car over the Mtkvari River",
+            "Abanotubani Sulfur Baths (Old Tbilisi) — Historic domed royal bathhouses powered by naturally warm thermal sulfur springs visited by Pushkin & Dumas",
+            "Georgian Military Highway & Ananuri Fortress (Zhinvali Reservoir Route) — Dramatic alpine highway passing turquoise mountain lakes and 13th-century stone battlements",
+            "Chronicle of Georgia & Tbilisi Sea (Tbilisi Outskirts) — Monumental 30m stone pillars depicting Georgian royal history with panoramic lake vistas",
+            "Uplistsikhe Cave Town (Shida Kartli, 15 km from Gori) — Ancient iron-age rock-cut fortress town carved into sandstone cliffs",
+            "Batumi Boulevard & Ali and Nino Moving Statue (Batumi, Black Sea) — 7km subtropical coastal promenade with moving steel kinetic sculpture symbolizing eternal love",
+        ],
+        "hotels": [
+            "Rooms Hotel Kazbegi (★ 4.7 Google, ~₹11,500/night) — World-renowned design mountain retreat with floor-to-ceiling glass terraces facing Mount Kazbegi",
+            "Stamba Hotel Tbilisi (★ 4.8 Google, ~₹14,000/night) — Ultra-stylish converted historic Soviet publishing house in Vera with jungle atrium & Aviator lounge",
+            "Shota @ Rustaveli Boutique Hotel (★ 4.7 Google, ~₹7,500/night) — Luxury boutique haven situated right in central Tbilisi near Liberty Square",
+            "Fabrika Tbilisi (★ 4.6 Google, ~₹1,800/night) — Legendary hipster hostel & urban creative hub in a converted Soviet textile factory",
+            "Radisson Blu Iveria Hotel Tbilisi (★ 4.5 Google, ~₹9,800/night) — Modern luxury tower with rooftop infinity spa pool overlooking Old Tbilisi",
+        ],
+        "restaurants": [
+            "Pasanauri Restaurant Tbilisi (★ 4.5 Google, ~₹450/person) — The gold standard for authentic hand-twisted Khinkali soup dumplings and Khachapuri",
+            "Shavi Lomi (Black Lion) Tbilisi (★ 4.6 Google, ~₹850/person) — Renowned bohemian courtyard restaurant serving inventive modern Georgian gastropub dishes",
+            "Cafe Stamba Tbilisi (★ 4.6 Google, ~₹950/person) — Chic artisan brasserie with open kitchen, house-baked breads, and farm-to-table Georgian salads",
+            "Tsiskvili Restaurant Complex (★ 4.6 Google, ~₹1,100/person) — Spectacular riverbank dining with natural waterfalls, watermill & live traditional Polyphonic choir",
+            "Sakhachapure No. 1 (★ 4.4 Google, ~₹350/person) — Famous bakery in central Tbilisi crafting hot cheese-filled Adjarian and Imeretian Khachapuri",
+        ],
+        "cuisines": [
+            "Adjarian Khachapuri (Boat-shaped warm leavened bread filled with bubbling Sulguni cheese, butter & fresh egg yolk)",
+            "Khinkali (Plump hand-twisted dumplings filled with spiced spiced beef/pork and aromatic herbal broth)",
+            "Shkmeruli (Pan-roasted crispy chicken simmered in rich creamy garlic and milk sauce)",
+            "Badrijani Nigvzit (Pan-fried eggplant rolls stuffed with seasoned spiced walnut garlic paste & pomegranate seeds)",
+            "Mtsvadi (Georgian skewers of marinated pork or veal roasted over grapevine embers)",
+        ],
+        "beverages": [
+            "Qvevri Amber Wine (UNESCO heritage 8,000-year-old clay amphora natural wine)",
+            "Borjomi Sparkling Mineral Water (Naturally carbonated volcanic spring water)",
+            "Georgian Tarragon Lemonade (Tarkhuna green herbal soda)",
+            "Chacha (Traditional Georgian grape pomace brandy)",
+        ],
+    },
+    "azerbaijan": {
+        "attractions": [
+            "Flame Towers & Highland Park (Baku Panoramic Hill) — Iconic trio of glass flame-shaped skyscrapers with panoramic Caspian Sea amphitheater views",
+            "Icherisheher Old City & Maiden Tower (Baku Walled Fortress) — UNESCO 12th-century medieval walled fortress, Shirvanshahs' Palace & cobblestone alleys",
+            "Gobustan National Park & Mud Volcanoes (Gobustan, 60 km South of Baku) — UNESCO World Heritage 40,000-year-old rock petroglyphs & boiling grey mud bubbling volcanoes",
+            "Heydar Aliyev Center (Baku Central) — Zaha Hadid's breathtaking fluid wave architectural masterpiece with zero sharp angles",
+            "Baku Boulevard & Little Venice (Caspian Sea Promenade) — 4km coastal promenade with maritime breeze, gondola waterways, and Baku Ferris Wheel",
+            "Ateshgah Fire Temple & Yanar Dag (Surakhani / Absheron Peninsula) — Ancient Zoroastrian eternal flame temple & naturally burning hillside gas fires",
+            "Nizami Street & Fountains Square (Baku Downtown) — Bustling pedestrian avenue of Baroque stone facades, grand illuminated fountains & cafes",
+        ],
+        "hotels": [
+            "Four Seasons Hotel Baku (★ 4.8 Google, ~₹16,500/night) — Beaux-Arts luxury palace hotel directly fronting the Caspian Sea promenade and Old City",
+            "Fairmont Baku, Flame Towers (★ 4.6 Google, ~₹11,500/night) — Luxurious 5-star hotel located right inside the iconic Flame Towers with sweeping bay vistas",
+            "Shah Palace Luxury Museum Hotel (★ 4.5 Google, ~₹5,200/night) — Heritage oriental hotel nestled inside the ancient walls of Icherisheher",
+            "Courtyard by Marriott Baku (★ 4.6 Google, ~₹4,800/night) — Sleek contemporary hotel near Fountains Square and winter park",
+            "Sahil Hostel & Hotel (★ 4.7 Google, ~₹1,400/night) — Top-rated designer boutique traveler hostel on Baku Boulevard",
+        ],
+        "restaurants": [
+            "Shirvanshah Museum Restaurant (★ 4.6 Google, ~₹850/person) — Historic 19th-century bathhouse converted into an epic museum restaurant with private carpeted dining rooms",
+            "Firuze Restaurant Baku (★ 4.4 Google, ~₹550/person) — Celebrated subterranean traditional cellar eatery on Fountains Square serving saj and dolma",
+            "Qazmaq Cafe & Restaurant (★ 4.5 Google, ~₹480/person) — Atmospheric Old City rooftop restaurant serving saffron rice plov and fresh gutabs",
+            "Nergiz Restaurant Baku (★ 4.3 Google, ~₹420/person) — Classic cozy cellar restaurant known for tender lamb shashlik, dovga, and warm tandoor bread",
+            "Chayki Restaurant (★ 4.6 Google, ~₹1,200/person) — Luxury Caspian Sea waterfront restaurant serving fresh Caspian sturgeon & gourmet Azerbaijani fare",
+        ],
+        "cuisines": [
+            "Shah Plov (Crown jewel plov wrapped in a golden crispy lavash crust filled with saffron rice, chestnuts, lamb & dried fruits)",
+            "Gutab (Paper-thin Azerbaijani flatbread griddled with herbs, spinach, spiced lamb or pumpkin, dusted with sumac)",
+            "Azerbaijani Saj (Sizzling cast-iron domed platter of marinated lamb, eggplant, tomatoes & bell peppers cooked over embers)",
+            "Yarpag Dolmasi (Tender grape leaves stuffed with spiced minced mutton, rice, mint & served with garlicky yogurt)",
+            "Baku Pakhlava (Multi-layered diamond pastry drenched in saffron syrup and filled with crushed walnuts and cardamom)",
+        ],
+        "beverages": [
+            "Azerbaijani Armudu Tea (Rich black tea served in pear-shaped glasses with thyme, cardamom & white cherry jam)",
+            "Dovga (Refreshing chilled yogurt soup with cilantro, dill, mint, and chickpeas)",
+            "Sharbat (Pomegranate and rose petal infused fruit drink)",
+        ],
+    },
+    "malaysia": {
+        "attractions": [
+            "Petronas Twin Towers & Skybridge (KLCC Central, Kuala Lumpur) — World's tallest twin towers (452m), skybridge walk & nightly Symphony Lake light show",
+            "Batu Caves & Murugan Statue (Gombak, 13 km North of KL) — 272 vibrant rainbow steps leading into limestone cavern temples guarded by a 140ft golden Lord Murugan",
+            "Putra Mosque & Perdana Putra (Putrajaya Lake, 30 km South of KL) — Majestic rose-tinted granite pink mosque floating over Putrajaya lake",
+            "Merdeka Square & Sultan Abdul Samad Building (Kuala Lumpur Historic District) — Moorish copper-domed historic landmark & colonial clock tower",
+            "KL Tower & Sky Box (Bukit Nanas, Kuala Lumpur) — 421m telecommunications tower with glass floor skybox cantilevered over the city skyline",
+            "Jalan Alor & Bukit Bintang Night Market (Bukit Bintang, KL) — Electrifying food street packed with open-air hawker seafood stalls and satay grills",
+            "Thean Hou Temple (Robson Heights, Kuala Lumpur) — Six-tiered ornate Chinese sea goddess temple with thousands of glowing red lanterns",
+        ],
+        "hotels": [
+            "Mandarin Oriental Kuala Lumpur (★ 4.7 Google, ~₹12,800/night) — 5-star luxury hotel set directly between Petronas Twin Towers and lush KLCC Park",
+            "The RuMa Hotel and Residences (★ 4.8 Google, ~₹8,900/night) — Chic artisanal luxury retreat in the golden triangle with cantilevering pool",
+            "WOLO Kuala Lumpur (★ 4.4 Google, ~₹4,500/night) — Stylish contemporary boutique design hotel in the heart of Bukit Bintang shopping & nightlife",
+            "Aloft Kuala Lumpur Sentral (★ 4.5 Google, ~₹5,200/night) — Connected to KL Sentral express train with rooftop Mai Bar and infinity pool",
+            "The Bed KLCC (★ 4.5 Google, ~₹1,600/night) — Luxury capsule & pod lifestyle hotel within 5 minutes walk from Petronas Towers",
+        ],
+        "restaurants": [
+            "Wong Ah Wah Restaurant (★ 4.1 Google, ~₹350/person) — Legendary Jalan Alor supper institution famed for charcoal-grilled BBQ chicken wings & salted egg squid",
+            "Village Park Restaurant Damansara (★ 4.4 Google, ~₹220/person) — Malaysia's undisputed champion for Nasi Lemak with crispy spiced fried chicken",
+            "Restoran Rebung Chef Ismail (★ 4.3 Google, ~₹550/person) — Celebrated traditional Malay buffet restaurant featuring Negeri Sembilan spicy rendang",
+            "Restoran Yut Kee (★ 4.3 Google, ~₹200/person) — Historic 1928 Hainanese kopitiam serving roasted pork roll, kaya butter toast & iced kopi",
+            "Madam Kwan's KLCC (★ 4.2 Google, ~₹480/person) — High-end Malaysian comfort cuisine serving Laksa, Beef Rendang, and Otak-Otak in Suria KLCC",
+        ],
+        "cuisines": [
+            "Nasi Lemak (Fragrant coconut milk rice served with fiery sambal, crispy anchovies, peanuts, boiled egg & spiced fried chicken)",
+            "Beef Rendang (Slow-braised caramelized tender beef in rich coconut milk, lemongrass, galangal & toasted coconut kerisik)",
+            "Roti Canai with Dhal & Curry (Flaky, crispy hand-flipped flatbread paired with rich lentil dhal and aromatic chicken sambal)",
+            "Char Kway Teow (Wok-hei stir-fried flat rice noodles with prawns, cockles, Chinese sausage, eggs & bean sprouts)",
+            "Satay Kajang (Tender charcoal-grilled chicken and beef skewers with thick roasted peanut gravy & compressed rice cakes)",
+        ],
+        "beverages": [
+            "Teh Tarik (Frothy 'pulled' hot black tea with sweetened condensed milk)",
+            "Milo Dinosaur (Iced chocolate malt drink heaped with an extra mountain of undissolved Milo powder)",
+            "Cendol (Shaved ice dessert bowl with green pandan rice flour jelly, coconut milk & dark palm sugar Gula Melaka)",
+            "Sirap Bandung (Refreshing iced rose syrup drink with evaporated milk and basil seeds)",
+        ],
+    },
+    "thailand": {
+        "attractions": [
+            "Grand Palace & Wat Phra Kaew (Phra Nakhon, Bangkok) — Gleaming gold spires, intricate mosaics & the sacred Emerald Buddha in the 1782 royal sanctuary",
+            "Wat Arun - Temple of Dawn (Chao Phraya Riverside, Bangkok) — 79m riverside pagoda encrusted with colorful Chinese porcelain catching sunset light",
+            "Wat Phra That Doi Suthep (Doi Suthep Mountain, Chiang Mai) — Sacred mountain monastery with golden chedi overlooking Chiang Mai valley",
+            "Phi Phi Islands & Maya Bay (Phuket / Krabi Marine Corridor) — Soaring limestone sea cliffs enclosing the iconic turquoise waters of Maya Bay",
+            "Chatuchak Weekend Market & Jodd Fairs (Bangkok) — World's largest weekend market with 15,000 stalls & vibrant night street food markets",
+            "Chiang Mai Old City & Wat Chedi Luang (Chiang Mai Historic Center) — Ancient walled moat, 14th-century ruined brick pagoda & night walking street",
+            "Phuket Big Buddha & Promthep Cape (Chalong / Rawai, Phuket) — 45m white Burmese marble Buddha on Nakkerd Hill & iconic sunset coastal cliff",
+        ],
+        "hotels": [
+            "The Peninsula Bangkok (★ 4.8 Google, ~₹19,000/night) — Legendary 5-star riverside palace with private ferry boats and sweeping Chao Phraya views",
+            "Rachamankha Hotel Chiang Mai (★ 4.7 Google, ~₹8,800/night) — Exquisite heritage boutique sanctuary in Chiang Mai Old City designed around peaceful courtyards",
+            "Katathani Phuket Beach Resort (★ 4.5 Google, ~₹8,200/night) — Prime beachfront luxury resort along the secluded golden sands of Kata Noi Beach",
+            "The Quarter Ari by UHG Bangkok (★ 4.4 Google, ~₹3,400/night) — Stylish modern skyscraper hotel with rooftop infinity pool in Bangkok's trendy cafe district",
+            "Lub d Bangkok Siam (★ 4.5 Google, ~₹1,500/night) — Vibrant award-winning boutique traveler hostel right beside BTS National Stadium",
+        ],
+        "restaurants": [
+            "Jay Fai Bangkok Old Town (★ 4.2 Google, ~₹1,800/person) — Michelin-starred street food legend famed for giant crispy crab omelettes cooked over charcoal brazier",
+            "Thip Samai Pad Thai (Pratu Phi, Bangkok) (★ 4.2 Google, ~₹280/person) — Bangkok's most famous Pad Thai wrapped in a whisper-thin golden egg crepe with fresh orange juice",
+            "Khao Soi Khun Yai (Chiang Mai Old City) (★ 4.5 Google, ~₹120/person) — Unassuming temple garden shack crafting the most fragrant coconut curry Khao Soi noodles",
+            "SP Chicken (Chiang Mai Old City) (★ 4.5 Google, ~₹220/person) — Renowned rotisserie stall roasting whole chickens stuffed with garlic and Thai lemongrass herbs",
+            "Tu Kab Khao Restaurant Phuket (★ 4.5 Google, ~₹550/person) — Michelin Bib Gourmand Sino-Portuguese heritage house serving royal Southern Thai pork belly stew",
+        ],
+        "cuisines": [
+            "Pad Thai Kung Sarap (Stir-fried rice noodles with jumbo prawns, tofu, bean sprouts, crushed peanuts & tamarind glaze)",
+            "Tom Yum Goong (Spicy and sour lemongrass soup infused with kaffir lime, galangal, chili & river prawns)",
+            "Khao Soi Gai (Northern Thai rich coconut yellow curry noodle soup topped with crispy fried egg noodles & pickled mustard greens)",
+            "Gaeng Keow Wan (Thai Green Curry with tender chicken, pea eggplants, bamboo shoots & sweet Thai basil)",
+            "Mango Sticky Rice (Sweet glutinous rice steamed in coconut cream with ripe honey mango & toasted mung beans)",
+        ],
+        "beverages": [
+            "Cha Yen (Thai Iced Milk Tea infused with star anise and poured over crushed ice)",
+            "Fresh Nam Maphrao (Chilled young Thai fragrant coconut water)",
+            "Cha Manao (Iced Thai black tea with fresh lime juice)",
+            "Singha / Chang Thai Herbal Coolers",
+        ],
+    },
+    "lakshadweep": {
+        "attractions": [
+            "Agatti Island Lagoon & Coral Reef (Agatti Atoll, Lakshadweep) — Crystal-clear turquoise lagoon, white coral sands, and runway encircled by the azure Arabian Sea",
+            "Bangaram Island & Sandbank Excursion (Bangaram Atoll, 8 km North of Agatti) — Uninhabited tear-drop tropical island with shallow turquoise lagoon & glowing bioluminescence",
+            "Thinnakara Island Coral Garden (Thinnakara Atoll, opposite Bangaram) — Pristine coral sanctuary teeming with clownfish, manta rays & sea turtles",
+            "Agatti Scuba Diving & Sea Turtle Snorkeling (Agatti Marine Station) — PADI dive sites exploring untouched coral drop-offs, shipwrecks & marine biodiversity",
+            "Kavaratti Marine Aquarium & Glass-Bottom Boating (Kavaratti Island - Capital) — Vibrant marine museum exhibiting rare coral species, sea cucumbers & colorful reef fish",
+            "Kalpeni Coral Atoll & Tip Beach (Kalpeni Island) — Dramatic debris-strewn coral bank formed by a historic 1847 storm with expansive shallow swimming waters",
+            "Minicoy Lighthouse & Viringili Islet (Minicoy Southernmost Atoll) — 300ft British lighthouse built in 1885 offering 360-degree views of coconut groves and reef ocean",
+        ],
+        "hotels": [
+            "Bangaram Island Resort (★ 4.6 Google, ~₹14,500/night) — Premier eco-luxury beach cottages on an uninhabited island with private white-sand beach and dive center",
+            "Agatti Island Beach Resort (★ 4.4 Google, ~₹8,500/night) — Beachfront wooden huts nestled under swaying coconut palms steps from the coral lagoon",
+            "White Pearl Beach Resort Agatti (★ 4.3 Google, ~₹6,800/night) — Modern air-conditioned coastal resort with sea excursions, kayak rentals & fresh seafood",
+            "Sea Shells Beach Resort Agatti (★ 4.2 Google, ~₹5,200/night) — Cozy island retreat offering authentic Lakshadweep hospitality and island-hopping tours",
+            "Kavaratti Tourist Hut / Paradise Hut (★ 4.1 Google, ~₹4,500/night) — Government tourism (SPORTS) cottages situated on the serene western beach",
+        ],
+        "restaurants": [
+            "Agatti Island Lagoon Cafe (★ 4.4 Google, ~₹350/person) — Open-air beachside dining serving freshly caught yellowfin tuna fry and coconut rice",
+            "Bangaram Beach Shack Restaurant (★ 4.5 Google, ~₹600/person) — Island resort buffet serving grilled reef fish, malabar parotta, and tropical fruit spreads",
+            "Al-Bake Agatti Food Corner (★ 4.2 Google, ~₹220/person) — Local island favorite known for spiced tuna rolls, samosas, and coconut-milk chicken curry",
+            "Kavaratti SPORTS Dining Hall (★ 4.1 Google, ~₹250/person) — Wholesome traditional South Indian and coastal Malabar meals with fresh fish curry",
+            "Cafe Island Breeze Agatti (★ 4.3 Google, ~₹280/person) — Relaxed beachfront tea shop serving evening snacks, banana fritters, and spiced chai",
+        ],
+        "cuisines": [
+            "Mas Huni / Lakshadweep Tuna Curry (Fresh shredded skipjack/yellowfin tuna cooked with grated coconut, curry leaves & green chilies)",
+            "Rayereha (Spiced island red tuna curry simmered in fragrant coconut milk and tamarind)",
+            "Malabar Parotta with Fish Roast (Flaky layered parotta paired with spicy pan-roasted Arabian sea reef fish)",
+            "Kadalakka Curry (Spiced black chickpea and raw plantain stew with roasted coconut paste)",
+            "Mus Kavaab (Marinated boneless tuna cubes cooked in spiced red gravy and coconut paste)",
+        ],
+        "beverages": [
+            "Fresh Tender Coconut Water (Elaneer freshly plucked from Agatti palm trees)",
+            "Sulaimani (Fragrant black tea infused with cardamom, cloves, and a dash of lemon)",
+            "Spiced Buttermilk with Curry Leaves & Ginger",
+        ],
+    },
+    "manali": {
+        "attractions": [
+            "Hadimba Devi Temple (Dhungri Forest, 2.5 km from Mall Rd) — 16th-century wooden pagoda temple amidst ancient deodar forests",
+            "Solang Valley & Rohtang Gateway (14 km North) — Snow adventures, paragliding, zorbing & panoramic Himalayan peaks",
+            "Old Manali Village & Manu Temple (2 km from Mall Rd) — Bohemian stone alleys, live-music riverfront cafes & historic Manu shrine",
+            "Vashisht Hot Springs & Temple (Vashisht, 3 km across Beas) — Natural thermal sulfur springs & carved wooden Himalayan architecture",
+            "Jogini Waterfalls (Vashisht trail, 4 km) — Pine forest trek leading to cascading tiered waterfalls & valley viewpoints",
+            "Mall Road & Tibetan Monastery (Manali Center) — Vibrant shopping promenade, handcrafted Kullu shawls, and wooden handicrafts",
+            "Beas River Promenade & Van Vihar (1 km from Mall Rd) — Serene riverbank nature park with towering deodars and walking bridges",
+            "Naggar Castle & Roerich Art Gallery (Naggar, 20 km South) — Medieval wood-and-stone Himalayan castle with Kullu valley panoramas",
+        ],
+        "hotels": [
+            "The Himalayan Resort & Spa (★ 4.6 Google, ~₹8,500/night) — Victorian Gothic castle resort with pine forest views and luxury mountain spa",
+            "Johnson Lodge & Spa (★ 4.5 Google, ~₹4,500/night) — Historic boutique alpine lodge near Circuit House with garden lawn & stone bar",
+            "Snow Valley Resorts Manali (★ 4.4 Google, ~₹3,800/night) — Premium family resort in Log Huts area with panoramic snow peak balconies",
+            "Hotel Beas Manali HPTDC (★ 4.2 Google, ~₹2,200/night) — Government riverfront lodge with direct views of the snow-clad peaks",
+            "Zostel Old Manali (★ 4.4 Google, ~₹1,200/night) — Vibrant traveler hostel with mountain-view cafe, bonfire deck & apple orchards",
+        ],
+        "restaurants": [
+            "Cafe 1947 (Old Manali, ★ 4.5 Google, ~₹450/person) — Iconic riverbank cafe on Manalsu river with live acoustic music, pizza & trout",
+            "Johnson's Cafe & Bar (★ 4.5 Google, ~₹550/person) — Famous wood-fired oven trout with almond butter & apple crumble",
+            "Dylans Toasted and Roasted Coffee House (★ 4.6 Google, ~₹250/person) — Legendary Old Manali coffee nook known for warm cookies & cinnamon toast",
+            "Chopsticks Restaurant (Mall Road, ★ 4.4 Google, ~₹320/person) — Authentic Tibetan steamed momos, thukpa & gyathuk noodles",
+            "Mayur Restaurant (Mall Road, ★ 4.3 Google, ~₹380/person) — Wholesome North Indian & Himachali thali with hot tandoori rotis",
+        ],
+        "cuisines": [
+            "Himachali Siddu with Pure Desi Ghee (Steamed wheat flour bun stuffed with spiced lentils & poppy seeds)",
+            "Kullu Trout Fish Fry with Lemon Garlic Butter",
+            "Tibetan Steamed & Fried Momos with Spiced Tomato Achar",
+            "Himachali Madra (Chickpeas slow-cooked in spiced yogurt gravy)",
+            "Thukpa (Hearty Tibetan noodle soup with mountain herbs)",
+        ],
+        "beverages": [
+            "Spiced Himalayan Kahwa with saffron & crushed almonds",
+            "Fresh Himachali Hot Spiced Apple Cider",
+            "Piping-hot Ginger Lemon Honey Tea",
+            "Buransh (Wild Himalayan Rhododendron floral cooler)",
+        ],
+    },
+    "annapurna": {
+        "attractions": [
+            "Annapurna Base Camp (ABC - 4,130m / 13,550ft) — 360-degree high glacier amphitheater encircled by Annapurna I, South, Hiunchuli & Machapuchare",
+            "Machapuchare Base Camp (MBC - 3,700m) — Sacred Fishtail mountain sanctuary with dramatic granite pyramid vistas",
+            "Poon Hill & Ghorepani Sunrise (3,210m) — World-renowned sunrise panorama over the Dhaulagiri and Annapurna mountain massifs",
+            "Jhinu Danda Natural Hot Springs (Modi Khola riverbed) — Geothermal mineral springs amidst lush Himalayan river canyon for trekker recovery",
+            "Chhomrong Gurung Heritage Village (2,170m) — Traditional stone-paved Gurung settlement with hanging suspension bridge & mountain bakery",
+            "Deurali Alpine Gorge & Hinku Cave (3,200m) — Dramatic narrow river gorge transition from bamboo forest to stark alpine tundra",
+            "Phewa Lake & Sarangkot Gateway (Pokhara, Annapurna Base) — Serene lakeside mountain reflection, doonga boat rides & sunrise paragliding",
+        ],
+        "hotels": [
+            "Annapurna Sanctuary Lodge ABC (★ 4.6 Google, ~₹1,200/night) — High-altitude stone teahouse lodge with thermal blankets and sunrise glacier deck",
+            "Fishtail Teahouse Machapuchare (★ 4.5 Google, ~₹1,000/night) — Mountain ridge lodge with warm communal dining room and firewood stove",
+            "Chhomrong Grand View Lodge (★ 4.4 Google, ~₹1,400/night) — Terraced lodge with panoramic vistas of Annapurna South and Gurung hospitality",
+            "Temple Tree Resort & Spa Pokhara (★ 4.7 Google, ~₹6,500/night) — Boutique luxury gateway resort in Pokhara lakeside with spa and pool",
+            "Hotel Middle Path & Spa Pokhara (★ 4.6 Google, ~₹3,200/night) — Cozy lakeside retreat ideal for trek gear preparation and recovery",
+        ],
+        "restaurants": [
+            "ABC Teahouse Summit Kitchen (★ 4.5 Google, ~₹450/person) — Mountain dining room serving piping-hot Sherpa stew, garlic soup & dal bhat",
+            "Chhomrong German Bakery (★ 4.6 Google, ~₹280/person) — Legendary alpine bakery serving fresh apple strudel, yak cheese toast & cappuccino",
+            "Moondance Restaurant Pokhara (★ 4.5 Google, ~₹650/person) — Iconic lakeside stone restaurant serving wood-fired pizzas, lemon garlic trout & craft ales",
+            "OR2K Pokhara (★ 4.6 Google, ~₹400/person) — Cozy floor-seating vegetarian restaurant overlooking Phewa lake serving Mediterranean platters",
+            "Busy Bee Cafe Pokhara (★ 4.4 Google, ~₹550/person) — Vibrant trekker hangout with live rock music, momos, and celebratory post-trek burgers",
+        ],
+        "cuisines": [
+            "Dal Bhat Power 24 Hour (Nepali lentil soup, spiced mountain potatoes, spinach sag & steamed rice with refills)",
+            "Himalayan Sherpa Stew / Thukpa (Hearty noodle and root vegetable broth with warming mountain herbs)",
+            "Steamed & Fried Tibetan Momos (Hand-folded dumplings with spicy roasted tomato-sesame achar)",
+            "Gurung Mountain Honey Bread (Freshly pan-fried thick flatbread drizzled with wild mountain honey)",
+            "Fresh Himalayan River Trout Fry with Lemon Butter",
+        ],
+        "beverages": [
+            "Fresh Ginger Lemon Honey Tea (Mountain trekker remedy for acclimatization and warmth)",
+            "Masala Himalayan Milk Chai with Cardamom & Cloves",
+            "Tibetan Butter Tea (Po Cha - churned with yak butter and Himalayan rock salt)",
+            "Fresh Seabuckthorn Berry Juice (Rich in Vitamin C from high-altitude bushes)",
+        ],
+    },
 }
 
 
 def find_verified_entry(destination: str) -> dict[str, list[str]] | None:
     """Find verified travel knowledge by destination name with fuzzy token matching."""
+    if not destination:
+        return None
     dest_clean = destination.lower().strip()
+
+    # Direct or alias match
+    if any(k in dest_clean for k in ["annapurna", "annapoorna", "abc trek", "abc trekking", "machapuchare"]):
+        return VERIFIED_TRAVEL_DIRECTORY.get("annapurna")
+    if "manali" in dest_clean:
+        return VERIFIED_TRAVEL_DIRECTORY.get("manali")
+
     for key, data in VERIFIED_TRAVEL_DIRECTORY.items():
-        if key in dest_clean or dest_clean in key:
+        if key == dest_clean or key in dest_clean:
+            return data
+        if len(dest_clean) >= 4 and dest_clean in key:
             return data
     return None

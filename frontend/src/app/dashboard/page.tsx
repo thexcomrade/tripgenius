@@ -209,8 +209,8 @@ export default function DashboardPage() {
   const router = useRouter();
 
   const [greeting, setGreeting] = useState("Welcome");
-  const [userName, setUserName] = useState("Sivya Babu");
-  const [tripGeniusId, setTripGeniusId] = useState("TG-SB8842");
+  const [userName, setUserName] = useState("Test Traveler");
+  const [tripGeniusId, setTripGeniusId] = useState("TG-TC8842");
   const [totalTrips, setTotalTrips] = useState(4);
   const [savedTrips, setSavedTrips] = useState(0);
   const [ecoScore, setEcoScore] = useState(92);
@@ -283,12 +283,20 @@ export default function DashboardPage() {
     if (storedUser) {
       try {
         const user = JSON.parse(storedUser);
-        if (user.full_name && user.full_name !== "Traveler") {
+        if (
+          user.full_name &&
+          user.full_name !== "Traveler" &&
+          user.full_name !== "Sivya Babu"
+        ) {
           setUserName(user.full_name);
         } else {
-          setUserName("Sivya Babu");
+          setUserName("Test Traveler");
         }
-        if (user.tripgenius_id) setTripGeniusId(user.tripgenius_id);
+        if (user.tripgenius_id && user.tripgenius_id !== "TG-SB8842") {
+          setTripGeniusId(user.tripgenius_id);
+        } else {
+          setTripGeniusId("TG-TC8842");
+        }
         if (user.eco_score !== undefined) setEcoScore(user.eco_score);
         if (user.location || user.city || user.district) {
           const loc = (user.location || user.city || user.district || "").split(",")[0].trim();
@@ -1169,7 +1177,7 @@ export default function DashboardPage() {
                     color: "#FFFFFF",
                   }}
                 >
-                  DASAPPAN
+                  PADAYAPPA
                 </h3>
                 <p style={{ fontSize: "0.82rem", color: "#94A3B8" }}>
                   AI Travel Companion
@@ -1185,7 +1193,7 @@ export default function DashboardPage() {
               }}
             >
               Have questions about local food trails, hidden spots, or train
-              connections? Ask DASAPPAN anytime.
+              connections? Ask PADAYAPPA anytime.
             </p>
           </div>
 
@@ -1378,13 +1386,7 @@ export default function DashboardPage() {
         />
 
         {recentTrips.length > 0 ? (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "20px",
-            }}
-          >
+          <div className="grid-3-col">
             {recentTrips.map((trip, idx) => (
               <GlassCard
                 key={trip.id || idx}

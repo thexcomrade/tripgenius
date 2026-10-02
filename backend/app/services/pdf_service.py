@@ -37,6 +37,8 @@ from reportlab.platypus import (
     TableStyle,
 )
 
+from app.services.verified_travel_data import find_verified_entry
+
 # ----------------------------------------------------
 # UNICODE FONT REGISTRATION (NATIVE RUPEE SYMBOL SUPPORT)
 # ----------------------------------------------------
@@ -414,14 +416,18 @@ class TripPDFGenerator:
             story.append(Spacer(1, 10))
 
         # Title and Description
-        trip_title = trip.get("trip_title") or f"{destination} AI Travel Itinerary"
-        story.append(Paragraph(trip_title, self.title_style))
+        raw_title = trip.get("trip_title") or f"{destination} AI Travel Itinerary"
+        clean_title = sanitize_pdf_text(re.sub(r"[*_#`~]+", "", str(raw_title)))
+        story.append(Paragraph(clean_title or f"{destination} Travel Plan", self.title_style))
 
-        desc = (
-            trip.get("destination_summary")
-            or trip.get("itinerary_summary")
-            or f"Meticulously curated bespoke journey to {destination} powered by Trip Geni AI."
-        )
+        raw_desc = trip.get("destination_summary") or trip.get("itinerary_summary") or ""
+        # Filter out chat conversational fluff if present
+        if any(fluff in raw_desc.lower() for fluff in ["favorite part", "my favorite", "let's dive", "ah,", "here's a"]):
+            desc = f"A bespoke travel itinerary for {destination} exploring iconic scenic viewpoints, cultural heritage, and authentic regional cuisine."
+        else:
+            desc = sanitize_pdf_text(re.sub(r"[*_#`~]+", "", str(raw_desc)))
+            if not desc or len(desc) < 15:
+                desc = f"Meticulously curated bespoke journey to {destination} powered by Trip Geni AI."
         story.append(Paragraph(desc, self.subtitle_style))
 
         # Key Metrics Strip (Table)
@@ -492,13 +498,21 @@ class TripPDFGenerator:
         if isinstance(itinerary, list) and len(itinerary) > 0:
             for idx, day_info in enumerate(itinerary, start=1):
                 day_num = day_info.get("day_number") or day_info.get("day") or idx
-                day_title = day_info.get("title") or f"Day {day_num}: Exploring {destination}"
+                raw_title = day_info.get("title") or day_info.get("theme") or f"Exploring {destination}"
                 day_theme = day_info.get("theme") or ""
                 day_desc = day_info.get("description") or ""
 
-                day_header_text = f"<b>Day {day_num}: {day_title}</b>"
-                if day_theme:
-                    day_header_text += f" &nbsp;<i>({day_theme})</i>"
+                # Strip duplicated "Day X:" prefixes
+                clean_title = re.sub(r"^Day\s*\d+\s*[:–-]?\s*", "", str(raw_title), flags=re.IGNORECASE).strip()
+                clean_title = re.sub(r"^Day\s*\d+\s*[:–-]?\s*", "", clean_title, flags=re.IGNORECASE).strip()
+                if not clean_title or clean_title.lower() == f"exploring {destination.lower()}":
+                    clean_title = day_theme or f"Exploring {destination}"
+                clean_title = sanitize_pdf_text(re.sub(r"[*_#`~]+", "", clean_title))
+
+                day_header_text = f"<b>Day {day_num}: {clean_title}</b>"
+                if day_theme and day_theme.lower() not in clean_title.lower():
+                    clean_theme = sanitize_pdf_text(re.sub(r"[*_#`~]+", "", day_theme))
+                    day_header_text += f" &nbsp;<i>({clean_theme})</i>"
 
                 day_elements = [
                     Spacer(1, 4),
@@ -586,6 +600,15 @@ class TripPDFGenerator:
         restaurants = trip.get("recommended_restaurants", [])
         cuisines = trip.get("local_cuisines", [])
         beverages = trip.get("beverages_to_try", [])
+
+        # If empty (e.g. from chat export), populate authentic stays and dining from verified directory
+        if not hotels and not restaurants:
+            verified_info = find_verified_entry(destination)
+            if verified_info:
+                hotels = verified_info.get("hotels", [])
+                restaurants = verified_info.get("restaurants", [])
+                cuisines = verified_info.get("cuisines", [])
+                beverages = verified_info.get("beverages", [])
 
         stays_table_data = []
 

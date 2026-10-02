@@ -602,13 +602,7 @@ export default function TripHistoryPage() {
       ) : filteredTrips.length > 0 ? (
         viewMode === "grid" ? (
           /* GRID CARDS VIEW */
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))",
-              gap: "24px",
-            }}
-          >
+          <div className="grid-3-col">
             {filteredTrips.map((trip, idx) => {
               const img = getDestinationImage(trip.destination);
               return (

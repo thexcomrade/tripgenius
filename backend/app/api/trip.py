@@ -236,7 +236,7 @@ def generate_ai_itinerary(
             preferred_accommodation=payload.preferred_accommodation,
         )
 
-        result["destination"] = payload.destination
+        result["destination"] = result.get("destination") or payload.destination
         result["duration_days"] = payload.duration_days
         result["budget"] = payload.budget
         result["travelers_count"] = payload.travelers_count

@@ -18,10 +18,15 @@ import {
   Volume2,
   VolumeX,
   Radio,
+  Download,
+  FileText,
+  AlertCircle,
 } from "lucide-react";
+import toast from "react-hot-toast";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import { GlassCard } from "../../components/ui/Card";
+import tripService from "../../services/trip.service";
 
 interface ChatMessage {
   id: string;
@@ -61,11 +66,15 @@ export default function AIChatPage() {
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("Traveler");
+  const [micError, setMicError] = useState<string | null>(null);
 
   // In-Built 2026 Voice Assistant States
   const [isListening, setIsListening] = useState(false);
   const [speechSupported, setSpeechSupported] = useState(true);
+  const [isInsecureContext, setIsInsecureContext] = useState(false);
+  const [currentHost, setCurrentHost] = useState("");
   const [speakingId, setSpeakingId] = useState<string | null>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
   const [autoSendCountdown, setAutoSendCountdown] = useState<number | null>(null);
   const recognitionRef = useRef<any>(null);
   const silenceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -87,7 +96,26 @@ export default function AIChatPage() {
     setAutoSendCountdown(null);
   };
 
-  // Load user name
+  // Detect insecure origin (e.g. raw LAN IP http://192.168... where Chrome blocks mic)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCurrentHost(window.location.host);
+      const SpeechRecognition =
+        (window as any).SpeechRecognition ||
+        (window as any).webkitSpeechRecognition;
+      setSpeechSupported(!!SpeechRecognition);
+
+      if (
+        !window.isSecureContext &&
+        window.location.hostname !== "localhost" &&
+        window.location.hostname !== "127.0.0.1"
+      ) {
+        setIsInsecureContext(true);
+      }
+    }
+  }, []);
+
+  // Load user name & initial chat
   useEffect(() => {
     let name = "Traveler";
     const storedUser = localStorage.getItem("tripgenius_user");
@@ -107,20 +135,18 @@ export default function AIChatPage() {
       try {
         const parsed = JSON.parse(stored);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // If first message has legacy misty Western Ghats intro, refresh it to the new clean greeting
-          if (
-            parsed[0].content &&
-            parsed[0].content.includes("misty Western Ghats waterfalls")
-          ) {
-            parsed[0].content =
-              `Namaskaram ${name}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
-              `How may I help you today?\n\n` +
-              `Tell me your dream destination, budget, or travel style, and I'll analyze your requirements to craft the perfect plan with verified stays and costs in ₹.\n\n` +
-              `🎙️ **Voice Command Enabled**: You can speak with me using the microphone button below, or type your message. Trip Geni automatically sends your message after you finish speaking.\n\n` +
-              `❓ Where would you like to travel, or what would you like me to plan for you?`;
-            localStorage.setItem("tripgenius_ai_chat", JSON.stringify(parsed));
-          }
-          setMessages(parsed);
+          // Thorough migration: replace all occurrences of DASAPPAN/Dasappan in any stored messages
+          const migrated = parsed.map((m: any) => ({
+            ...m,
+            content:
+              typeof m.content === "string"
+                ? m.content
+                    .replace(/DASAPPAN/g, "PADAYAPPA")
+                    .replace(/Dasappan/g, "Padayappa")
+                : m.content,
+          }));
+          localStorage.setItem("tripgenius_ai_chat", JSON.stringify(migrated));
+          setMessages(migrated);
           return;
         }
       } catch {
@@ -132,7 +158,7 @@ export default function AIChatPage() {
       id: "welcome-msg",
       role: "assistant",
       content:
-        `Namaskaram ${name}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
+        `Namaskaram ${name}! 🙏 PADAYAPPA here, your AI travel companion.\n\n` +
         `How may I help you today?\n\n` +
         `Tell me your dream destination, budget, or travel style, and I'll analyze your requirements to craft the perfect plan with verified stays and costs in ₹.\n\n` +
         `🎙️ **Voice Command Enabled**: You can speak with me using the microphone button below, or type your message. Trip Geni automatically sends your message after you finish speaking.\n\n` +
@@ -140,98 +166,6 @@ export default function AIChatPage() {
       timestamp: new Date().toISOString(),
     };
     setMessages([welcome]);
-  }, []);
-
-  // Web Speech API: English Voice Recognition Setup with Auto-Send on Silence
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition =
-        (window as any).SpeechRecognition ||
-        (window as any).webkitSpeechRecognition;
-
-      if (SpeechRecognition) {
-        try {
-          const recognition = new SpeechRecognition();
-          recognition.continuous = true;
-          recognition.interimResults = true;
-          recognition.lang = "en-US";
-
-          recognition.onstart = () => {
-            setIsListening(true);
-          };
-
-          recognition.onresult = (event: any) => {
-            let transcript = "";
-            for (let i = 0; i < event.results.length; i++) {
-              transcript += event.results[i][0].transcript;
-            }
-            const clean = transcript.trim();
-            if (clean) {
-              setInput(clean);
-              latestTranscriptRef.current = clean;
-
-              // Reset any ongoing timers
-              if (silenceTimeoutRef.current) {
-                clearTimeout(silenceTimeoutRef.current);
-              }
-              if (countdownIntervalRef.current) {
-                clearInterval(countdownIntervalRef.current);
-              }
-
-              // Start visual countdown for smooth user feedback
-              setAutoSendCountdown(2);
-              let remaining = 2;
-              countdownIntervalRef.current = setInterval(() => {
-                remaining -= 1;
-                if (remaining > 0) {
-                  setAutoSendCountdown(remaining);
-                } else {
-                  if (countdownIntervalRef.current) {
-                    clearInterval(countdownIntervalRef.current);
-                  }
-                  setAutoSendCountdown(null);
-                }
-              }, 900);
-
-              // 1.8s silence detector: if user stops speaking for 1.8s, automatically send!
-              silenceTimeoutRef.current = setTimeout(() => {
-                if (countdownIntervalRef.current) {
-                  clearInterval(countdownIntervalRef.current);
-                }
-                setAutoSendCountdown(null);
-                const textToSend = latestTranscriptRef.current.trim();
-                if (textToSend) {
-                  if (recognitionRef.current) {
-                    try {
-                      recognitionRef.current.stop();
-                    } catch {}
-                  }
-                  setIsListening(false);
-                  handleSendMessageRef.current?.(textToSend);
-                }
-              }, 1800);
-            }
-          };
-
-          recognition.onerror = (event: any) => {
-            console.warn("Speech recognition error:", event.error);
-            cancelAutoSend();
-            setIsListening(false);
-          };
-
-          recognition.onend = () => {
-            setIsListening(false);
-          };
-
-          recognitionRef.current = recognition;
-        } catch (e) {
-          console.warn("Could not initialize SpeechRecognition:", e);
-          setSpeechSupported(false);
-        }
-      } else {
-        setSpeechSupported(false);
-      }
-    }
   }, []);
 
   useEffect(() => {
@@ -243,31 +177,145 @@ export default function AIChatPage() {
     }
   }, [messages]);
 
-  const toggleListening = () => {
-    if (!recognitionRef.current) {
-      alert("Voice input is not supported in this browser. Please use Chrome, Edge, or Safari.");
+  const toggleListening = async () => {
+    cancelAutoSend();
+    setMicError(null);
+
+    if (isListening) {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch {}
+      }
+      setIsListening(false);
       return;
     }
 
-    cancelAutoSend();
+    if (typeof window === "undefined") return;
 
-    if (isListening) {
-      try {
-        recognitionRef.current.stop();
-      } catch {}
-      setIsListening(false);
-    } else {
-      try {
-        latestTranscriptRef.current = "";
-        recognitionRef.current.start();
-        setIsListening(true);
-      } catch (err) {
-        console.warn("Recognition start failed:", err);
+    if (
+      !window.isSecureContext &&
+      window.location.hostname !== "localhost" &&
+      window.location.hostname !== "127.0.0.1"
+    ) {
+      setMicError(
+        `Microphone is blocked by Google Chrome on LAN IP (${window.location.host}). Please open http://localhost:3000 to speak with Padayappa.`
+      );
+      toast.error(
+        "Chrome blocks microphone on LAN IP. Open http://localhost:3000 for voice recognition!",
+        { duration: 6000 }
+      );
+      return;
+    }
+
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setMicError(
+        "Voice speech recognition is not supported in this browser. Please open Trip Geni in Google Chrome, Microsoft Edge, or Safari."
+      );
+      return;
+    }
+
+    try {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {}
       }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      // Auto-detect browser language or default to en-IN with fallback to en-US
+      recognition.lang =
+        typeof navigator !== "undefined" &&
+        navigator.language &&
+        navigator.language.startsWith("en")
+          ? navigator.language
+          : "en-IN";
+
+      let silenceTimer: ReturnType<typeof setTimeout> | null = null;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        latestTranscriptRef.current = "";
+        setMicError(null);
+      };
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        let finalStr = "";
+        for (let i = 0; i < event.results.length; i++) {
+          const chunk = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalStr += chunk + " ";
+          } else {
+            interim += chunk;
+          }
+        }
+        const combined = (finalStr + interim).trim();
+        if (combined) {
+          setInput(combined);
+          latestTranscriptRef.current = combined;
+        }
+
+        // Reset silence timer: when user pauses for 2.5 seconds, auto stop and submit
+        if (silenceTimer) clearTimeout(silenceTimer);
+        silenceTimer = setTimeout(() => {
+          try {
+            recognition.stop();
+          } catch {}
+        }, 2500);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition error:", event.error);
+        setIsListening(false);
+        if (silenceTimer) clearTimeout(silenceTimer);
+
+        if (event.error === "no-speech") {
+          setMicError("No speech detected. Please speak into your microphone and try again.");
+        } else if (
+          event.error === "not-allowed" ||
+          event.error === "service-not-allowed"
+        ) {
+          setMicError(
+            "Microphone permission blocked. In Chrome/Edge, voice recognition requires microphone access. If testing on LAN IP (192.168...), please open http://localhost:3000 to speak with Padayappa."
+          );
+        } else if (event.error === "audio-capture") {
+          setMicError("No microphone found or another app is using your microphone.");
+        } else if (event.error === "network") {
+          setMicError("Speech recognition network error. Please check your internet connection.");
+        } else if (event.error !== "aborted") {
+          setMicError(`Voice error: ${event.error}. Please try again.`);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        if (silenceTimer) clearTimeout(silenceTimer);
+        const text = latestTranscriptRef.current.trim();
+        if (text) {
+          handleSendMessageRef.current?.(text);
+          latestTranscriptRef.current = "";
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err: any) {
+      console.warn("Recognition start failed:", err);
+      setIsListening(false);
+      setMicError(
+        "Unable to start microphone recording. Please allow microphone access in your browser or open http://localhost:3000."
+      );
     }
   };
 
-  // Text-To-Speech (TTS Voice Narration with Dasappan Male Voice & Brisk Pace)
+  // Text-To-Speech (TTS Voice Narration with Padayappa Male Voice & Brisk Pace)
   const handleSpeak = (text: string, msgId: string) => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) {
       return;
@@ -295,7 +343,7 @@ export default function AIChatPage() {
     utterance.lang = "en-US";
 
     const voices = window.speechSynthesis.getVoices();
-    // Prioritize authentic, clear male English voices suitable for Dasappan
+    // Prioritize authentic, clear male English voices suitable for Padayappa
     const maleVoice =
       voices.find(
         (v) =>
@@ -350,8 +398,172 @@ export default function AIChatPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
+  // Detect whether an assistant response contains a synthesized itinerary
+  const isItinerary = (text: string) => {
+    return (
+      /day\s*\d/i.test(text) ||
+      /itinerary/i.test(text) ||
+      /blueprint/i.test(text) ||
+      /comfort itinerary/i.test(text) ||
+      /himalayan heights/i.test(text)
+    );
+  };
+
+  // Chatbot structured PDF export
+  const handleDownloadChatPDF = async (content: string, msgId: string) => {
+    setDownloadingPdfId(msgId);
+    try {
+      const dest = extractDestination(content) || "Destination";
+
+      // 1. Clean Title: strip markdown and emojis
+      let title = `${dest} Travel Blueprint`;
+      const titleMatch = content.match(/###\s*\*{0,2}(.*?)\*{0,2}(?:\n|$)/);
+      if (titleMatch && titleMatch[1]) {
+        title = titleMatch[1]
+          .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+          .replace(/[*_#`~]/g, "")
+          .trim();
+      }
+
+      // 2. Travelers count extraction
+      let travelers = 2;
+      const travelersMatch = content.match(/(\d+)\s*(?:people|travelers|guests|persons|adults)/i);
+      const familyMatch = content.match(/family\s+of\s+(\d+|three|four|five|six)/i);
+      if (travelersMatch && travelersMatch[1]) {
+        travelers = parseInt(travelersMatch[1], 10);
+      } else if (familyMatch && familyMatch[1]) {
+        const words: Record<string, number> = { three: 3, four: 4, five: 5, six: 6 };
+        travelers = words[familyMatch[1].toLowerCase()] || parseInt(familyMatch[1], 10) || 4;
+      }
+
+      // 3. Budget extraction (Total budget prioritized)
+      let budget = 12000;
+      const totalBudgetMatch = content.match(/Total\s*(?:Estimated\s*)?Budget[^₹\n]*₹\s*([\d,]+)/i);
+      const generalBudgetMatch = content.match(/Budget[^₹\n]*₹\s*([\d,]+)/i);
+      const anyBudgetMatch = content.match(/₹\s*([\d,]+)/);
+      if (totalBudgetMatch && totalBudgetMatch[1]) {
+        budget = parseInt(totalBudgetMatch[1].replace(/,/g, ""), 10);
+      } else if (generalBudgetMatch && generalBudgetMatch[1]) {
+        budget = parseInt(generalBudgetMatch[1].replace(/,/g, ""), 10);
+      } else if (anyBudgetMatch && anyBudgetMatch[1]) {
+        budget = parseInt(anyBudgetMatch[1].replace(/,/g, ""), 10);
+      }
+
+      // If per-head budget was mentioned (e.g. ₹4,000 per head) and budget seems too low:
+      const perHeadMatch = content.match(/₹\s*([\d,]+)\s*(?:per\s*(?:head|person)|each)/i);
+      if (perHeadMatch && perHeadMatch[1]) {
+        const perHead = parseInt(perHeadMatch[1].replace(/,/g, ""), 10);
+        if (budget <= perHead && travelers > 1) {
+          budget = perHead * travelers;
+        }
+      }
+
+      // 4. Parse day sections with Morning, Afternoon, Evening slots
+      const daySections: any[] = [];
+      const lines = content.split("\n");
+      let currentDay: any = null;
+      let currentSlot: "morning" | "afternoon" | "evening" | null = null;
+
+      for (const rawLine of lines) {
+        const line = rawLine.trim();
+        const dMatch = line.match(/(?:###\s*)?(?:\*{1,2})?Day\s*(\d+)\s*[:–-]?\s*([^*\n]+)?(?:\*{1,2})?/i);
+        if (dMatch) {
+          if (currentDay) daySections.push(currentDay);
+          const dNum = parseInt(dMatch[1], 10);
+          const dTitle = (dMatch[2] || `Day ${dNum} Exploration`)
+            .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
+            .replace(/[*_#`~]/g, "")
+            .trim();
+          currentDay = {
+            day: dNum,
+            theme: dTitle,
+            morning: "",
+            afternoon: "",
+            evening: "",
+            activities: [],
+          };
+          currentSlot = null;
+          continue;
+        }
+
+        if (!currentDay) continue;
+
+        // Slot headers: Morning, Afternoon, Evening
+        const morningMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Morning|Dawn)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+        const afternoonMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Afternoon|Midday|Noon)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+        const eveningMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Evening|Night|Dusk)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+
+        if (morningMatch) {
+          currentSlot = "morning";
+          const sub = (morningMatch[1] || "").replace(/[*_]/g, "").trim();
+          const detail = (morningMatch[2] || "").replace(/[*_]/g, "").trim();
+          currentDay.morning = [sub, detail].filter(Boolean).join(" — ");
+        } else if (afternoonMatch) {
+          currentSlot = "afternoon";
+          const sub = (afternoonMatch[1] || "").replace(/[*_]/g, "").trim();
+          const detail = (afternoonMatch[2] || "").replace(/[*_]/g, "").trim();
+          currentDay.afternoon = [sub, detail].filter(Boolean).join(" — ");
+        } else if (eveningMatch) {
+          currentSlot = "evening";
+          const sub = (eveningMatch[1] || "").replace(/[*_]/g, "").trim();
+          const detail = (eveningMatch[2] || "").replace(/[*_]/g, "").trim();
+          currentDay.evening = [sub, detail].filter(Boolean).join(" — ");
+        } else if (line.startsWith("*") || line.startsWith("•") || line.startsWith("-")) {
+          const bullet = line.replace(/^[*•\-]\s*/, "").replace(/[*_]/g, "").trim();
+          if (bullet && !bullet.toLowerCase().startsWith("cost saver")) {
+            if (currentSlot && currentDay[currentSlot]) {
+              currentDay[currentSlot] += ` • ${bullet}`;
+            } else if (currentSlot) {
+              currentDay[currentSlot] = bullet;
+            } else {
+              currentDay.activities.push(bullet);
+            }
+          }
+        }
+      }
+      if (currentDay) daySections.push(currentDay);
+
+      // Duration: derive from day count or text
+      const daysMatch = content.match(/(\d+)\s*[-–]?\s*Day/i) || content.match(/Day\s*(\d+)/i);
+      const totalDays = daySections.length > 0 ? daySections.length : (daysMatch ? parseInt(daysMatch[1], 10) : 3);
+
+      // Clean professional summary (no conversational chat fluff)
+      const cleanSummary = `A curated ${totalDays}-day bespoke travel itinerary for ${travelers} travelers to ${dest}, exploring iconic scenic landmarks, cultural heritage, and regional tastes within ₹${budget.toLocaleString("en-IN")}.`;
+
+      const payload = {
+        destination: dest,
+        trip_title: title,
+        duration_days: totalDays,
+        budget: budget,
+        travelers_count: travelers,
+        travel_style: "Comfort",
+        destination_summary: cleanSummary,
+        itinerary_summary: cleanSummary,
+        ai_itinerary: daySections,
+        user_name: userName,
+      };
+
+      const { blob, filename } = await tripService.exportTripPDF(payload, userName);
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", filename);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Downloaded ${filename} successfully!`);
+    } catch (err) {
+      console.error("PDF export error:", err);
+      toast.error("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloadingPdfId(null);
+    }
+  };
+
   const extractDestination = (text: string): string | undefined => {
     const keywords = [
+      "Manali",
       "Varanasi",
       "Kashi",
       "Banaras",
@@ -359,8 +571,8 @@ export default function AIChatPage() {
       "Thenkasi",
       "Tenkasi",
       "Courtallam",
-      "Vattavada",
       "Munnar",
+      "Vattavada",
       "Coorg",
       "Ooty",
       "Varkala",
@@ -371,12 +583,19 @@ export default function AIChatPage() {
       "Goa",
       "Delhi",
       "Jaipur",
-      "Manali",
       "Ladakh",
       "Paris",
       "Tokyo",
       "Bali",
       "Dubai",
+      "Egypt",
+      "Vietnam",
+      "Uzbekistan",
+      "Georgia",
+      "Azerbaijan",
+      "Malaysia",
+      "Thailand",
+      "Lakshadweep",
     ];
     return keywords.find((k) => text.toLowerCase().includes(k.toLowerCase()));
   };
@@ -407,10 +626,14 @@ export default function AIChatPage() {
     const dest = extractDestination(textToSend);
 
     try {
+      const host =
+        typeof window !== "undefined" ? window.location.hostname : "127.0.0.1";
       const apiBase =
-        process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        typeof window !== "undefined"
+          ? `${window.location.protocol}//${host}:8000`
+          : process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
-      const historyPayload = messages.slice(-6).map((m) => ({
+      const historyPayload = messages.slice(-8).map((m) => ({
         role: m.role,
         content: m.content,
       }));
@@ -445,46 +668,125 @@ export default function AIChatPage() {
       );
     }
 
-    // Intelligent client-side fallback matching Next-Gen Travel AI Engine 2.0
+    // Intelligent client-side fallback matching Next-Gen Travel AI Engine 3.0 Pro
     setTimeout(() => {
       let aiReply = "";
       const lower = textToSend.toLowerCase();
-      const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste"];
-      const daysMatch = lower.match(/\b(\d+)\s*(?:day|days|d)\b/);
+      const greetingWords = ["hi", "hai", "hello", "hey", "namaskaram", "namaste", "vanakkam"];
+      const daysMatch = lower.match(/\b(\d+)\s*[-–]?\s*(?:day|days|d)\b/);
       const numDays = daysMatch ? parseInt(daysMatch[1], 10) : null;
-      const hasTravelers = ["solo", "couple", "family", "friends", "group", "people", "person", "pax"].some((w) => lower.includes(w));
-      const hasBudget = ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap"].some((w) => lower.includes(w));
+      const hasTravelers = ["solo", "couple", "family", "friends", "group", "people", "person", "pax", "adult"].some((w) => lower.includes(w));
+      const hasBudget = ["budget", "comfort", "luxury", "₹", "rs", "rupee", "cheap", "10000", "12000", "15000", "20000", "under"].some((w) => lower.includes(w));
+
+      const alreadyGreeted = messages.length > 0;
+      const historyAll = messages.map((m) => m.content).join(" ");
+      const activeDest = dest || extractDestination(historyAll);
+      const isAffirmation = ["yes", "yeah", "yep", "sure", "please", "ok", "okay", "hotels", "stays", "transit"].some((w) => lower === w || lower.startsWith(w + " "));
 
       if (greetingWords.some((g) => lower === g || lower.startsWith(g + " "))) {
-        aiReply =
-          `Namaskaram ${userName}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
-          `How may I help you today?\n\n` +
-          `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal itinerary for you!\n\n` +
-          `❓ Where would you like to travel, or what can I help you plan?`;
-      } else if (dest && !numDays && !hasTravelers && !hasBudget) {
-        // Consultative discovery: User said a destination without enough details -> Ask questions!
-        aiReply =
-          `Namaskaram ${userName}! 🙏\n\n` +
-          `**${dest}** is an incredible choice! A deeply captivating journey awaits you.\n\n` +
-          `To help me craft your personalized, day-by-day plan with verified stays and costs in ₹, could you tell me:\n\n` +
-          `• 🗓️ **How many days** are you planning to spend? (e.g. 2–3 days for highlights or 4–5 days for deep immersion?)\n` +
-          `• 👥 **How many travelers** will be joining you? (Solo, couple, family, or friends?)\n` +
-          `• 💰 What is your approximate **budget tier**? (Budget backpacker, comfortable heritage stay, or luxury?)\n` +
-          `• ✨ Any **must-have experiences**? (Temple darshan, morning boat rides, street food trails, silk shopping, or peaceful relaxation?)\n\n` +
-          `Drop your details below, and I'll synthesize a comprehensive day-by-day plan with timings, authentic stays, food spots, and costs in ₹ for you!`;
-      } else if (dest && (numDays || hasTravelers || hasBudget)) {
-        // Full plan generation
-        const days = numDays || 5;
-        if (dest.toLowerCase().includes("varanasi") || dest.toLowerCase().includes("kashi") || dest.toLowerCase().includes("banaras")) {
+        if (alreadyGreeted) {
+          aiReply = `Hello ${userName}! 😊 Ready for the next adventure.\n\nTell me your destination or whatever travel vibe is on your mind, and let's plan it out!`;
+        } else {
           aiReply =
-            `Namaskaram ${userName}! 🙏\n\n` +
+            `Namaskaram ${userName}! 🙏 PADAYAPPA here, your AI travel companion.\n\n` +
+            `How may I help you today?\n\n` +
+            `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal plan with verified stays and costs in ₹.\n\n` +
+            `❓ Where would you like to travel, or what can I help you plan?`;
+        }
+      } else if (isAffirmation && activeDest) {
+        if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("tenkasi")) {
+          aiReply =
+            `Here are the hand-picked stays and transit details for **Thenkasi & Courtallam**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Heritage Resort Courtallam** (~₹2,800 – ₹4,200/night)\n` +
+            `• **Five Falls Orchard Farmstay** (~₹2,200 – ₹3,500/night)\n` +
+            `• **Comfort Lodge near Tenkasi Junction** (~₹1,200 – ₹1,800/night)\n\n` +
+            `🚗 **How to Reach & Local Transit**:\n` +
+            `Tenkasi Junction (TSI) connects directly to Madurai, Chennai, and Kollam. Nearest airport is Trivandrum (TRV, 105 km) or Tuticorin (90 km).\n\n` +
+            `💡 **PADAYAPPA's Foodie Secret**: You must stop at Border Rahmath Hotel in Shenkottai for authentic pepper country chicken and Ennai Parotta with spicy salna!\n\n` +
+            `Would you like me to map out a complete day-by-day plan or give you more details on waterfalls?`;
+        } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi")) {
+          aiReply =
+            `Here are the hand-picked stays and transit details for **Varanasi (Kashi)**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Heritage Riverside Haveli on Ghats** (~₹3,200 – ₹5,500/night)\n` +
+            `• **Boutique Comfort Stay near Godowlia** (~₹1,800 – ₹2,800/night)\n` +
+            `• **Assi Ghat Peaceful Homestay** (~₹1,200 – ₹2,000/night)\n\n` +
+            `🚗 **How to Reach & Local Transit**:\n` +
+            `Lal Bahadur Shastri Airport (VNS, Babatpur, 24 km) connects to all major metros. Varanasi Junction (BSB) is in the city center. E-rickshaws and hand-rowed wooden boats are best for moving around.\n\n` +
+            `💡 **PADAYAPPA's Insider Secret**: Book Kashi Vishwanath Sugam Darshan online in advance to skip 3-hour long queues, and always take a hand-rowed boat at 5:30 AM rather than a noisy motorboat.\n\n` +
+            `Would you like me to recommend iconic street food spots (like Ram Bhandar & Blue Lassi) or plan your day-by-day itinerary?`;
+        } else {
+          aiReply =
+            `Here are the hand-picked stays and transit options for **${activeDest}**:\n\n` +
+            `🏨 **Verified Stays**:\n` +
+            `• **Boutique Heritage Resort** (~₹3,500 – ₹5,500/night)\n` +
+            `• **Comfort Stay & Homestay** (~₹1,800 – ₹2,800/night)\n\n` +
+            `🚗 **Transit**: Connected by major rail, road, and nearby airport corridors.\n\n` +
+            `Would you like me to map out a complete day-by-day itinerary or share local food gems?`;
+        }
+      } else if (activeDest && !numDays && !hasTravelers && !hasBudget) {
+        // STEP 1: Destination mentioned -> "Oh, Varanasi!!" + 2-line description + Ask travelers count ONLY!
+        if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi") || activeDest.toLowerCase().includes("banaras")) {
+          aiReply =
+            `Oh, Varanasi!! 🌟\n\n` +
+            `The eternal spiritual heart of India on the banks of the sacred Ganges, where ancient river ghats and mesmerizing evening aartis come alive. A truly captivating journey into living heritage awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("courtallam")) {
+          aiReply =
+            `Oh, Thenkasi & Courtallam!! 🌟\n\n` +
+            `The refreshing spa of South India nestled at the foot of the Western Ghats, blessed with herbal waterfalls and legendary border cuisine. A revitalizing escape into nature awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else if (activeDest.toLowerCase().includes("munnar")) {
+          aiReply =
+            `Oh, Munnar!! 🌟\n\n` +
+            `The emerald tea paradise of the Western Ghats, wrapped in mist-kissed hills, cool mountain breeze, and sprawling tea estates. A scenic retreat into nature awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        } else {
+          aiReply =
+            `Oh, ${activeDest}!! 🌟\n\n` +
+            `An extraordinary destination known for stunning landscapes, rich culture, and unforgettable local experiences. An incredible journey awaits you.\n\n` +
+            `How many people will be traveling with you on this trip? (Solo, couple, family, or friends?)`;
+        }
+      } else if (activeDest && hasTravelers && !numDays) {
+        // STEP 2: Travelers given -> Ask duration
+        const groupType = lower.includes("couple") ? "A couple's journey" : lower.includes("solo") ? "A solo adventure" : lower.includes("family") ? "A family holiday" : "A trip with friends";
+        aiReply =
+          `Wonderful! ${groupType} to **${activeDest}** will be an exceptional experience.\n\n` +
+          `How many days are you planning to spend? (Most travelers find 3 to 4 days ideal to explore the key highlights and authentic spots comfortably).`;
+      } else if (activeDest && numDays && !hasBudget && !lower.includes("under") && !lower.includes("plan")) {
+        // STEP 3: Days given -> Ask budget
+        aiReply =
+          `${numDays} days is a fantastic timeframe for **${activeDest}**! That gives us ample time to experience the signature sights, authentic regional meals, and peaceful hidden corners.\n\n` +
+          `What approximate budget tier or style do you have in mind? (e.g. Budget backpacker, comfortable heritage stays, or luxury in ₹)?`;
+      } else if (activeDest && (numDays || hasTravelers || hasBudget)) {
+        // STEP 4: Full plan generation strictly matching requested days
+        const days = numDays || 3;
+        if (activeDest.toLowerCase().includes("thenkasi") || activeDest.toLowerCase().includes("courtallam")) {
+          aiReply =
+            `Here is your tailored **${days}-Day Thenkasi & Courtallam Travel Blueprint**:\n\n` +
+            `### 🗓️ Curated ${days}-Day Itinerary\n` +
+            `• **Day 1: Waterfalls & Pandyan Heritage** — Morning herbal bath at Courtallam Main Falls and Five Falls (Aintharuvi). Visit 13th-century Kasi Viswanathar Temple. Evening country chicken & Ennai Parotta feast at Border Rahmath Hotel in Shenkottai.\n` +
+            `• **Day 2: Scenic Mountain Foothills & Dam Reservoir** — Scenic drive to Gundar Dam surrounded by rubber estates and misty hills. Relax at Old Falls (Pazhaya Courtallam) and enjoy herbal Sukku Kaapi with freshly made hot Tirunelveli Halwa.\n` +
+            (days >= 3 ? `• **Day 3: Eco Orchards & Village Discovery** — Visit Ayikudi sweet guava orchards and honey farms. Take a scenic border drive towards Sengottai and relax with panoramic Western Ghats vistas before departure.\n\n` : `\n\n`) +
+            `### 🏨 Stays & Dining\n` +
+            `• Heritage Resort Courtallam (~₹2,800 – ₹4,200/night)\n` +
+            `• Five Falls Orchard Farmstay (~₹2,200 – ₹3,500/night)\n` +
+            `• Authentic Tenkasi Parotta with spicy salna and country chicken\n\n` +
+            `### 💰 Estimated Budget (in ₹)\n` +
+            `• ~₹1,800 – ₹3,000 per person per day (stays, meals, and local transit)\n\n` +
+            `### 💡 Padayappa's Local Insider Secret\n` +
+            `Visit Five Falls early at 6:30 AM to beat the crowds and enjoy the pure forest mineral water at its best.\n\n` +
+            `Would you like me to refine this with specific hotel booking options or transit details?`;
+        } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi") || activeDest.toLowerCase().includes("banaras")) {
+          aiReply =
             `Here is your bespoke **${days}-Day Varanasi (Kashi) Spiritual & Cultural Immersion Plan**:\n\n` +
             `### 🗓️ Day-by-Day Journey\n` +
             `• **Day 1: Arrival & The Sacred Evening Ganga Aarti** — Settle into your riverside haveli. Stroll from Assi Ghat to Dashashwamedh Ghat. At dusk, witness the hypnotic Ganga Aarti from a wooden boat on the river.\n` +
             `• **Day 2: Subah-e-Banaras & Kashi Vishwanath Corridor** — 5:30 AM rowboat cruise from Assi to Manikarnika Ghat at sunrise. Breakfast at Ram Bhandar (kachori-jalebi). Darshan at Kashi Vishwanath Corridor and Annapurna Temple.\n` +
-            `• **Day 3: Sarnath & Buddhist Heritage** — Morning excursion to Sarnath (Dhamek Stupa & Archaeological Museum) where Lord Buddha gave his first sermon. Return for sunset reflections at Chet Singh Ghat.\n` +
-            `• **Day 4: Heritage Galis, Silk Weaving & Ramnagar Fort** — Explore Madanpura handloom silk-weaving lanes. Visit Kal Bhairav Temple. Take a local boat to 18th-century sandstone Ramnagar Fort across the river.\n` +
-            `• **Day 5: Northern Ghats & Culinary Farewell** — Gentle morning meditation at Panchganga Ghat. Savor famous Tamatar Chaat at Kashi Chaat Bhandar and clay-cup Blue Lassi before departure.\n\n` +
+            (days >= 3 ? `• **Day 3: Sarnath & Buddhist Heritage** — Morning excursion to Sarnath (Dhamek Stupa & Archaeological Museum) where Lord Buddha gave his first sermon. Return for sunset reflections at Chet Singh Ghat.\n` : ``) +
+            (days >= 4 ? `• **Day 4: Heritage Galis, Silk Weaving & Ramnagar Fort** — Explore Madanpura handloom silk-weaving lanes. Visit Kal Bhairav Temple. Take a local boat to 18th-century sandstone Ramnagar Fort across the river.\n` : ``) +
+            (days >= 5 ? `• **Day 5: Northern Ghats & Culinary Farewell** — Gentle morning meditation at Panchganga Ghat. Savor famous Tamatar Chaat at Kashi Chaat Bhandar and clay-cup Blue Lassi before departure.\n\n` : `\n\n`) +
             `### 🏨 Recommended Stays\n` +
             `• Heritage Riverside Haveli on Ghats (~₹3,200 – ₹5,500/night)\n` +
             `• Boutique Comfort Stay near Godowlia (~₹1,800 – ₹2,800/night)\n\n` +
@@ -495,17 +797,16 @@ export default function AIChatPage() {
             `• Legendary Banarasi Meetha Paan at Keshav Paan\n\n` +
             `### 💰 Estimated Budget (in ₹)\n` +
             `• Daily Average: ~₹1,800 – ₹3,200 per person/day (stays, meals, hand-rowed boats, and transit)\n\n` +
-            `### 💡 Dasappan's Local Insider Secret\n` +
+            `### 💡 Padayappa's Local Insider Secret\n` +
             `Always hire a hand-rowed wooden boat (₹400–₹600) rather than a motorboat at dawn. The silence on the misty river at 5:45 AM is unforgettable.\n\n` +
             `Would you like hotel recommendations or help with temple darshan timings?`;
         } else {
           aiReply =
-            `Namaskaram ${userName}! 🙏\n\n` +
-            `Here is your tailored **${days}-Day ${dest} Travel Blueprint**:\n\n` +
+            `Here is your tailored **${days}-Day ${activeDest} Travel Blueprint**:\n\n` +
             `### 🗓️ Curated ${days}-Day Itinerary\n` +
             `• **Day 1: Arrival & Local Immersion** — Check in, explore central heritage streets, enjoy local sunset viewpoints and authentic regional dinner.\n` +
             `• **Day 2: Iconic Landmarks & Scenic Exploration** — Guided exploration of prime natural and architectural wonders, panoramic photo stops, and signature cultural visits.\n` +
-            `• **Day 3: Offbeat Trails & Cuisine** — Discover hidden nature trails, local artisan markets, and heritage dining.\n` +
+            (days >= 3 ? `• **Day 3: Offbeat Trails & Cuisine** — Discover hidden nature trails, local artisan markets, and heritage dining.\n` : `\n`) +
             (days > 3 ? `• **Days 4–${days}: Leisure & Unique Excursions** — Deep dive into neighboring villages, scenic valleys or waterfronts, and souvenir shopping.\n\n` : `\n`) +
             `### 🏨 Stays & Dining\n` +
             `• Boutique stays & eco-resorts: ~₹2,200 – ₹4,500/night\n` +
@@ -516,8 +817,8 @@ export default function AIChatPage() {
         }
       } else {
         aiReply =
-          `Namaskaram ${userName}! 🙏 I am here to help you plan an unforgettable trip.\n\n` +
-          `Tell me your dream destination (e.g. Varanasi, Munnar, Goa, Paris, Tokyo), or ask me anything about budgets, stays, or packing essentials!`;
+          `I am here to help you plan an unforgettable trip.\n\n` +
+          `Tell me your dream destination (e.g. Varanasi, Thenkasi, Munnar, Goa, Paris, Tokyo), or ask me anything about budgets, stays, or packing essentials!`;
       }
 
       const assistantMsg: ChatMessage = {
@@ -525,7 +826,7 @@ export default function AIChatPage() {
         role: "assistant",
         content: aiReply,
         timestamp: new Date().toISOString(),
-        suggestedDestination: dest,
+        suggestedDestination: dest || activeDest,
       };
 
       setMessages((prev) => [...prev, assistantMsg]);
@@ -575,7 +876,7 @@ export default function AIChatPage() {
           >
             <img
               src="/images/das.ico"
-              alt="DASAPPAN"
+              alt="PADAYAPPA"
               style={{
                 width: "100%",
                 height: "100%",
@@ -597,7 +898,7 @@ export default function AIChatPage() {
                   margin: 0,
                 }}
               >
-                DASAPPAN
+                PADAYAPPA
               </h2>
               <span
                 style={{
@@ -632,6 +933,66 @@ export default function AIChatPage() {
           </Button>
         </div>
       </div>
+
+      {/* INSECURE CONTEXT HELPER BANNER (CHROME MIC NLP FIX) */}
+      {isInsecureContext && (
+        <div
+          style={{
+            background: "linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(234, 88, 12, 0.12))",
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            borderRadius: "14px",
+            padding: "10px 16px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: "12px",
+            flexWrap: "wrap",
+            marginBottom: "6px",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "#FEF08A", fontSize: "0.84rem" }}>
+            <AlertCircle size={16} color="#FBBF24" style={{ flexShrink: 0 }} />
+            <span>
+              <strong>Voice NLP Note:</strong> Google Chrome flags raw LAN IPs ({currentHost}) as &quot;Not Secure&quot; and blocks microphone access. Switch to <strong>localhost:3000</strong> for instant 1-click voice speech-to-text.
+            </span>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <button
+              type="button"
+              onClick={() => {
+                window.location.href = window.location.href.replace(window.location.host, "localhost:3000");
+              }}
+              style={{
+                background: "#F59E0B",
+                color: "#0F172A",
+                border: "none",
+                padding: "5px 12px",
+                borderRadius: "8px",
+                fontWeight: 700,
+                fontSize: "0.80rem",
+                cursor: "pointer",
+              }}
+            >
+              Switch to localhost:3000
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsInsecureContext(false)}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                color: "#94A3B8",
+                padding: "5px 10px",
+                borderRadius: "8px",
+                fontSize: "0.78rem",
+                cursor: "pointer",
+              }}
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* QUICK SUGGESTIONS CAROUSEL */}
       <div
@@ -705,7 +1066,7 @@ export default function AIChatPage() {
               Conversation Cleared
             </div>
             <p style={{ fontSize: "0.88rem", maxWidth: "420px", color: "#64748B", lineHeight: 1.5 }}>
-              Ask DASAPPAN anything about destinations worldwide, budgets, stays, or tap any suggestion above to start fresh.
+              Ask PADAYAPPA anything about destinations worldwide, budgets, stays, or tap any suggestion above to start fresh.
             </p>
           </div>
         )}
@@ -741,7 +1102,7 @@ export default function AIChatPage() {
                 >
                   <img
                     src="/images/das.ico"
-                    alt="DASAPPAN"
+                    alt="PADAYAPPA"
                     style={{
                       width: "100%",
                       height: "100%",
@@ -859,6 +1220,37 @@ export default function AIChatPage() {
                       <span>{copiedId === msg.id ? "Copied" : "Copy"}</span>
                     </button>
 
+                    {/* DOWNLOAD PDF BUTTON */}
+                    {isItinerary(msg.content) && (
+                      <button
+                        type="button"
+                        onClick={() => handleDownloadChatPDF(msg.content, msg.id)}
+                        disabled={downloadingPdfId === msg.id}
+                        style={{
+                          background: "rgba(14, 165, 233, 0.15)",
+                          border: "1px solid rgba(56, 189, 248, 0.35)",
+                          color: "#38BDF8",
+                          borderRadius: "6px",
+                          padding: "2px 10px",
+                          fontSize: "0.78rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "5px",
+                          transition: "all 0.2s",
+                        }}
+                        title="Download this complete itinerary as a publication-grade PDF document"
+                      >
+                        <Download size={12} color="#38BDF8" />
+                        <span>
+                          {downloadingPdfId === msg.id
+                            ? "Generating PDF..."
+                            : "Download PDF"}
+                        </span>
+                      </button>
+                    )}
+
                     {msg.suggestedDestination && (
                       <button
                         type="button"
@@ -910,7 +1302,7 @@ export default function AIChatPage() {
             >
               <img
                 src="/images/das.ico"
-                alt="DASAPPAN"
+                alt="PADAYAPPA"
                 style={{
                   width: "100%",
                   height: "100%",

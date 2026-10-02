@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import {
   Sparkles,
   Calendar,
@@ -168,9 +169,24 @@ export default function GeneratedTripPage() {
   useEffect(() => {
     async function initTrip() {
       try {
-        const storedTrip =
-          localStorage.getItem("tripgenius_generated_trip") ||
-          localStorage.getItem("latest_trip");
+        const genRaw = localStorage.getItem("tripgenius_generated_trip");
+        const latRaw = localStorage.getItem("latest_trip");
+        let storedTrip: string | null = null;
+
+        if (genRaw && latRaw) {
+          try {
+            const genParsed = JSON.parse(genRaw);
+            const latParsed = JSON.parse(latRaw);
+            const genTime = genParsed.generated_at ? new Date(genParsed.generated_at).getTime() : 0;
+            const latTime = latParsed.generated_at ? new Date(latParsed.generated_at).getTime() : 0;
+            storedTrip = latTime >= genTime ? latRaw : genRaw;
+          } catch {
+            storedTrip = latRaw || genRaw;
+          }
+        } else {
+          storedTrip = latRaw || genRaw;
+        }
+
         if (storedTrip) {
           let parsed: TripData = JSON.parse(storedTrip);
 
@@ -369,9 +385,11 @@ export default function GeneratedTripPage() {
       }
 
       setSaveFeedback("success");
+      toast.success("Itinerary saved to your Profile & Archive! ✓");
     } catch (err) {
       console.error(err);
       setSaveFeedback("error");
+      toast.error("Could not save itinerary. Saved to offline storage.");
     } finally {
       setSaving(false);
     }
@@ -411,10 +429,12 @@ export default function GeneratedTripPage() {
       link.remove();
       window.URL.revokeObjectURL(url);
       setPdfFeedback(`Downloaded ${filename} successfully!`);
+      toast.success(`Downloaded ${filename} successfully!`);
       setTimeout(() => setPdfFeedback(""), 5000);
     } catch (err) {
       console.error("PDF export error:", err);
       setPdfFeedback("Failed to download PDF. Please try again.");
+      toast.error("Failed to generate PDF. Please try again.");
       setTimeout(() => setPdfFeedback(""), 5000);
     } finally {
       setDownloadingPdf(false);
@@ -573,6 +593,12 @@ export default function GeneratedTripPage() {
 
   const imageSrc = getDestinationImage(trip.destination);
   const isOffline = trip.generation_mode === "offline";
+  const resolvedBudget =
+    trip.estimated_trip_cost && trip.estimated_trip_cost > 0
+      ? trip.estimated_trip_cost
+      : trip.budget && trip.budget > 0
+      ? trip.budget
+      : Math.round((trip.duration_days || 4) * 4500 * (trip.travelers_count || 1));
 
   return (
     <div
@@ -685,36 +711,55 @@ export default function GeneratedTripPage() {
           position: "relative",
           borderRadius: "28px",
           overflow: "hidden",
-          border: "1px solid rgba(255, 255, 255, 0.10)",
-          boxShadow: "0 20px 60px rgba(0, 0, 0, 0.50)",
+          border: "1px solid rgba(255, 255, 255, 0.12)",
+          boxShadow: "0 24px 70px rgba(0, 0, 0, 0.55)",
+          minHeight: "560px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          padding: "30px clamp(20px, 3.5vw, 40px) 36px clamp(20px, 3.5vw, 40px)",
         }}
       >
-        <div style={{ position: "relative", height: "420px", width: "100%" }}>
-          <Image
-            src={imageSrc}
-            alt={trip.destination}
-            fill
-            priority
-            style={{ objectFit: "cover" }}
-          />
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              background:
-                "linear-gradient(to top, rgba(3, 7, 18, 0.95) 0%, rgba(3, 7, 18, 0.50) 50%, rgba(3, 7, 18, 0.20) 100%)",
-            }}
-          />
+        {/* BACKGROUND IMAGE */}
+        <Image
+          src={imageSrc}
+          alt={trip.destination}
+          fill
+          priority
+          style={{ objectFit: "cover", zIndex: 0 }}
+        />
+        {/* BALANCED MULTI-STAGE GRADIENT: Clear middle so scenic view is admired, deep contrast top and bottom */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 1,
+            pointerEvents: "none",
+            background:
+              "linear-gradient(to bottom, rgba(3, 7, 18, 0.72) 0%, rgba(3, 7, 18, 0.15) 30%, rgba(3, 7, 18, 0.50) 65%, rgba(3, 7, 18, 0.98) 100%)",
+          }}
+        />
 
+        {/* TOP HEADER BAR (Badges & Unblocked Action Controls) */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 25,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            flexWrap: "wrap",
+            gap: "16px",
+            width: "100%",
+          }}
+        >
           {/* FLOATING TOP BADGES */}
           <div
             style={{
-              position: "absolute",
-              top: "24px",
-              left: "24px",
               display: "flex",
               gap: "10px",
               flexWrap: "wrap",
+              alignItems: "center",
             }}
           >
             <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
@@ -727,17 +772,34 @@ export default function GeneratedTripPage() {
                 {trip.sustainability_score}/100 Eco Score
               </Badge>
             )}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                background: "rgba(15, 23, 42, 0.65)",
+                backdropFilter: "blur(12px)",
+                border: "1px solid rgba(56, 189, 248, 0.35)",
+                color: "#E0F2FE",
+                padding: "6px 14px",
+                borderRadius: "999px",
+                fontSize: "0.82rem",
+                fontWeight: 600,
+              }}
+            >
+              <MapPin size={13} color="#38BDF8" />
+              <span>{trip.destination}</span>
+            </div>
           </div>
 
           {/* HERO ACTIONS */}
           <div
             style={{
-              position: "absolute",
-              top: "24px",
-              right: "24px",
               display: "flex",
-              gap: "10px",
+              gap: "12px",
               alignItems: "center",
+              flexWrap: "wrap",
+              zIndex: 30,
             }}
           >
             <Button
@@ -748,10 +810,12 @@ export default function GeneratedTripPage() {
               onClick={handleDownloadPDF}
               title="Download structured PDF (e.g. deva_munnar.pdf)"
               style={{
-                background: "rgba(0, 0, 0, 0.65)",
-                backdropFilter: "blur(12px)",
+                background: "rgba(15, 23, 42, 0.75)",
+                backdropFilter: "blur(14px)",
                 border: "1px solid rgba(255, 255, 255, 0.25)",
                 color: "#FFFFFF",
+                boxShadow: "0 4px 16px rgba(0, 0, 0, 0.40)",
+                cursor: "pointer",
               }}
             >
               {downloadingPdf ? "Generating PDF..." : "Download PDF"}
@@ -768,92 +832,154 @@ export default function GeneratedTripPage() {
                 )
               }
               onClick={handleSaveTrip}
+              style={{
+                boxShadow: "0 4px 20px rgba(14, 165, 233, 0.45)",
+                cursor: "pointer",
+              }}
             >
               {saveFeedback === "success"
                 ? "Saved to Profile! ✓"
                 : "Save Itinerary"}
             </Button>
           </div>
+        </div>
 
-          {/* BOTTOM HERO CONTENT */}
-          <div
+        {/* ELEGANT SCENIC GAP - Deliberate breathing room between top actions and title */}
+        <div
+          style={{
+            minHeight: "85px",
+            flex: "1 1 auto",
+            pointerEvents: "none",
+          }}
+        />
+
+        {/* BOTTOM HERO CONTENT */}
+        <div
+          style={{
+            position: "relative",
+            zIndex: 15,
+            maxWidth: "1020px",
+          }}
+        >
+          <h1
             style={{
-              position: "absolute",
-              bottom: "30px",
-              left: "32px",
-              right: "32px",
+              fontSize: "clamp(2rem, 4.4vw, 3.4rem)",
+              fontWeight: 900,
+              color: "#FFFFFF",
+              letterSpacing: "-0.025em",
+              lineHeight: 1.18,
+              marginBottom: "12px",
+              textShadow: "0 4px 24px rgba(0, 0, 0, 0.85)",
             }}
           >
-            <h1
-              style={{
-                fontSize: "clamp(2.2rem, 5vw, 3.6rem)",
-                fontWeight: 900,
-                color: "#FFFFFF",
-                letterSpacing: "-1px",
-                marginBottom: "8px",
-              }}
-            >
-              {trip.trip_title || `${trip.destination} Custom Expedition`}
-            </h1>
-            <p
-              style={{
-                color: "#CBD5E1",
-                fontSize: "1.05rem",
-                maxWidth: "800px",
-                lineHeight: 1.6,
-                marginBottom: "20px",
-              }}
-            >
-              {trip.destination_summary ||
-                `A bespoke ${trip.duration_days}-day itinerary crafted for ${trip.travelers_count} travelers, optimizing scenic landscapes, heritage spots, and regional tastes.`}
-            </p>
+            {trip.trip_title || `${trip.destination} Custom Expedition`}
+          </h1>
+          <p
+            style={{
+              color: "#E2E8F0",
+              fontSize: "1.05rem",
+              maxWidth: "840px",
+              lineHeight: 1.6,
+              marginBottom: "22px",
+              textShadow: "0 2px 10px rgba(0, 0, 0, 0.75)",
+            }}
+          >
+            {trip.destination_summary ||
+              `A bespoke ${trip.duration_days}-day itinerary crafted for ${trip.travelers_count} travelers, optimizing scenic landscapes, heritage spots, and regional tastes.`}
+          </p>
 
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "14px 22px",
+              color: "#F1F5F9",
+              fontSize: "0.95rem",
+            }}
+          >
+            <span
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <Calendar size={16} color="#38BDF8" />{" "}
+              <strong>{trip.duration_days} Days</strong>
+            </span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <Users size={16} color="#38BDF8" />{" "}
+              <strong>{trip.travelers_count} Travelers</strong>
+            </span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <IndianRupee size={16} color="#34D399" />{" "}
+              <strong>
+                ₹{resolvedBudget.toLocaleString()} Est. Budget
+              </strong>
+            </span>
+            <span
+              style={{ display: "flex", alignItems: "center", gap: "6px" }}
+            >
+              <Compass size={16} color="#FBBF24" />{" "}
+              <strong>{trip.travel_style} Pacing</strong>
+            </span>
+            {trip.carbon_footprint_estimate !== undefined && (
+              <span
+                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+              >
+                <Leaf size={16} color="#34D399" />{" "}
+                <strong>{trip.carbon_footprint_estimate} kg CO₂</strong>
+              </span>
+            )}
+          </div>
+
+          {trip.interests && trip.interests.length > 0 && (
             <div
               style={{
+                marginTop: "20px",
+                paddingTop: "16px",
+                borderTop: "1px solid rgba(255, 255, 255, 0.12)",
                 display: "flex",
+                alignItems: "center",
+                gap: "8px",
                 flexWrap: "wrap",
-                gap: "20px",
-                color: "#E2E8F0",
-                fontSize: "0.95rem",
               }}
             >
               <span
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                style={{
+                  fontSize: "0.78rem",
+                  fontWeight: 700,
+                  color: "#38BDF8",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                }}
               >
-                <Calendar size={16} color="#38BDF8" />{" "}
-                <strong>{trip.duration_days} Days</strong>
+                <Sparkles size={13} color="#38BDF8" /> Activity & Interest Focus:
               </span>
-              <span
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <Users size={16} color="#38BDF8" />{" "}
-                <strong>{trip.travelers_count} Travelers</strong>
-              </span>
-              <span
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <IndianRupee size={16} color="#34D399" />{" "}
-                <strong>
-                  ₹{(trip.estimated_trip_cost ?? trip.budget).toLocaleString()}{" "}
-                  Est. Budget
-                </strong>
-              </span>
-              <span
-                style={{ display: "flex", alignItems: "center", gap: "6px" }}
-              >
-                <Compass size={16} color="#FBBF24" />{" "}
-                <strong>{trip.travel_style} Pacing</strong>
-              </span>
-              {trip.carbon_footprint_estimate !== undefined && (
+              {trip.interests.map((focus: string, idx: number) => (
                 <span
-                  style={{ display: "flex", alignItems: "center", gap: "6px" }}
+                  key={idx}
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    background: "rgba(14, 165, 233, 0.18)",
+                    border: "1px solid rgba(56, 189, 248, 0.35)",
+                    color: "#FFFFFF",
+                    borderRadius: "999px",
+                    padding: "4px 12px",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                  }}
                 >
-                  <Leaf size={16} color="#34D399" />{" "}
-                  <strong>{trip.carbon_footprint_estimate} kg CO₂</strong>
+                  <Check size={12} color="#38BDF8" /> {focus}
                 </span>
-              )}
+              ))}
             </div>
-          </div>
+          )}
         </div>
       </section>
 
@@ -2595,6 +2721,22 @@ export default function GeneratedTripPage() {
           marginTop: "10px",
         }}
       >
+        <Button
+          variant="secondary"
+          size="md"
+          isLoading={downloadingPdf}
+          leftIcon={<Download size={16} />}
+          onClick={handleDownloadPDF}
+          title="Download structured PDF"
+          style={{
+            background: "rgba(15, 23, 42, 0.75)",
+            border: "1px solid rgba(255, 255, 255, 0.20)",
+            color: "#FFFFFF",
+            cursor: "pointer",
+          }}
+        >
+          {downloadingPdf ? "Generating PDF..." : "Download PDF"}
+        </Button>
         <Button
           variant={saveFeedback === "success" ? "secondary" : "primary"}
           size="md"
