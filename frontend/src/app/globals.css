@@ -378,33 +378,19 @@ h6 {
 }
 
 .app-main-wrapper {
-<<<<<<< HEAD
   width: 100%;
   max-width: 100%;
   margin: 0;
   padding: 0;
-=======
-  width: 80%;
-  max-width: 1240px;
-  margin: 0 auto;
-  padding: 0 clamp(16px, 2.5vw, 32px);
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   position: relative;
   z-index: 1;
 }
 
 @media (max-width: 1200px) {
   .page-container,
-<<<<<<< HEAD
   .navbar-content-container,
   .footer-content-container {
-    width: 90% !important;
-=======
-  .app-main-wrapper,
-  .navbar-content-container,
-  .footer-content-container {
-    width: 88% !important;
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+    width: 94% !important;
     padding-left: clamp(16px, 2.5vw, 28px);
     padding-right: clamp(16px, 2.5vw, 28px);
   }
@@ -412,10 +398,6 @@ h6 {
 
 @media (max-width: 768px) {
   .page-container,
-<<<<<<< HEAD
-=======
-  .app-main-wrapper,
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   .navbar-content-container,
   .footer-content-container {
     width: 100% !important;
@@ -444,7 +426,6 @@ h6 {
   }
 }
 
-<<<<<<< HEAD
 /* Responsive 3-Column Focus Grid for Planner Activity & Interest Focus */
 .grid-3-col-focus {
   display: grid;
@@ -465,9 +446,6 @@ h6 {
     gap: 8px;
   }
 }
-
-=======
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
 /* Analytics 4-Card Responsive KPI Grid */
 .analytics-metrics-grid {
   display: grid;
@@ -652,10 +630,21 @@ h6 {
 
 .gradient-text-luxury {
   font-family: inherit;
-  background: linear-gradient(135deg, #38BDF8 0%, #2DD4BF 45%, #FDE047 100%);
+  background: linear-gradient(
+    135deg,
+    #0284c7 0%,
+    #0ea5e9 16%,
+    #14b8a6 42%,
+    #10b981 58%,
+    #84cc16 75%,
+    #eab308 88%,
+    #ca8a04 100%
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 2px 14px rgba(56, 189, 248, 0.40));
+  filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.92))
+    drop-shadow(0 2px 4px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 0 24px rgba(14, 165, 233, 0.28));
 }
 
 .hero-subtitle-bright {

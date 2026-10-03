@@ -103,74 +103,82 @@ export default function AppNavbar() {
   };
 
   return (
-    <header
-      style={{
-        position: "sticky",
-        top: 0,
-        zIndex: 100,
-        backdropFilter: "blur(20px)",
-        WebkitBackdropFilter: "blur(20px)",
-        background: scrolled
-          ? "rgba(3, 7, 18, 0.88)"
-          : isHome
-            ? "rgba(3, 7, 18, 0.35)"
-            : "rgba(3, 7, 18, 0.72)",
-        borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
-        transition: "background 0.3s ease, border-color 0.3s ease",
-      }}
-    >
+    <>
+      <header
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          width: "100%",
+          zIndex: 100,
+          backdropFilter: "blur(20px)",
+          WebkitBackdropFilter: "blur(20px)",
+          background: scrolled
+            ? "rgba(3, 7, 18, 0.90)"
+            : isHome
+              ? "rgba(3, 7, 18, 0.35)"
+              : "rgba(3, 7, 18, 0.85)",
+          borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+          transition: "background 0.3s ease, border-color 0.3s ease",
+        }}
+      >
       <div
         className="navbar-content-container"
         style={{
-          width: "80%",
-          maxWidth: "1240px",
+          width: "100%",
+          maxWidth: "100%",
           margin: "0 auto",
-          padding: "14px clamp(16px, 2.5vw, 32px)",
+          padding: "14px clamp(20px, 3.5vw, 48px)",
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
           gap: "20px",
         }}
       >
-        {/* BRAND LOGO */}
-        <Link
-          href="/"
-          className={isHome ? "animate-blur-fade-up" : ""}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "12px",
-            textDecoration: "none",
-            flexShrink: 0,
-            animationDelay: isHome ? "0ms" : undefined,
-          }}
-        >
-          <Image
-            src="/logo/logo.svg"
-            alt="Trip Geni Logo"
-            width={38}
-            height={38}
-            priority
-          />
-          <span
+        {/* BRAND LOGO (LEFT) */}
+        <div style={{ flex: 1, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+          <Link
+            href="/"
+            className={isHome ? "animate-blur-fade-up" : ""}
             style={{
-              color: "#FFFFFF",
-              fontSize: "1.8rem",
-              fontWeight: 800,
-              letterSpacing: "-0.5px",
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              textDecoration: "none",
+              flexShrink: 0,
+              animationDelay: isHome ? "0ms" : undefined,
             }}
           >
-            Trip Geni
-          </span>
-        </Link>
+            <Image
+              src="/logo/logo.svg"
+              alt="Trip Geni Logo"
+              width={38}
+              height={38}
+              priority
+            />
+            <span
+              style={{
+                color: "#FFFFFF",
+                fontSize: "1.8rem",
+                fontWeight: 800,
+                letterSpacing: "-0.5px",
+              }}
+            >
+              Trip Geni
+            </span>
+          </Link>
+        </div>
 
-        {/* DESKTOP NAVIGATION */}
+        {/* DESKTOP NAVIGATION (CENTER) */}
         <nav
           style={{
             display: "none",
             alignItems: "center",
+            justifyContent: "center",
             gap: "6px",
             flexWrap: "nowrap",
+            flexShrink: 0,
           }}
           className="desktop-nav-container"
         >
@@ -311,11 +319,13 @@ export default function AppNavbar() {
           </div>
         </nav>
 
-        {/* RIGHT ACTION CONTROLS */}
+        {/* RIGHT ACTION CONTROLS (RIGHT) */}
         <div
           style={{
+            flex: 1,
             display: "flex",
             alignItems: "center",
+            justifyContent: "flex-end",
             gap: "12px",
           }}
         >
@@ -618,5 +628,7 @@ export default function AppNavbar() {
         }
       `}</style>
     </header>
+    {!isHome && <div style={{ height: "68px" }} aria-hidden="true" />}
+  </>
   );
 }

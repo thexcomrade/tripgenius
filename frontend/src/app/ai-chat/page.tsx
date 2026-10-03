@@ -209,14 +209,13 @@ export default function AIChatPage() {
 
     if (typeof window === "undefined") return;
 
-<<<<<<< HEAD
     if (
       !window.isSecureContext &&
       window.location.hostname !== "localhost" &&
       window.location.hostname !== "127.0.0.1"
     ) {
       setMicError(
-        `Microphone is blocked by Google Chrome on LAN IP (${window.location.host}). Please open http://localhost:3000 to speak with Padayappa.`
+        `Microphone is blocked by Google Chrome on LAN IP (${window.location.host}). Please open http://localhost:3000 to speak with AI travel companion.`
       );
       toast.error(
         "Chrome blocks microphone on LAN IP. Open http://localhost:3000 for voice recognition!",
@@ -225,44 +224,17 @@ export default function AIChatPage() {
       return;
     }
 
-=======
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     const SpeechRecognition =
       (window as any).SpeechRecognition ||
       (window as any).webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
       setMicError(
-<<<<<<< HEAD
         "Voice speech recognition is not supported in this browser. Please open Trip Geni in Google Chrome, Microsoft Edge, or Safari."
-=======
-        "Voice input is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Safari."
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
       );
       return;
     }
 
-<<<<<<< HEAD
-    try {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {}
-      }
-
-      const recognition = new SpeechRecognition();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      // Auto-detect browser language or default to en-IN with fallback to en-US
-      recognition.lang =
-        typeof navigator !== "undefined" &&
-        navigator.language &&
-        navigator.language.startsWith("en")
-          ? navigator.language
-          : "en-IN";
-
-      let silenceTimer: ReturnType<typeof setTimeout> | null = null;
-=======
     // Proactively verify / request microphone permission
     try {
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -276,7 +248,7 @@ export default function AIChatPage() {
         micErr.name === "PermissionDeniedError"
       ) {
         setMicError(
-          "Microphone permission was denied. Please allow microphone access in your browser address bar or settings to speak with Dasappan."
+          "Microphone permission was denied. Please allow microphone access in your browser address bar or settings to speak with AI travel companion."
         );
         return;
       }
@@ -290,10 +262,16 @@ export default function AIChatPage() {
       }
 
       const recognition = new SpeechRecognition();
-      recognition.continuous = false;
+      recognition.continuous = true;
       recognition.interimResults = true;
-      recognition.lang = "en-US";
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+      recognition.lang =
+        typeof navigator !== "undefined" &&
+        navigator.language &&
+        navigator.language.startsWith("en")
+          ? navigator.language
+          : "en-IN";
+
+      let silenceTimer: ReturnType<typeof setTimeout> | null = null;
 
       recognition.onstart = () => {
         setIsListening(true);
@@ -302,7 +280,6 @@ export default function AIChatPage() {
       };
 
       recognition.onresult = (event: any) => {
-<<<<<<< HEAD
         let interim = "";
         let finalStr = "";
         for (let i = 0; i < event.results.length; i++) {
@@ -326,37 +303,21 @@ export default function AIChatPage() {
             recognition.stop();
           } catch {}
         }, 2500);
-=======
-        let transcript = "";
-        for (let i = 0; i < event.results.length; i++) {
-          transcript += event.results[i][0].transcript;
-        }
-        const clean = transcript.trim();
-        if (clean) {
-          setInput(clean);
-          latestTranscriptRef.current = clean;
-        }
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
       };
 
       recognition.onerror = (event: any) => {
         console.warn("Speech recognition error:", event.error);
         setIsListening(false);
-<<<<<<< HEAD
         if (silenceTimer) clearTimeout(silenceTimer);
 
         if (event.error === "no-speech") {
           setMicError("No speech detected. Please speak into your microphone and try again.");
         } else if (
-=======
-        if (
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
           event.error === "not-allowed" ||
           event.error === "service-not-allowed"
         ) {
           setMicError(
-<<<<<<< HEAD
-            "Microphone permission blocked. In Chrome/Edge, voice recognition requires microphone access. If testing on LAN IP (192.168...), please open http://localhost:3000 to speak with Padayappa."
+            "Microphone permission blocked. In Chrome/Edge, voice recognition requires microphone access. If testing on LAN IP (192.168...), please open http://localhost:3000 to speak with AI travel companion."
           );
         } else if (event.error === "audio-capture") {
           setMicError("No microphone found or another app is using your microphone.");
@@ -364,46 +325,27 @@ export default function AIChatPage() {
           setMicError("Speech recognition network error. Please check your internet connection.");
         } else if (event.error !== "aborted") {
           setMicError(`Voice error: ${event.error}. Please try again.`);
-=======
-            "Microphone permission blocked. In Chrome/Edge, voice recognition requires a secure context (http://localhost:3000 or HTTPS) and microphone access enabled."
-          );
-        } else if (event.error === "network") {
-          setMicError("Speech recognition network error. Please check your internet connection.");
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
         }
       };
 
       recognition.onend = () => {
         setIsListening(false);
-<<<<<<< HEAD
         if (silenceTimer) clearTimeout(silenceTimer);
         const text = latestTranscriptRef.current.trim();
         if (text) {
           handleSendMessageRef.current?.(text);
           latestTranscriptRef.current = "";
-=======
-        const text = latestTranscriptRef.current.trim();
-        if (text) {
-          handleSendMessageRef.current?.(text);
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
         }
       };
 
       recognitionRef.current = recognition;
       recognition.start();
-<<<<<<< HEAD
     } catch (err: any) {
       console.warn("Recognition start failed:", err);
       setIsListening(false);
       setMicError(
         "Unable to start microphone recording. Please allow microphone access in your browser or open http://localhost:3000."
       );
-=======
-    } catch (err) {
-      console.warn("Recognition start failed:", err);
-      setIsListening(false);
-      setMicError("Unable to start recording. Please check your microphone device settings.");
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     }
   };
 
@@ -861,11 +803,7 @@ export default function AIChatPage() {
           aiReply = `Hello ${userName}! 😊 Ready for the next adventure.\n\nTell me your destination or whatever travel vibe is on your mind, and let's plan it out!`;
         } else {
           aiReply =
-<<<<<<< HEAD
-            `Namaskaram ${userName}! 🙏 PADAYAPPA here, your AI travel companion.\n\n` +
-=======
-            `Namaskaram ${userName}! 🙏 DASAPPAN here, your AI travel companion.\n\n` +
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+            `Namaskaram ${userName}! 🙏 Trip Geni AI here, your AI travel companion.\n\n` +
             `How may I help you today?\n\n` +
             `Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal plan with verified stays and costs in ₹.\n\n` +
             `❓ Where would you like to travel, or what can I help you plan?`;
@@ -880,11 +818,7 @@ export default function AIChatPage() {
             `• **Comfort Lodge near Tenkasi Junction** (~₹1,200 – ₹1,800/night)\n\n` +
             `🚗 **How to Reach & Local Transit**:\n` +
             `Tenkasi Junction (TSI) connects directly to Madurai, Chennai, and Kollam. Nearest airport is Trivandrum (TRV, 105 km) or Tuticorin (90 km).\n\n` +
-<<<<<<< HEAD
-            `💡 **PADAYAPPA's Foodie Secret**: You must stop at Border Rahmath Hotel in Shenkottai for authentic pepper country chicken and Ennai Parotta with spicy salna!\n\n` +
-=======
-            `💡 **DASAPPAN's Foodie Secret**: You must stop at Border Rahmath Hotel in Shenkottai for authentic pepper country chicken and Ennai Parotta with spicy salna!\n\n` +
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+            `💡 **Foodie Secret**: You must stop at Border Rahmath Hotel in Shenkottai for authentic pepper country chicken and Ennai Parotta with spicy salna!\n\n` +
             `Would you like me to map out a complete day-by-day plan or give you more details on waterfalls?`;
         } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi")) {
           aiReply =
@@ -895,11 +829,7 @@ export default function AIChatPage() {
             `• **Assi Ghat Peaceful Homestay** (~₹1,200 – ₹2,000/night)\n\n` +
             `🚗 **How to Reach & Local Transit**:\n` +
             `Lal Bahadur Shastri Airport (VNS, Babatpur, 24 km) connects to all major metros. Varanasi Junction (BSB) is in the city center. E-rickshaws and hand-rowed wooden boats are best for moving around.\n\n` +
-<<<<<<< HEAD
-            `💡 **PADAYAPPA's Insider Secret**: Book Kashi Vishwanath Sugam Darshan online in advance to skip 3-hour long queues, and always take a hand-rowed boat at 5:30 AM rather than a noisy motorboat.\n\n` +
-=======
-            `💡 **DASAPPAN's Insider Secret**: Book Kashi Vishwanath Sugam Darshan online in advance to skip 3-hour long queues, and always take a hand-rowed boat at 5:30 AM rather than a noisy motorboat.\n\n` +
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+            `💡 **Insider Secret**: Book Kashi Vishwanath Sugam Darshan online in advance to skip 3-hour long queues, and always take a hand-rowed boat at 5:30 AM rather than a noisy motorboat.\n\n` +
             `Would you like me to recommend iconic street food spots (like Ram Bhandar & Blue Lassi) or plan your day-by-day itinerary?`;
         } else {
           aiReply =
@@ -960,11 +890,7 @@ export default function AIChatPage() {
             `• Authentic Tenkasi Parotta with spicy salna and country chicken\n\n` +
             `### 💰 Estimated Budget (in ₹)\n` +
             `• ~₹1,800 – ₹3,000 per person per day (stays, meals, and local transit)\n\n` +
-<<<<<<< HEAD
-            `### 💡 Padayappa's Local Insider Secret\n` +
-=======
-            `### 💡 Dasappan's Local Insider Secret\n` +
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+            `### 💡 Local Insider Secret\n` +
             `Visit Five Falls early at 6:30 AM to beat the crowds and enjoy the pure forest mineral water at its best.\n\n` +
             `Would you like me to refine this with specific hotel booking options or transit details?`;
         } else if (activeDest.toLowerCase().includes("varanasi") || activeDest.toLowerCase().includes("kashi") || activeDest.toLowerCase().includes("banaras")) {

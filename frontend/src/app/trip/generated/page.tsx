@@ -980,59 +980,7 @@ export default function GeneratedTripPage() {
                 </span>
               ))}
             </div>
-<<<<<<< HEAD
           )}
-=======
-
-            {trip.interests && trip.interests.length > 0 && (
-              <div
-                style={{
-                  marginTop: "18px",
-                  paddingTop: "14px",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.10)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  flexWrap: "wrap",
-                }}
-              >
-                <span
-                  style={{
-                    fontSize: "0.78rem",
-                    fontWeight: 700,
-                    color: "#38BDF8",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.04em",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "5px",
-                  }}
-                >
-                  <Sparkles size={13} color="#38BDF8" /> Activity & Interest Focus:
-                </span>
-                {trip.interests.map((focus: string, idx: number) => (
-                  <span
-                    key={idx}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "5px",
-                      background: "rgba(14, 165, 233, 0.15)",
-                      border: "1px solid rgba(56, 189, 248, 0.35)",
-                      color: "#FFFFFF",
-                      borderRadius: "999px",
-                      padding: "4px 12px",
-                      fontSize: "0.8rem",
-                      fontWeight: 600,
-                    }}
-                  >
-                    <Check size={12} color="#38BDF8" /> {focus}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
         </div>
       </section>
 

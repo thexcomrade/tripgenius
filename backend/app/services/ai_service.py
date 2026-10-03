@@ -1316,6 +1316,10 @@ Return JSON.
         greeting_prefix = (
             f"Namaskaram {display_name}! 🙏" if display_name else "Namaskaram! 🙏"
         )
+        already_greeted = any(
+            isinstance(m, dict) and "namaskaram" in m.get("content", "").lower()
+            for m in (history or [])
+        )
 
         # 1. Pure greeting check: instant return, 0 lag
         greeting_words = {

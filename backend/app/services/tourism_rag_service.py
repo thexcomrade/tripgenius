@@ -1166,11 +1166,7 @@ class TourismRAGService:
         self, user_message: str, history: Optional[list] = None, user_name: Optional[str] = None
     ) -> dict[str, str]:
         """
-<<<<<<< HEAD
-        Synthesizes a warm, conversational, 0-lag response in PADAYAPPA's authentic voice.
-=======
         Synthesizes a warm, conversational, 0-lag response in DASAPPAN's authentic voice.
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
         Follows progressive multi-turn consultative discovery:
         1. Never repeats formal greetings if already greeted in history.
         2. Reacts with authentic delight: 'Oh, {Destination}!! 🌟' followed by a 2-line vivid description.
@@ -1224,11 +1220,7 @@ class TourismRAGService:
                 }
             return {
                 "reply": (
-<<<<<<< HEAD
-                    f"Namaskaram {display_name}! 🙏 PADAYAPPA here, your AI travel companion.\n\n"
-=======
-                    f"Namaskaram {display_name}! 🙏 DASAPPAN here, your AI travel companion.\n\n"
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+                    f"Namaskaram {display_name}! 🙏 Trip Geni AI here, your AI travel companion.\n\n"
                     "How may I help you today?\n\n"
                     "Tell me your dream destination, budget, or the travel vibe you have in mind, and I'll analyze it to craft the ideal plan with verified stays and costs in ₹.\n\n"
                     "❓ Where would you like to travel, or what would you like me to plan for you?"
@@ -1274,11 +1266,7 @@ class TourismRAGService:
                     f"Here are the hand-picked stays and transit details for **{cname}**:\n\n"
                     f"🏨 **Verified Stays**:\n{stays}\n\n"
                     f"🚗 **How to Reach & Local Transit**:\n{transit}\n\n"
-<<<<<<< HEAD
-                    f"💡 **PADAYAPPA's Insider Secret**: {tip}\n\n"
-=======
-                    f"💡 **DASAPPAN's Insider Secret**: {tip}\n\n"
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+                    f"💡 **Local Insider Secret**: {tip}\n\n"
                     f"Would you like me to recommend the best local food spots or map out a detailed day-by-day plan next?"
                 ),
                 "source": "rag_knowledge_engine",
@@ -1295,11 +1283,7 @@ class TourismRAGService:
                     "reply": (
                         f"Here are the authentic must-try food specialities in **{dest_short}**:\n\n"
                         f"{foods}\n\n"
-<<<<<<< HEAD
-                        f"💡 **PADAYAPPA's Foodie Tip**: {dest_data['insider_tip']}\n\n"
-=======
-                        f"💡 **DASAPPAN's Foodie Tip**: {dest_data['insider_tip']}\n\n"
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+                        f"💡 **Foodie Insider Tip**: {dest_data['insider_tip']}\n\n"
                         f"Would you like recommended stays nearby or shall we plan the itinerary?"
                     ),
                     "source": "rag_knowledge_engine",
@@ -1435,11 +1419,7 @@ class TourismRAGService:
                 f"### 💰 Estimated Budget Guidelines\n"
                 f"• **Daily Average**: {budget_str}\n"
                 f"• **Transit Details**: {transit_str}\n\n"
-<<<<<<< HEAD
-                f"### 💡 Padayappa's Local Insider Secret\n"
-=======
-                f"### 💡 Dasappan's Local Insider Secret\n"
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
+                f"### 💡 Local Insider Secret\n"
                 f"{tip_str}\n\n"
                 f"Would you like recommendations on specific hotel bookings or flight/train transit details?"
             )
@@ -1450,11 +1430,7 @@ class TourismRAGService:
             "reply": (
                 f"{greeting_prefix}"
                 "I'm ready to craft your personalized travel plan.\n\n"
-<<<<<<< HEAD
                 "Which destination do you have in mind? (e.g. Varanasi, Thenkasi, Munnar, Varkala, Coorg, Goa, or Paris)?\n\n"
-=======
-                "Which destination do you have in mind? (e.g. **Varanasi**, **Thenkasi**, **Munnar**, **Varkala**, **Coorg**, **Goa**, or **Paris**)?\n\n"
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
                 "❓ Just drop the city or region name, and we'll take it from there!"
             ),
             "source": "rag_knowledge_engine",

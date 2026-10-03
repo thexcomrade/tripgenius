@@ -103,11 +103,7 @@ const TRANSPORT_MODES = [
   },
   {
     id: "Bike",
-<<<<<<< HEAD
     label: "Bike / Scooter",
-=======
-    label: "Bike",
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     desc: "Two-wheeler rental across local spots",
     icon: "🏍️",
   },
@@ -438,14 +434,11 @@ function PlannerContent() {
   const [aiProcessingStage, setAiProcessingStage] = useState(0);
   const [error, setError] = useState("");
 
-<<<<<<< HEAD
   // Live Transit Distance and Ticket Pricing Intelligence
   const transitPricing = useMemo(() => {
     return calculateTransitPricing(origin, destination);
   }, [origin, destination]);
 
-=======
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   // Dynamically calibrate Activity & Interest Focus Points based on Google Travel Ideas & Dataset
   useEffect(() => {
     const dest = destination.trim().toLowerCase();
@@ -497,11 +490,7 @@ function PlannerContent() {
       });
   }, [destination]);
 
-<<<<<<< HEAD
   // Auth guard & destination/origin param pre-fill
-=======
-  // Auth guard & destination param pre-fill
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   useEffect(() => {
     const token = localStorage.getItem("tripgenius_token");
     if (!token) {
@@ -2117,7 +2106,6 @@ function PlannerContent() {
                       </span>
                     )}
                   </label>
-<<<<<<< HEAD
 
                   <Badge variant="overlay" size="sm">
                     <span
@@ -2147,30 +2135,6 @@ function PlannerContent() {
                     gap: "10px",
                   }}
                 >
-=======
-
-                  <Badge variant="overlay" size="sm">
-                    <span
-                      style={{
-                        width: "6px",
-                        height: "6px",
-                        borderRadius: "50%",
-                        background: "#38BDF8",
-                        display: "inline-block",
-                        marginRight: "6px",
-                        boxShadow: "0 0 6px #38BDF8",
-                      }}
-                    />
-                    {focusSource === "google_ideas"
-                      ? "Google Ideas & Verified Intelligence"
-                      : focusSource === "dataset"
-                      ? "Tourism Dataset Focus Points"
-                      : "Dynamic Focus Intelligence"}
-                  </Badge>
-                </div>
-
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
                   {[...focusPoints, ...customInterestsList].map((tag) => {
                     const isSelected = selectedInterests.includes(tag);
                     const isCustom = customInterestsList.includes(tag);
@@ -2206,7 +2170,6 @@ function PlannerContent() {
                         }}
                       >
                         {isSelected ? (
-<<<<<<< HEAD
                           <Check size={14} color="#38BDF8" style={{ flexShrink: 0 }} />
                         ) : (
                           <Sparkles size={12} color="rgba(255, 255, 255, 0.35)" style={{ flexShrink: 0 }} />
@@ -2221,13 +2184,6 @@ function PlannerContent() {
                         >
                           {tag}
                         </span>
-=======
-                          <Check size={14} color="#38BDF8" />
-                        ) : (
-                          <Sparkles size={12} color="rgba(255, 255, 255, 0.3)" />
-                        )}
-                        <span>{tag}</span>
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
                         {isCustom && (
                           <span
                             onClick={(e) => {

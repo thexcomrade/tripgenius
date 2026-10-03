@@ -273,76 +273,27 @@ export default function HomePage() {
     : prioritySortedReviews.slice(0, MAX_DEFAULT_REVIEWS);
 
   return (
-<<<<<<< HEAD
     <>
-      {/* CINEMATIC HERO SECTION WITH EMBEDDED VIDEO */}
-      <div className="hero-video-container">
-        <video
-          ref={videoRef}
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="cinematic-bg-video"
-        >
-          <source
-            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260406_094145_4a271a6c-3869-4f1c-8aa7-aeb0cb227994.mp4"
-            type="video/mp4"
-          />
-        </video>
-=======
-    <div style={{ position: "relative", overflow: "hidden" }}>
-      {/* HERO SECTION */}
-      <section
-        style={{
-          position: "relative",
-          padding: "70px 0 60px 0",
-          maxWidth: "100%",
-          margin: "0 auto",
-          textAlign: "center",
-        }}
+      {/* CINEMATIC FULL-SCREEN BACKGROUND VIDEO */}
+      <video
+        ref={videoRef}
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="cinematic-bg-video"
       >
-        {/* AMBIENT GLOW BACKDROP */}
-        <div
-          style={{
-            position: "absolute",
-            top: "5%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "800px",
-            height: "400px",
-            background:
-              "radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(20, 184, 166, 0.12) 40%, transparent 70%)",
-            filter: "blur(60px)",
-            pointerEvents: "none",
-            zIndex: -1,
-          }}
+        <source
+          src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260406_094145_4a271a6c-3869-4f1c-8aa7-aeb0cb227994.mp4"
+          type="video/mp4"
         />
+      </video>
 
-        <div style={{ display: "inline-flex", marginBottom: "24px" }}>
-          <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
-            Next-Gen Travel AI Engine 3.0 Pro
-          </Badge>
-        </div>
+      {/* BOTTOM BLUR OVERLAY (no gradient darkening, pure backdrop-blur with CSS mask) */}
+      <div className="cinematic-blur-overlay" />
 
-        <h1
-          style={{
-            fontSize: "clamp(2.4rem, 5.5vw, 4.2rem)",
-            fontWeight: 600,
-            lineHeight: 1.16,
-            letterSpacing: "-0.032em",
-            maxWidth: "1050px",
-            margin: "0 auto 24px auto",
-            color: "#FFFFFF",
-          }}
-        >
-          Plan Extraordinary Journeys with{" "}
-          <span className="gradient-text" style={{ fontWeight: 600 }}>
-            Intelligent Precision
-          </span>
-        </h1>
->>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
-
+      {/* FOREGROUND CONTENT WRAPPER */}
+      <div style={{ position: "relative", zIndex: 10, overflow: "hidden" }}>
         {/* HERO SECTION */}
         <section
           style={{
@@ -350,14 +301,14 @@ export default function HomePage() {
             zIndex: 10,
             width: "92%",
             maxWidth: "1360px",
-            minHeight: "calc(100vh - 84px)",
+            minHeight: "100vh",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             alignItems: "center",
             margin: "0 auto",
             textAlign: "center",
-            padding: "40px clamp(20px, 3.5vw, 48px) 60px clamp(20px, 3.5vw, 48px)",
+            padding: "80px clamp(20px, 3.5vw, 48px) 60px clamp(20px, 3.5vw, 48px)",
           }}
         >
           {/* AMBIENT GLOW BACKDROP */}
