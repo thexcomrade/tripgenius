@@ -378,19 +378,33 @@ h6 {
 }
 
 .app-main-wrapper {
+<<<<<<< HEAD
   width: 100%;
   max-width: 100%;
   margin: 0;
   padding: 0;
+=======
+  width: 80%;
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 2.5vw, 32px);
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   position: relative;
   z-index: 1;
 }
 
 @media (max-width: 1200px) {
   .page-container,
+<<<<<<< HEAD
   .navbar-content-container,
   .footer-content-container {
     width: 90% !important;
+=======
+  .app-main-wrapper,
+  .navbar-content-container,
+  .footer-content-container {
+    width: 88% !important;
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     padding-left: clamp(16px, 2.5vw, 28px);
     padding-right: clamp(16px, 2.5vw, 28px);
   }
@@ -398,6 +412,10 @@ h6 {
 
 @media (max-width: 768px) {
   .page-container,
+<<<<<<< HEAD
+=======
+  .app-main-wrapper,
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
   .navbar-content-container,
   .footer-content-container {
     width: 100% !important;
@@ -426,6 +444,7 @@ h6 {
   }
 }
 
+<<<<<<< HEAD
 /* Responsive 3-Column Focus Grid for Planner Activity & Interest Focus */
 .grid-3-col-focus {
   display: grid;
@@ -447,6 +466,8 @@ h6 {
   }
 }
 
+=======
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
 /* Analytics 4-Card Responsive KPI Grid */
 .analytics-metrics-grid {
   display: grid;

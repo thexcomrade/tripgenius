@@ -78,14 +78,12 @@ export default function AppFooter() {
       />
 
       <div
+        className="footer-content-container"
         style={{
-          width: "92%",
-          maxWidth: "1360px",
+          width: "100%",
+          maxWidth: "1680px",
           margin: "0 auto",
-          padding: "0 clamp(16px, 3vw, 40px)",
-          display: "flex",
-          flexDirection: "column",
-          gap: "28px", // Clean 3-row vertical gap
+          padding: "36px clamp(16px, 3.5vw, 44px) 18px clamp(16px, 3.5vw, 44px)",
         }}
       >
         {/* ==================================================== */}

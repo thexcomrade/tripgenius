@@ -273,6 +273,7 @@ export default function HomePage() {
     : prioritySortedReviews.slice(0, MAX_DEFAULT_REVIEWS);
 
   return (
+<<<<<<< HEAD
     <>
       {/* CINEMATIC HERO SECTION WITH EMBEDDED VIDEO */}
       <div className="hero-video-container">
@@ -289,6 +290,58 @@ export default function HomePage() {
             type="video/mp4"
           />
         </video>
+=======
+    <div style={{ position: "relative", overflow: "hidden" }}>
+      {/* HERO SECTION */}
+      <section
+        style={{
+          position: "relative",
+          padding: "70px 0 60px 0",
+          maxWidth: "100%",
+          margin: "0 auto",
+          textAlign: "center",
+        }}
+      >
+        {/* AMBIENT GLOW BACKDROP */}
+        <div
+          style={{
+            position: "absolute",
+            top: "5%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: "800px",
+            height: "400px",
+            background:
+              "radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(20, 184, 166, 0.12) 40%, transparent 70%)",
+            filter: "blur(60px)",
+            pointerEvents: "none",
+            zIndex: -1,
+          }}
+        />
+
+        <div style={{ display: "inline-flex", marginBottom: "24px" }}>
+          <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
+            Next-Gen Travel AI Engine 3.0 Pro
+          </Badge>
+        </div>
+
+        <h1
+          style={{
+            fontSize: "clamp(2.4rem, 5.5vw, 4.2rem)",
+            fontWeight: 600,
+            lineHeight: 1.16,
+            letterSpacing: "-0.032em",
+            maxWidth: "1050px",
+            margin: "0 auto 24px auto",
+            color: "#FFFFFF",
+          }}
+        >
+          Plan Extraordinary Journeys with{" "}
+          <span className="gradient-text" style={{ fontWeight: 600 }}>
+            Intelligent Precision
+          </span>
+        </h1>
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
 
         {/* HERO SECTION */}
         <section

@@ -487,6 +487,7 @@ VERIFIED_TRAVEL_DIRECTORY: dict[str, dict[str, list[str]]] = {
         "cuisines": ["Shenkottai Pepper Chicken with crispy layered Parotta", "Tirunelveli Wheat Halwa", "Courtallam Herbal Banana Leaf Meals"],
         "beverages": ["Herbal Sukku Kaapi (Dry ginger & pepper coffee)", "Fresh Tender Coconut Water", "Nannari Sarbath"],
     },
+<<<<<<< HEAD
     "egypt": {
         "attractions": [
             "Pyramids of Giza & Great Sphinx (Al Haram, Giza - 15 km from Cairo) — Iconic 4,500-year-old Wonder of the Ancient World & panoramic desert plateau",
@@ -865,6 +866,8 @@ VERIFIED_TRAVEL_DIRECTORY: dict[str, dict[str, list[str]]] = {
             "Fresh Seabuckthorn Berry Juice (Rich in Vitamin C from high-altitude bushes)",
         ],
     },
+=======
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
 }
 
 

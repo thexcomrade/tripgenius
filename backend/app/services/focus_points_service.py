@@ -80,6 +80,7 @@ VERIFIED_FOCUS_POINTS: dict[str, list[str]] = {
         "Tea Factory & CTC Museum",
         "Pine Forest Nature Walks",
     ],
+<<<<<<< HEAD
     "manali": [
         "Hadimba Devi Ancient Wooden Pagoda Temple",
         "Solang Valley Snow Adventures & Paragliding",
@@ -104,6 +105,8 @@ VERIFIED_FOCUS_POINTS: dict[str, list[str]] = {
         "High-Altitude Stargazing & Himalayan Photography",
         "Pokhara Phewa Lake Rest & Paragliding Gateway",
     ],
+=======
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     "paris": [
         "Eiffel Tower & Seine Cruise",
         "Louvre & Musée d'Orsay Art",
@@ -135,6 +138,7 @@ VERIFIED_FOCUS_POINTS: dict[str, list[str]] = {
         "Traditional Abra Boat Crossing",
         "Miracle Garden & Frame Views",
     ],
+<<<<<<< HEAD
     "egypt": [
         "Pyramids of Giza & Great Sphinx",
         "Nile River Sunset Felucca Cruise",
@@ -231,6 +235,8 @@ VERIFIED_FOCUS_POINTS: dict[str, list[str]] = {
         "Bioluminescent Lagoon Night Walks",
         "Coconut Grove Eco Bicycle Trails",
     ],
+=======
+>>>>>>> 3c289274a32b5e22152d56b42e31ac969b5e8f6e
     "coorg": [
         "Coffee Plantation & Bean Roasting",
         "Abbey & Iruppu Waterfalls",
