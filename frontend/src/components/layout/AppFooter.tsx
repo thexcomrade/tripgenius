@@ -163,7 +163,7 @@ export default function AppFooter() {
               { label: "History", href: "/trip/history" },
               { label: "Favorites", href: "/favorites" },
               { label: "Analytics", href: "/analytics" },
-              { label: "PADAYAPPA AI", href: "/ai-chat", highlight: true },
+              { label: "AI ChatBot", href: "/ai-chat", highlight: true },
             ].map((item) => (
               <Link
                 key={item.label}
@@ -209,7 +209,54 @@ export default function AppFooter() {
             borderRadius: "16px",
           }}
         >
-          {/* CONTACT BADGES */}
+          {/* STATUS PILLS (LEFT) */}
+          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
+            {/* LIVE API STATUS */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                fontSize: "0.78rem",
+                color: "#A7F3D0",
+                background: "rgba(16, 185, 129, 0.08)",
+                border: "1px solid rgba(16, 185, 129, 0.22)",
+                padding: "5px 12px",
+                borderRadius: "999px",
+              }}
+            >
+              <span
+                style={{
+                  width: "7px",
+                  height: "7px",
+                  borderRadius: "50%",
+                  background: "#10B981",
+                  boxShadow: "0 0 8px #10B981",
+                }}
+              />
+              <span>Live Services: Connected &amp; Operational</span>
+            </div>
+
+            {/* ECO RATING PILL */}
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                fontSize: "0.78rem",
+                color: "#BAE6FD",
+                background: "rgba(14, 165, 233, 0.08)",
+                border: "1px solid rgba(56, 189, 248, 0.22)",
+                padding: "5px 12px",
+                borderRadius: "999px",
+              }}
+            >
+              <Leaf size={12} color="#38BDF8" />
+              <span>Carbon-Calibrated Planning</span>
+            </div>
+          </div>
+
+          {/* CONTACT BADGES (RIGHT) */}
           <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
             {/* EMAIL COPY CHIP */}
             <button
@@ -262,53 +309,6 @@ export default function AppFooter() {
               <span>+91 8078421005</span>
             </a>
           </div>
-
-          {/* STATUS PILLS */}
-          <div style={{ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" }}>
-            {/* LIVE API STATUS */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "7px",
-                fontSize: "0.78rem",
-                color: "#A7F3D0",
-                background: "rgba(16, 185, 129, 0.08)",
-                border: "1px solid rgba(16, 185, 129, 0.22)",
-                padding: "5px 12px",
-                borderRadius: "999px",
-              }}
-            >
-              <span
-                style={{
-                  width: "7px",
-                  height: "7px",
-                  borderRadius: "50%",
-                  background: "#10B981",
-                  boxShadow: "0 0 8px #10B981",
-                }}
-              />
-              <span>Live Services: Connected &amp; Operational</span>
-            </div>
-
-            {/* ECO RATING PILL */}
-            <div
-              style={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: "6px",
-                fontSize: "0.78rem",
-                color: "#BAE6FD",
-                background: "rgba(14, 165, 233, 0.08)",
-                border: "1px solid rgba(56, 189, 248, 0.22)",
-                padding: "5px 12px",
-                borderRadius: "999px",
-              }}
-            >
-              <Leaf size={12} color="#38BDF8" />
-              <span>Carbon-Calibrated Planning</span>
-            </div>
-          </div>
         </div>
 
         {/* ==================================================== */}
@@ -335,14 +335,14 @@ export default function AppFooter() {
           {/* DEVELOPER CREDITS */}
           <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
             <span>developed by</span>
-            <strong style={{ color: "#E2E8F0" }}>thexcomrade</strong>
+            <strong style={{ color: "#fbbf24" }}>thexcomrade</strong>
             <span
               style={{
                 fontSize: "0.70rem",
                 padding: "2px 8px",
                 borderRadius: "5px",
-                background: "rgba(245, 158, 11, 0.18)",
-                color: "#FBBF24",
+                background: "#f2631a",
+                color: "#f8f7f3",
                 fontWeight: 700,
                 letterSpacing: "0.4px",
               }}

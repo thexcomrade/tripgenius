@@ -117,6 +117,8 @@ class DayItinerarySchema(BaseModel):
 class AITripGenerationRequest(BaseModel):
     destination: str = Field(min_length=2, max_length=200)
 
+    origin: str | None = Field(default=None, max_length=200, description="Starting point / departure city")
+
     duration_days: int = Field(ge=1, le=30)
 
     budget: float = Field(gt=0)
@@ -152,6 +154,8 @@ class TripCreateRequest(BaseModel):
     trip_title: str = Field(min_length=2, max_length=200)
 
     destination: str = Field(min_length=2, max_length=200)
+
+    origin: str | None = Field(default=None, max_length=200, description="Starting point / departure city")
 
     duration_days: int = Field(ge=1, le=30)
 
@@ -257,6 +261,8 @@ class TripResponse(BaseModel):
 
     destination: str
 
+    origin: str | None = None
+
     state: str | None = None
 
     district: str | None = None
@@ -345,6 +351,8 @@ class CompleteTripResponse(BaseModel):
     trip_title: str
 
     destination: str
+
+    origin: str | None = None
 
     state: str | None = None
 
@@ -542,6 +550,8 @@ class AITripGenerationResponse(BaseModel):
     trip_title: str | None = None
 
     destination: str | None = None
+
+    origin: str | None = None
 
     duration_days: int | None = None
 

@@ -1,0 +1,389 @@
+<USER_REQUEST>
+Yes. I checked the **actual `tourism(3).csv`** rather than relying on the earlier conversation list. It contains **19,974 rows, 86 country labels, 463 state/province values and 1,843 district/region values**. The database is already large, but it still has major worldwide gaps.
+
+Below is the **pending tourism expansion list** — places/countries that should be added to make the database much more complete. I am **not repeating the 19,974 existing rows**.
+
+## 🌍 PENDING WORLD TOURISM SPOTS
+
+### 🇦🇫 Afghanistan
+Kabul, Band-e-Amir National Park, Bamiyan Buddhas/Valley, Panjshir Valley, Herat Citadel, Herat Old City, Mazar-i-Sharif Blue Mosque, Balkh, Wakhan Corridor, Band-e-Amir Lakes, Minaret of Jam, Kandahar, Nuristan, Salang Pass.
+
+### 🇩🇿 Algeria
+Algiers, Casbah of Algiers, Tipasa, Timgad, Djemila, Constantine, Sidi M'Cid Bridge, Oran, Ghardaïa, M'Zab Valley, Tassili n'Ajjer, Hoggar Mountains, Tamanrasset, Timimoun, Djanet, Sahara Desert, Assekrem, El Oued, Annaba, Béjaïa.
+
+### 🇦🇴 Angola
+Luanda, Ilha do Cabo, Miradouro da Lua, Kissama National Park, Kalandula Falls, Pungo Andongo, Tundavala Gap, Lubango, Namibe Desert, Serra da Leba, Benguela, Lobito, Iona National Park, Cabo Ledo, Mussulo Island.
+
+### 🇦🇬 Antigua and Barbuda
+St. John's, Nelson's Dockyard, English Harbour, Shirley Heights, Half Moon Bay, Dickenson Bay, Pigeon Point Beach, Jolly Beach, Barbuda, Pink Sand Beach, Devil's Bridge, Codrington Lagoon.
+
+### 🇧🇭 Bahrain
+Manama, Bahrain Fort, Al Fateh Grand Mosque, Bab Al Bahrain, Bahrain National Museum, Muharraq, Pearling Path, Tree of Life, Al Areen Wildlife Park, Hawar Islands, Amwaj Islands.
+
+### 🇧🇧 Barbados
+Bridgetown, Carlisle Bay, Harrison's Cave, Bathsheba, Crane Beach, Dover Beach, Carlisle Bay Marine Park, Animal Flower Cave, St. Nicholas Abbey, Hunte's Gardens, Oistins, Mount Gay region.
+
+### 🇧🇿 Belize
+Belize City, Ambergris Caye, San Pedro, Caye Caulker, Great Blue Hole, Hol Chan Marine Reserve, Xunantunich, Caracol, Lamanai, ATM Cave, Cockscomb Basin Wildlife Sanctuary, Placencia, Hopkins, Mountain Pine Ridge.
+
+### 🇧🇯 Benin
+Cotonou, Ouidah, Door of No Return, Ganvié, Abomey Royal Palaces, Pendjari National Park, Porto-Novo, Grand-Popo, Route des Esclaves, Dantokpa Market.
+
+### 🇧🇦 Bosnia and Herzegovina
+Sarajevo, Baščaršija, Mostar, Stari Most, Blagaj, Kravica Waterfalls, Jajce, Pliva Waterfall, Travnik, Vrelo Bosne, Una National Park, Međugorje, Sutjeska National Park, Lukomir.
+
+### 🇧🇼 Botswana
+Okavango Delta, Chobe National Park, Moremi Game Reserve, Makgadikgadi Pans, Nxai Pan, Central Kalahari Game Reserve, Maun, Kasane, Tsodilo Hills, Savuti, Khwai, Chobe River.
+
+### 🇧🇳 Brunei
+Bandar Seri Begawan, Sultan Omar Ali Saifuddien Mosque, Jame' Asr Hassanil Bolkiah Mosque, Kampong Ayer, Ulu Temburong National Park, Tasek Merimbun, Jerudong Park, Muara Beach, Empire Hotel, Brunei Museum.
+
+### 🇧🇬 Bulgaria
+Sofia, Alexander Nevsky Cathedral, Rila Monastery, Plovdiv Old Town, Seven Rila Lakes, Bansko, Vitosha Mountain, Nessebar, Varna, Black Sea Coast, Veliko Tarnovo, Tsarevets Fortress, Koprivshtitsa, Pirin National Park.
+
+### 🇧🇫 Burkina Faso
+Ouagadougou, Bangr-Weogo Park, Grand Mosque of Bobo-Dioulasso, Sindou Peaks, Banfora, Karfiguéla Waterfalls, Tengrela Lake, Loropéni Ruins, Nazinga Game Ranch.
+
+### 🇧🇮 Burundi
+Bujumbura, Lake Tanganyika, Rusizi National Park, Kibira National Park, Karera Waterfalls, Gitega, Gishora Drum Sanctuary, Source of the Nile, Vyanda Natural Reserve.
+
+### 🇨🇲 Cameroon
+Yaoundé, Mount Cameroon, Limbe, Limbe Wildlife Centre, Kribi, Lobe Falls, Douala, Waza National Park, Korup National Park, Dja Faunal Reserve, Bamenda Highlands, Lake Nyos, Foumban Royal Palace.
+
+### 🇨🇻 Cape Verde
+Praia, Cidade Velha, Sal Island, Santa Maria Beach, Boa Vista, Fogo Island, Mount Fogo, Santo Antão, Paul Valley, Mindelo, São Vicente, Pedra de Lume, Serra Malagueta.
+
+### 🇨🇫 Central African Republic
+Bangui, Boali Falls, Dzanga-Sangha National Park, Dzanga Bai, Manovo-Gounda St Floris National Park, Lobaye region, Ubangi River.
+
+### 🇹🇩 Chad
+N'Djamena, Ennedi Plateau, Ennedi Mountains, Guelta d'Archei, Zakouma National Park, Tibesti Mountains, Lakes of Ounianga, Lake Chad, Sahara Desert.
+
+### 🇰🇲 Comoros
+Moroni, Mount Karthala, Grande Comore, Mohéli Marine Park, Mohéli, Anjouan, Moya Beach, Chomoni Beach, Lac Sale, Old Friday Mosque.
+
+### 🇨🇩 Democratic Republic of Congo
+Kinshasa, Virunga National Park, Nyiragongo Volcano, Kahuzi-Biéga National Park, Lake Kivu, Goma, Bukavu, Garamba National Park, Salonga National Park, Boyoma Falls.
+
+### 🇨🇬 Republic of Congo
+Brazzaville, Odzala-Kokoua National Park, Nouabalé-Ndoki National Park, Congo River, Pointe-Noire, Diosso Gorge, Conkouati-Douli National Park.
+
+### 🇨🇺 Cuba
+Havana, Old Havana, Malecón, Viñales Valley, Varadero, Trinidad, Cienfuegos, Santiago de Cuba, Baracoa, Playa Ancón, Guardalavaca, Cayo Coco, Cayo Guillermo, Bay of Pigs.
+
+### 🇨🇾 Cyprus
+Nicosia, Limassol, Paphos, Paphos Archaeological Park, Aphrodite's Rock, Troodos Mountains, Kyrenia, Larnaca, Ayia Napa, Cape Greco, Blue Lagoon, Kourion.
+
+### 🇩🇯 Djibouti
+Djibouti City, Lake Assal, Lake Abbé, Gulf of Tadjoura, Moucha Island, Maskali Island, Ardoukoba Volcano, Day Forest National Park, Goda Mountains, Lac Abbé.
+
+### 🇩🇲 Dominica
+Roseau, Morne Trois Pitons National Park, Boiling Lake, Trafalgar Falls, Middleham Falls, Emerald Pool, Champagne Reef, Scotts Head, Indian River, Waitukubuli National Trail.
+
+### 🇸🇻 El Salvador
+San Salvador, Santa Ana Volcano, Lake Coatepeque, Ruta de las Flores, El Tunco, El Zonte, Suchitoto, Tazumal, Joya de Cerén, Cerro Verde, El Boquerón.
+
+### 🇬🇶 Equatorial Guinea
+Malabo, Bioko Island, Pico Basilé, Moka Valley, Ureka Waterfalls, Monte Alén National Park, Corisco Island, Bata.
+
+### 🇪🇷 Eritrea
+Asmara, Massawa, Dahlak Archipelago, Keren, Filfil-Solomuna, Nakfa, Debre Bizen, Red Sea coast, Qohaito archaeological site.
+
+### 🇪🇪 Estonia
+Tallinn Old Town, Toompea Castle, Kadriorg Palace, Lahemaa National Park, Saaremaa, Pärnu, Tartu, Narva Castle, Hiiumaa, Soomaa National Park.
+
+### 🇸🇿 Eswatini
+Mbabane, Lobamba, Mlilwane Wildlife Sanctuary, Hlane Royal National Park, Malolotja Nature Reserve, Ezulwini Valley, Sibebe Rock, Mantenga Cultural Village.
+
+### 🇬🇦 Gabon
+Libreville, Loango National Park, Lopé National Park, Ivindo National Park, Akanda National Park, Pongara National Park, Port-Gentil, Fernan Vaz Lagoon.
+
+### 🇬🇲 Gambia
+Banjul, Kololi, Kotu Beach, Cape Point, Abuko Nature Reserve, Makasutu Cultural Forest, Kunta Kinteh Island, River Gambia National Park, Tanji Bird Reserve.
+
+### 🇬🇭 Ghana
+Accra, Cape Coast Castle, Elmina Castle, Kakum National Park, Mole National Park, Lake Volta, Kumasi, Manhyia Palace, Wli Falls, Aburi Botanical Gardens, Busua Beach, Nzulezo.
+
+### 🇬🇩 Grenada
+St. George's, Grand Anse Beach, Seven Sisters Falls, Grand Etang National Park, Underwater Sculpture Park, Carriacou, Petite Martinique, Annandale Falls.
+
+### 🇬🇹 Guatemala
+Guatemala City, Antigua Guatemala, Lake Atitlán, Tikal, Semuc Champey, Acatenango, Pacaya Volcano, Flores, Chichicastenango, Rio Dulce, Livingston.
+
+### 🇬🇳 Guinea
+Conakry, Îles de Los, Fouta Djallon, Mount Nimba, Kindia, Kinkon Falls, Ditinn Falls, Labé, Dalaba.
+
+### 🇬🇾 Guyana
+Georgetown, Kaieteur Falls, Essequibo River, Iwokrama Forest, Rupununi, Shell Beach, Kanuku Mountains, Orinduik Falls, St. George's Cathedral.
+
+### 🇭🇹 Haiti
+Port-au-Prince, Citadelle Laferrière, Sans-Souci Palace, Labadee, Jacmel, Bassin Bleu, Cap-Haïtien, Île-à-Vache, Pétion-Ville.
+
+### 🇭🇳 Honduras
+Tegucigalpa, Roatán, Utila, Copán Ruinas, Copán Archaeological Site, Pico Bonito National Park, Lake Yojoa, La Ceiba, Bay Islands, Pulhapanzak Falls.
+
+### 🇮🇷 Iran
+Tehran, Golestan Palace, Grand Bazaar, Isfahan, Naqsh-e Jahan Square, Sheikh Lotfollah Mosque, Persepolis, Shiraz, Yazd, Kashan, Pasargadae, Tabriz, Masuleh, Qeshm Island, Hormuz Island, Lut Desert.
+
+### 🇮🇶 Iraq
+Baghdad, Babylon, Samarra, Erbil Citadel, Najaf, Karbala, Ur, Marshes of Mesopotamia, Mosul Old City, Lalish, Rawanduz Canyon.
+
+### 🇯🇲 Jamaica
+Kingston, Montego Bay, Negril, Seven Mile Beach, Dunn's River Falls, Blue Mountains, Ocho Rios, Doctor's Cave Beach, Rick's Café, Bob Marley Museum, Port Antonio, Blue Lagoon.
+
+### 🇰🇿 Kazakhstan
+Almaty, Charyn Canyon, Big Almaty Lake, Kolsai Lakes, Kaindy Lake, Astana, Medeu, Shymbulak, Turkistan, Tamgaly, Altyn-Emel National Park, Singing Dune, Mangystau.
+
+### 🇰🇬 Kyrgyzstan
+Bishkek, Issyk-Kul, Ala Archa National Park, Song-Kul, Karakol, Jeti-Oguz, Skazka Canyon, Tash Rabat, Sary-Chelek, Arslanbob.
+
+### 🇰🇼 Kuwait
+Kuwait City, Kuwait Towers, Grand Mosque, Al Shaheed Park, Souq Al-Mubarakiya, Failaka Island, Sheikh Jaber Al-Ahmad Cultural Centre, Al Kout Mall, Arabian Gulf Road.
+
+### 🇱🇧 Lebanon
+Beirut, Baalbek, Jeita Grotto, Byblos, Sidon, Tyre, Harissa, Kadisha Valley, Cedars of God, Bsharri, Beiteddine Palace, Chouf Mountains.
+
+### 🇱🇸 Lesotho
+Maseru, Maletsunyane Falls, Sani Pass, Thaba-Bosiu, Sehlabathebe National Park, Ts'ehlanyane National Park, Katse Dam, Bokong Nature Reserve.
+
+### 🇱🇷 Liberia
+Monrovia, Providence Island, Robertsport, Kpatawee Falls, Sapo National Park, Lake Piso, Mesurado River, Ce Ce Beach.
+
+### 🇱🇾 Libya
+Tripoli, Leptis Magna, Sabratha, Cyrene, Ghadames, Acacus Mountains, Ubari Sand Dunes, Lake Ubari, Benghazi, Martyrs' Square.
+
+### 🇱🇮 Liechtenstein
+Vaduz, Vaduz Castle, Malbun, Gutenberg Castle, Triesenberg, Three Sisters Mountain, Rhine Valley.
+
+### 🇱🇹 Lithuania
+Vilnius Old Town, Gediminas Castle, Trakai Castle, Kaunas, Curonian Spit, Klaipėda, Hill of Crosses, Palanga, Aukštaitija National Park.
+
+### 🇱🇺 Luxembourg
+Luxembourg City, Old Quarter, Vianden Castle, Mullerthal, Echternach, Moselle Valley, Bock Casemates, Grand Ducal Palace.
+
+### 🇲🇬 Madagascar
+Antananarivo, Avenue of the Baobabs, Morondava, Tsingy de Bemaraha, Ranomafana National Park, Isalo National Park, Nosy Be, Andasibe-Mantadia, Île Sainte-Marie, Ifaty, Ankarana Reserve.
+
+### 🇲🇼 Malawi
+Lilongwe, Lake Malawi, Cape Maclear, Liwonde National Park, Nyika National Park, Mount Mulanje, Zomba Plateau, Nkhata Bay, Majete Wildlife Reserve.
+
+### 🇲🇱 Mali
+Bamako, Timbuktu, Djenné, Great Mosque of Djenné, Bandiagara Escarpment, Dogon Country, Mopti, Ségou, Niger River.
+
+### 🇲🇹 Malta
+Valletta, Mdina, Blue Grotto, Gozo, Comino, Blue Lagoon, St. John's Co-Cathedral, Three Cities, Marsaxlokk, Ħaġar Qim, Popeye Village.
+
+### 🇲🇭 Marshall Islands
+Majuro, Bikini Atoll, Arno Atoll, Jaluit Atoll, Laura Beach, Eneko Island, Kwajalein Atoll.
+
+### 🇫🇲 Micronesia
+Palikir, Pohnpei, Nan Madol, Kosrae, Chuuk Lagoon, Yap, Rock Islands, waterfalls and diving sites.
+
+### 🇲🇳 Mongolia
+Ulaanbaatar, Gobi Desert, Flaming Cliffs, Terelj National Park, Kharkhorin, Erdene Zuu Monastery, Lake Khövsgöl, Altai Mountains, Orkhon Valley, Yolyn Am.
+
+### 🇲🇪 Montenegro
+Kotor, Bay of Kotor, Budva, Sveti Stefan, Durmitor National Park, Tara Canyon, Lovćen, Perast, Ostrog Monastery, Skadar Lake, Ulcinj.
+
+### 🇲🇩 Moldova
+Chișinău, Orheiul Vechi, Cricova Winery, Mileștii Mici, Soroca Fortress, Tipova Monastery, Purcari, Codru region.
+
+### 🇲🇨 Monaco
+Monte Carlo, Casino de Monte-Carlo, Prince's Palace, Oceanographic Museum, Larvotto Beach, Monaco-Ville, Port Hercules.
+
+### 🇲🇿 Mozambique
+Maputo, Bazaruto Archipelago, Bazaruto National Park, Tofo Beach, Vilanculos, Gorongosa National Park, Quirimbas Archipelago, Pemba, Ilha de Moçambique.
+
+### 🇲🇲 Myanmar
+Yangon, Shwedagon Pagoda, Bagan, Inle Lake, Mandalay, U Bein Bridge, Ngapali Beach, Golden Rock, Mrauk U, Hpa-An, Ngwe Saung.
+
+### 🇳🇦 Namibia
+Windhoek, Sossusvlei, Deadvlei, Namib Desert, Etosha National Park, Fish River Canyon, Swakopmund, Walvis Bay, Skeleton Coast, Spitzkoppe, Damaraland, Lüderitz.
+
+### 🇳🇮 Nicaragua
+Managua, Granada, León, Masaya Volcano, Ometepe Island, Lake Nicaragua, San Juan del Sur, Corn Islands, Cerro Negro, Mombacho Volcano.
+
+### 🇳🇪 Niger
+Niamey, Agadez, Aïr Mountains, Tenere Desert, W National Park, Termit and Tin Toumma, Bilma Oasis, Koure Giraffe Reserve.
+
+### 🇳🇬 Nigeria
+Lagos, Abuja, Zuma Rock, Olumo Rock, Obudu Mountain Resort, Yankari National Park, Erin-Ijesha Waterfalls, Idanre Hills, Lekki Conservation Centre, Calabar, Osun-Osogbo.
+
+### 🇰🇵 North Korea
+Pyongyang, Juche Tower, Kim Il Sung Square, Mount Paektu, Mount Kumgang, Kaesong, Koryo Museum, DMZ region.
+
+### 🇲🇰 North Macedonia
+Skopje, Lake Ohrid, Ohrid Old Town, Matka Canyon, Mavrovo National Park, Bitola, Sveti Naum, Šar Mountains, Krusevo.
+
+### 🇵🇼 Palau
+Koror, Rock Islands, Jellyfish Lake, Milky Way Lagoon, Blue Corner, Ngardmau Waterfall, Babeldaob, Peleliu.
+
+### 🇵🇸 Palestine
+Jerusalem Old City, Bethlehem, Church of the Nativity, Jericho, Dead Sea, Mount of Temptation, Hebron, Ramallah, Nablus, Wadi Qelt.
+
+### 🇵🇾 Paraguay
+Asunción, Ciudad del Este, Itaipu Dam, Encarnación, Trinidad Jesuit Ruins, Ybycuí National Park, Cerro Akati, Saltos del Monday.
+
+### 🇷🇴 Romania
+Bucharest, Bran Castle, Peleș Castle, Transylvania, Brașov, Sibiu, Sighișoara, Danube Delta, Transfăgărășan, Cluj-Napoca, Turda Salt Mine, Maramureș.
+
+### 🇷🇼 Rwanda
+Kigali, Volcanoes National Park, gorilla trekking, Lake Kivu, Nyungwe National Park, Akagera National Park, Musanze, Bisoke Volcano, Nyanza Royal Palace.
+
+### 🇰🇳 Saint Kitts and Nevis
+Basseterre, Brimstone Hill Fortress, Mount Liamuiga, Frigate Bay, Nevis Peak, Pinney's Beach, Charlestown.
+
+### 🇱🇨 Saint Lucia
+Castries, Pitons, Soufrière, Sulphur Springs, Diamond Falls, Marigot Bay, Pigeon Island, Rodney Bay, Anse Chastanet.
+
+### 🇻🇨 Saint Vincent and the Grenadines
+Kingstown, Bequia, Mustique, Tobago Cays, Mayreau, Canouan, La Soufrière, Dark View Falls.
+
+### 🇸🇲 San Marino
+San Marino City, Guaita Tower, Cesta Tower, Montale Tower, Palazzo Pubblico, Mount Titano.
+
+### 🇸🇹 São Tomé and Príncipe
+São Tomé, Pico de São Tomé, Obo National Park, Praia Banana, Roça Agostinho Neto, Ilhéu das Rolas, Lagoa Azul.
+
+### 🇸🇳 Senegal
+Dakar, Gorée Island, Pink Lake, Saint-Louis, Saly, Bandia Wildlife Reserve, Niokolo-Koba National Park, Touba, Casamance.
+
+### 🇷🇸 Serbia
+Belgrade, Belgrade Fortress, Novi Sad, Petrovaradin Fortress, Tara National Park, Đerdap National Park, Uvac Special Nature Reserve, Niš, Zlatibor, Kopaonik.
+
+### 🇸🇱 Sierra Leone
+Freetown, Lumley Beach, Tacugama Chimpanzee Sanctuary, Tiwai Island, Banana Islands, Outamba-Kilimi National Park, Bunce Island.
+
+### 🇸🇰 Slovakia
+Bratislava, Bratislava Castle, High Tatras, Štrbské Pleso, Spiš Castle, Bojnice Castle, Slovak Paradise, Košice.
+
+### 🇸🇮 Slovenia
+Ljubljana, Lake Bled, Bled Castle, Lake Bohinj, Postojna Cave, Predjama Castle, Triglav National Park, Piran, Soča Valley, Vintgar Gorge.
+
+### 🇸🇧 Solomon Islands
+Honiara, Guadalcanal, Marovo Lagoon, Mbonege Beach, Bonegi Beach, Kennedy Island, Rennell Island, WWII dive sites.
+
+### 🇸🇴 Somalia
+Mogadishu, Liido Beach, Laas Geel, Berbera, Zeila, Daallo Mountains, Ras Hafun.
+
+### 🇸🇸 South Sudan
+Juba, Boma National Park, Nimule National Park, Sudd Wetlands, Mount Kinyeti, White Nile region.
+
+### 🇸🇩 Sudan
+Khartoum, Meroë Pyramids, Jebel Barkal, Nuri Pyramids, Kerma, Red Sea coast, Suakin, Dinder National Park.
+
+### 🇸🇷 Suriname
+Paramaribo, Historic Inner City, Brownsberg Nature Park, Central Suriname Nature Reserve, Galibi Nature Reserve, Commewijne plantations, Bigi Pan.
+
+### 🇸🇾 Syria
+Damascus Old City, Umayyad Mosque, Palmyra, Aleppo Citadel, Krak des Chevaliers, Bosra, Apamea, Maaloula.
+
+### 🇹🇯 Tajikistan
+Dushanbe, Iskanderkul, Fann Mountains, Pamir Highway, Wakhan Valley, Seven Lakes, Karakul Lake, Khujand, Hissar Fortress.
+
+### 🇹🇬 Togo
+Lomé, Kpalimé, Mount Agou, Koutammakou, Cascade de Womé, Lake Togo, Fazao-Malfakassa National Park.
+
+### 🇹🇴 Tonga
+Nuku'alofa, Ha'amonga 'a Maui, Mapu'a 'a Vaea Blowholes, Vava'u, Tongatapu, whale watching, Swallow's Cave.
+
+### 🇹🇲 Turkmenistan
+Ashgabat, Darvaza Gas Crater, Ancient Merv, Kunya-Urgench, Yangykala Canyon, Kow Ata Cave, Nisa, Caspian coast.
+
+### 🇹🇹 Trinidad and Tobago
+Port of Spain, Maracas Bay, Pigeon Point, Tobago, Buccoo Reef, Nylon Pool, Caroni Bird Sanctuary, Pitch Lake, Asa Wright Nature Centre.
+
+### 🇹🇳 Tunisia
+Tunis, Carthage, Sidi Bou Said, El Jem, Djerba, Hammamet, Sousse, Monastir, Matmata, Douz, Sahara Desert, Chott el Djerid.
+
+### 🇺🇬 Uganda
+Kampala, Bwindi Impenetrable National Park, gorilla trekking, Queen Elizabeth National Park, Murchison Falls, Kibale Forest, Lake Victoria, Rwenzori Mountains, Jinja, Source of the Nile.
+
+### 🇺🇦 Ukraine
+Kyiv, Saint Sophia Cathedral, Lviv Old Town, Odesa, Carpathian Mountains, Bukovel, Kamianets-Podilskyi, Chernivtsi, Uman, Tunnel of Love.
+
+### 🇺🇾 Uruguay
+Montevideo, Ciudad Vieja, Punta del Este, Colonia del Sacramento, Cabo Polonio, José Ignacio, Punta del Diablo, Rocha coast.
+
+### 🇻🇪 Venezuela
+Angel Falls, Canaima National Park, Mount Roraima, Los Roques, Mérida, Lake Maracaibo, Morrocoy National Park, Caracas, Mochima National Park.
+
+### 🇾🇪 Yemen
+Sana'a Old City, Socotra Island, Shibam, Al-Qal'a of Kawkaban, Wadi Hadramaut, Socotra beaches, Dragon Blood Trees.
+
+### 🇿🇲 Zambia
+Victoria Falls, Livingstone, South Luangwa National Park, Lower Zambezi National Park, Kafue National Park, Devil's Pool, Lake Kariba, Liuwa Plain.
+
+### 🇿🇼 Zimbabwe
+Victoria Falls, Hwange National Park, Mana Pools, Great Zimbabwe, Matobo National Park, Lake Kariba, Harare, Bulawayo, Eastern Highlands.
+
+---
+
+# 🇮🇳 INDIA — PENDING EXPANSION
+
+Your CSV already has a very large India section, so the missing Indian content is primarily **second-level and local sightseeing** rather than the obvious major destinations.
+
+### Kerala
+**Thiruvananthapuram:** Kappil, Aazhimala, Adimalathura, Chowara, Vellayani, Aruvikkara, Peppara, Bonacaud, Kallar, Mankayam, Palode, Agasthyarkoodam, Madavoorpara and additional local waterfalls, viewpoints, temples and village tourism.
+
+**Kollam:** Ashtamudi Lake, Munroe Island, Thenmala, Palaruvi, Jatayu Earth Center, Thirumullavaram, Kottarakkara, Punalur, Achankovil, Konni, Kokkathodu, Adavi, Manalar, Shenduruney, Rosemala, Aryankavu, Sasthamkotta, Chadayamangalam and additional forest/backwater locations.
+
+**Pathanamthitta:** Gavi, Konni, Adavi, Perunthenaruvi, Aranmula, Aranmula Parthasarathy Temple, Pandalam, Sabarimala, Pamba, Nilakkal, Kakki Dam, Moozhiyar, Seethathodu, Ranni, Maramon, Charalkunnu and additional trekking/forest destinations.
+
+**Alappuzha:** Alappuzha Backwaters, Kuttanad, Kumarakom-border backwaters, Marari, Pathiramanal, Vembanad Lake, Punnamada, Krishnapuram Palace, Ambalapuzha, Karumady, Thottappally, Arthunkal, Champakulam, Kakkathuruthu, Kavvayi-style backwater areas and village tourism.
+
+**Kottayam:** Kumarakom, Vembanad Lake, Vagamon, Illikkal Kallu, Ilaveezhapoonchira, Poonjar Palace, Poonjar, Erumeli, Bharananganam, Vaikom, Kaduthuruthy, Kumarakom Bird Sanctuary, Meenachil river region, Kottathavalam and numerous hill/viewpoint destinations.
+
+**Idukki:** Munnar, Top Station, Mattupetty, Kundala, Echo Point, Eravikulam, Anamudi, Meesapulimala, Kolukkumalai, Chinnakanal, Anayirankal, Marayoor, Kanthalloor, Vattavada, Chinnar, Thekkady, Periyar, Gavi, Vagamon, Ramakkalmedu, Kalvari Mount, Panchalimedu, Parunthumpara, Idukki Dam, Kulamavu, Cheruthoni and additional trekking locations.
+
+**Ernakulam:** Fort Kochi, Mattancherry, Jew Town, Marine Drive, Bolgatty, Kadamakudy, Kumbalangi, Cherai, Kuzhupilly, Bhoothathankettu, Thattekad, Paniyeli Poru, Malayattoor, Kodanad, Athirappilly-border routes, Munambam and additional islands/villages.
+
+**Thrissur:** Thrissur city, Vadakkunnathan Temple, Thrissur Pooram locations, Athirappilly, Vazhachal, Charpa, Sholayar, Peechi, Chimmini, Poomala, Vilangan Hills, Snehatheeram, Chavakkad, Guruvayur, Kodungallur, Kerala Kalamandalam, Punnathur Kotta and additional heritage sites.
+
+**Palakkad:** Palakkad Fort, Malampuzha, Silent Valley, Parambikulam, Nelliyampathy, Seetharkundu, Pothundi, Dhoni, Meenvallam, Attappady, Agali, Siruvani, Parambikulam Tiger Reserve, Mangalam Dam, Kava, Nenmara, Kollengode and additional Western Ghats destinations.
+
+**Malappuram:** Kottakkunnu, Nilambur, Teak Museum, Conolly's Plot, Adyanpara, Kozhippara, Nedumkayam, Arimbra Hills, Kadalundi, Tirur, Thirunavaya, Ponnani, Padinjarekkara, Tanur, Kodikuthimala, Nilambur forests and additional waterfalls/viewpoints.
+
+**Kozhikode:** Kozhikode Beach, Kappad, Beypore, Sarovaram, Mananchira, Tusharagiri, Kakkayam, Vellarimala, Peruvannamuzhi, Kadalundi, Thikkodi, Payyoli, Elathur, Kariyathumpara and additional hill/forest destinations.
+
+**Wayanad:** Chembra Peak, Edakkal Caves, Soochipara, Meenmutty, Banasura Sagar, Kuruva Island, Tholpetty, Muthanga, Pookode Lake, Lakkidi, Vythiri, Wayanad Wildlife Sanctuary, Pakshipathalam, Brahmagiri, Kanthappara and additional tribal/forest destinations.
+
+**Kannur:** Muzhappilangad, Payyambalam, St. Angelo Fort, Aralam Wildlife Sanctuary, Paithalmala, Palakkayam Thattu, Ezhimala, Madayipara, Kavvayi, Dharmadam, Thalassery, Muzhappilangad Drive-in Beach, Aralam, Kottiyoor, Valiyaparamba-border areas and additional Theyyam/cultural destinations.
+
+**Kasaragod:** Bekal Fort, Bekal Beach, Ranipuram, Kottancheri Hills, Valiyaparamba, Chandragiri Fort, Ananthapura Lake Temple, Madhur Temple, Hosdurg Fort, Kappil Beach, Manjeshwar, Posadigumpe, Malom, Kallar and additional northern Kerala destinations.
+
+---
+
+## 🇮🇳 More pending Indian expansion
+
+There is also significant second-level expansion required in **Rajasthan, Uttar Pradesh, Uttarakhand, Himachal Pradesh, Maharashtra, Karnataka, Tamil Nadu, Gujarat, Madhya Pradesh, Odisha, West Bengal, Assam, Meghalaya, Sikkim, Arunachal Pradesh, Nagaland, Manipur, Mizoram, Tripura, Jharkhand, Chhattisgarh, Bihar, Punjab, Haryana, Andhra Pradesh, Telangana and Goa**.
+
+Examples include **lesser-known forts, village destinations, local waterfalls, trekking peaks, forest trails, viewpoints, caves, dams, temples, archaeological sites, beaches, islands, wildlife areas and district-level attractions** that aren't represented by simply listing the state's famous cities.
+
+---
+
+# 🌎 Countries already in your database that still need expansion
+
+Even after adding the missing countries above, there are major opportunities to expand:
+
+**USA:** Alaska, Hawaii, Utah, Colorado, Montana, Oregon, Washington, Arizona, Nevada, California, Florida, New York, Maine, Massachusetts, Louisiana, Tennessee, Wyoming and national parks beyond the headline destinations.
+
+**Canada:** Yukon, Northwest Territories, Nunavut, Newfoundland, Nova Scotia, New Brunswick, Prince Edward Island, British Columbia, Alberta, Ontario and Québec.
+
+**Australia:** Northern Territory, Tasmania, Western Australia, South Australia, Queensland, New South Wales and Victoria at regional/town level.
+
+**Japan:** Hokkaido, Tohoku, Kanto, Chubu, Kansai, Chugoku, Shikoku, Kyushu and Okinawa at prefecture/city level.
+
+**China:** Beijing, Shanghai, Guangdong, Yunnan, Sichuan, Tibet, Xinjiang, Guangxi, Hunan, Zhejiang, Fujian, Jiangsu, Shaanxi, Gansu, Qinghai and Inner Mongolia require much deeper city/district coverage.
+
+**Indonesia:** Bali alone needs substantial expansion into individual temples, beaches, waterfalls, villages, rice terraces, dive sites and viewpoints; Java, Sumatra, Sulawesi, Kalimantan, Flores, Komodo, Lombok, Papua and other islands also need deeper coverage.
+
+**Thailand:** Bangkok, Chiang Mai, Chiang Rai, Phuket, Krabi, Surat Thani, Ayutthaya, Pattaya, Kanchanaburi, Pai, Mae Hong Son, Koh Samui, Koh Phangan, Koh Tao, Isaan and national parks need district-level expansion.
+
+**Europe:** France, Italy, Spain, Germany, Switzerland, Austria, Greece, Portugal, Netherlands, Norway, Sweden, Finland, Iceland, Ireland, UK, Poland, Czech Republic, Hungary, Croatia, Belgium and Denmark all need city + region + local-attraction expansion.
+add these too with the database
+
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-10-03T14:20:33+05:30.
+</ADDITIONAL_METADATA>

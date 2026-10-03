@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -32,6 +32,14 @@ import { GlassCard, SectionHeader } from "../components/ui/Card";
 export default function HomePage() {
   const router = useRouter();
   const [quickDestination, setQuickDestination] = useState("");
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.muted = true;
+      videoRef.current.play().catch(() => {});
+    }
+  }, []);
 
   const handleQuickLaunch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -265,147 +273,206 @@ export default function HomePage() {
     : prioritySortedReviews.slice(0, MAX_DEFAULT_REVIEWS);
 
   return (
-    <div
-      style={{
-        position: "relative",
-        overflow: "hidden",
-        width: "92%",
-        maxWidth: "1360px",
-        margin: "0 auto",
-        padding: "0 clamp(20px, 3.5vw, 48px)",
-      }}
-    >
-      {/* HERO SECTION */}
-      <section
-        style={{
-          position: "relative",
-          padding: "70px 0 60px 0",
-          maxWidth: "100%",
-          margin: "0 auto",
-          textAlign: "center",
-        }}
-      >
-        {/* AMBIENT GLOW BACKDROP */}
-        <div
-          style={{
-            position: "absolute",
-            top: "5%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: "800px",
-            height: "400px",
-            background:
-              "radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(20, 184, 166, 0.12) 40%, transparent 70%)",
-            filter: "blur(60px)",
-            pointerEvents: "none",
-            zIndex: -1,
-          }}
-        />
-
-        <div style={{ display: "inline-flex", marginBottom: "24px" }}>
-          <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
-            Next-Gen Travel AI Engine 3.0 Pro
-          </Badge>
-        </div>
-
-        <h1
-          style={{
-            fontSize: "clamp(2.4rem, 5.5vw, 4.2rem)",
-            fontWeight: 600,
-            lineHeight: 1.16,
-            letterSpacing: "-0.032em",
-            maxWidth: "1050px",
-            margin: "0 auto 24px auto",
-            color: "#FFFFFF",
-          }}
+    <>
+      {/* CINEMATIC HERO SECTION WITH EMBEDDED VIDEO */}
+      <div className="hero-video-container">
+        <video
+          ref={videoRef}
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="cinematic-bg-video"
         >
-          Plan Extraordinary Journeys with{" "}
-          <span className="gradient-text" style={{ fontWeight: 600 }}>
-            Intelligent Precision
-          </span>
-        </h1>
+          <source
+            src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260406_094145_4a271a6c-3869-4f1c-8aa7-aeb0cb227994.mp4"
+            type="video/mp4"
+          />
+        </video>
 
-        <p
+        {/* HERO SECTION */}
+        <section
           style={{
-            fontSize: "clamp(1.05rem, 2vw, 1.25rem)",
-            color: "#94A3B8",
-            maxWidth: "760px",
-            margin: "0 auto 40px auto",
-            lineHeight: 1.7,
-          }}
-        >
-          Synthesize personalized, data-backed itineraries with live weather
-          intelligence, carbon footprint tracking, and curated local culinary
-          trails in seconds.
-        </p>
-
-        {/* HERO QUICK LAUNCH BAR */}
-        <form
-          onSubmit={handleQuickLaunch}
-          style={{
-            maxWidth: "680px",
-            margin: "0 auto 40px auto",
+            position: "relative",
+            zIndex: 10,
+            width: "92%",
+            maxWidth: "1360px",
+            minHeight: "calc(100vh - 84px)",
             display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
             alignItems: "center",
-            gap: "10px",
-            padding: "8px 10px 8px 20px",
-            background: "rgba(15, 23, 42, 0.85)",
-            backdropFilter: "blur(20px)",
-            border: "1px solid rgba(14, 165, 233, 0.35)",
-            borderRadius: "999px",
-            boxShadow:
-              "0 12px 36px rgba(0, 0, 0, 0.40), 0 0 24px rgba(14, 165, 233, 0.20)",
+            margin: "0 auto",
+            textAlign: "center",
+            padding: "40px clamp(20px, 3.5vw, 48px) 60px clamp(20px, 3.5vw, 48px)",
           }}
         >
-          <MapPin size={20} color="#38BDF8" style={{ flexShrink: 0 }} />
-          <input
-            type="text"
-            value={quickDestination}
-            onChange={(e) => setQuickDestination(e.target.value)}
-            placeholder="Where to? (e.g. Munnar, Coorg, Ooty, Varkala...)"
+          {/* AMBIENT GLOW BACKDROP */}
+          <div
             style={{
-              flex: 1,
-              background: "transparent",
-              border: "none",
-              color: "#FFFFFF",
-              fontSize: "1rem",
-              outline: "none",
+              position: "absolute",
+              top: "20%",
+              left: "50%",
+              transform: "translateX(-50%)",
+              width: "800px",
+              height: "400px",
+              background:
+                "radial-gradient(circle, rgba(14, 165, 233, 0.18) 0%, rgba(20, 184, 166, 0.12) 40%, transparent 70%)",
+              filter: "blur(60px)",
+              pointerEvents: "none",
+              zIndex: -1,
             }}
           />
-          <Button
-            type="submit"
-            variant="primary"
-            size="md"
-            rightIcon={<ArrowRight size={16} />}
-          >
-            Generate Itinerary
-          </Button>
-        </form>
 
-        {/* TRUST / METRICS PILLS */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: "30px",
-            flexWrap: "wrap",
-            color: "#94A3B8",
-            fontSize: "0.9rem",
-          }}
-        >
-          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Sparkles size={16} color="#38BDF8" /> <strong>700+</strong> Curated
-            Tourism Spots
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <CloudSun size={16} color="#FBBF24" /> Real-Time Weather Integration
-          </span>
-          <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-            <Leaf size={16} color="#34D399" /> 100% Eco-Scored Itineraries
-          </span>
-        </div>
-      </section>
+          <div
+            className="animate-blur-fade-up"
+            style={{
+              animationDelay: "150ms",
+              display: "inline-flex",
+              marginBottom: "24px",
+            }}
+          >
+            <Badge variant="ai" size="md" icon={<Sparkles size={14} />}>
+              Next-Gen Travel AI Engine 3.0 Pro
+            </Badge>
+          </div>
+
+          <h1
+            className="animate-blur-fade-up font-luxury-display"
+            style={{
+              animationDelay: "300ms",
+              fontFamily:
+                "'Cormorant Garamond', 'Bodoni Moda', 'Playfair Display', 'Cinzel', serif",
+              fontSize: "clamp(2.8rem, 6.2vw, 5.2rem)",
+              fontWeight: 600,
+              lineHeight: 1.12,
+              letterSpacing: "-0.015em",
+              maxWidth: "1150px",
+              margin: "0 auto 24px auto",
+              color: "#FFFFFF",
+              textShadow:
+                "0 4px 28px rgba(0, 0, 0, 0.75), 0 2px 6px rgba(0, 0, 0, 0.90)",
+            }}
+          >
+            Plan Extraordinary Journeys with{" "}
+            <span
+              className="gradient-text-luxury"
+              style={{
+                fontFamily: "inherit",
+                fontWeight: 600,
+                textShadow: "none",
+                display: "inline-block",
+              }}
+            >
+              Intelligent Precision
+            </span>
+          </h1>
+
+          <p
+            className="animate-blur-fade-up hero-subtitle-bright"
+            style={{
+              animationDelay: "450ms",
+              fontSize: "clamp(1.05rem, 2.1vw, 1.28rem)",
+              color: "#F8FAFC",
+              maxWidth: "780px",
+              margin: "0 auto 40px auto",
+              lineHeight: 1.75,
+              fontWeight: 300,
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: "0.015em",
+              textShadow:
+                "0 2px 18px rgba(0, 0, 0, 0.85), 0 1px 4px rgba(0, 0, 0, 0.95)",
+            }}
+          >
+            Synthesize personalized, data-backed itineraries with live weather
+            intelligence, carbon footprint tracking, and curated local culinary
+            trails in seconds.
+          </p>
+
+          {/* HERO QUICK LAUNCH BAR */}
+          <form
+            onSubmit={handleQuickLaunch}
+            className="animate-blur-fade-up liquid-glass"
+            style={{
+              animationDelay: "600ms",
+              maxWidth: "680px",
+              width: "100%",
+              margin: "0 auto 40px auto",
+              display: "flex",
+              alignItems: "center",
+              gap: "10px",
+              padding: "8px 10px 8px 20px",
+              borderRadius: "999px",
+              boxShadow:
+                "0 12px 36px rgba(0, 0, 0, 0.40), 0 0 24px rgba(14, 165, 233, 0.20)",
+            }}
+          >
+            <MapPin size={20} color="#38BDF8" style={{ flexShrink: 0 }} />
+            <input
+              type="text"
+              value={quickDestination}
+              onChange={(e) => setQuickDestination(e.target.value)}
+              placeholder="Where to? (e.g. Munnar, Coorg, Ooty, Varkala...)"
+              style={{
+                flex: 1,
+                background: "transparent",
+                border: "none",
+                color: "#FFFFFF",
+                fontSize: "1rem",
+                outline: "none",
+              }}
+            />
+            <Button
+              type="submit"
+              variant="primary"
+              size="md"
+              rightIcon={<ArrowRight size={16} />}
+            >
+              Generate Itinerary
+            </Button>
+          </form>
+
+          {/* TRUST / METRICS PILLS */}
+          <div
+            className="animate-blur-fade-up"
+            style={{
+              animationDelay: "750ms",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "30px",
+              flexWrap: "wrap",
+              color: "#E2E8F0",
+              fontSize: "0.92rem",
+              textShadow: "0 2px 14px rgba(0, 0, 0, 0.85)",
+            }}
+          >
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Sparkles size={16} color="#38BDF8" /> <strong>700+</strong> Curated
+              Tourism Spots
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <CloudSun size={16} color="#FBBF24" /> Real-Time Weather Integration
+            </span>
+            <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <Leaf size={16} color="#34D399" /> 100% Eco-Scored Itineraries
+            </span>
+          </div>
+        </section>
+      </div>
+
+      {/* MAIN CONTENT WRAPPER FOR SECTIONS BELOW HERO */}
+      <div
+        style={{
+          position: "relative",
+          zIndex: 10,
+          overflow: "hidden",
+          width: "92%",
+          maxWidth: "1360px",
+          margin: "0 auto",
+          padding: "0 clamp(20px, 3.5vw, 48px)",
+        }}
+      >
 
       {/* VALUE PROPOSITION GRID */}
       <section
@@ -898,7 +965,8 @@ export default function HomePage() {
             textAlign: "center",
             position: "relative",
             overflow: "hidden",
-            boxShadow: "0 20px 60px rgba(0, 0, 0, 0.40)",
+            boxShadow:
+              "0 8px 32px rgba(14, 165, 233, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.15)",
           }}
         >
           <h2
@@ -1331,5 +1399,6 @@ export default function HomePage() {
         </div>
       )}
     </div>
+    </>
   );
 }

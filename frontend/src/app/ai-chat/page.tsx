@@ -57,6 +57,22 @@ const generateMsgId = () => {
   return `msg-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 };
 
+const renderFormattedContent = (content: string) => {
+  if (!content) return null;
+  const parts = content.split(/(\*\*[^*]+\*\*)/g);
+  return parts.map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      const inner = part.slice(2, -2);
+      return (
+        <strong key={i} style={{ color: "#FFFFFF", fontWeight: 700 }}>
+          {inner}
+        </strong>
+      );
+    }
+    return part;
+  });
+};
+
 export default function AIChatPage() {
   const router = useRouter();
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -410,14 +426,31 @@ export default function AIChatPage() {
   };
 
   // Chatbot structured PDF export
+  // Chatbot structured PDF export
   const handleDownloadChatPDF = async (content: string, msgId: string) => {
     setDownloadingPdfId(msgId);
     try {
-      const dest = extractDestination(content) || "Destination";
-
-      // 1. Clean Title: strip markdown and emojis
-      let title = `${dest} Travel Blueprint`;
+      // 1. Destination Extraction: Prioritize markdown title (### Destination: ...)
+      let dest = "";
       const titleMatch = content.match(/###\s*\*{0,2}(.*?)\*{0,2}(?:\n|$)/);
+      if (titleMatch && titleMatch[1]) {
+        const rawTitle = titleMatch[1];
+        const destPrefix = rawTitle.match(/^([A-Za-z0-9\s\-]+?)[:–\-(]/);
+        if (destPrefix && destPrefix[1].trim().length >= 3) {
+          dest = destPrefix[1].trim();
+        }
+      }
+      if (!dest) {
+        dest = extractDestination(content) || "";
+      }
+      if (!dest) {
+        const introMatch = content.match(/(?:welcome to|trip to|retreat in|retreat at|visit to|in|explore)\s+([A-Z][a-zA-Z]+)/i);
+        if (introMatch && introMatch[1]) dest = introMatch[1].trim();
+      }
+      if (!dest) dest = "Travel";
+
+      // 2. Clean Title: strip markdown and emojis
+      let title = `${dest} Travel Blueprint`;
       if (titleMatch && titleMatch[1]) {
         title = titleMatch[1]
           .replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "")
@@ -425,7 +458,7 @@ export default function AIChatPage() {
           .trim();
       }
 
-      // 2. Travelers count extraction
+      // 3. Travelers count extraction
       let travelers = 2;
       const travelersMatch = content.match(/(\d+)\s*(?:people|travelers|guests|persons|adults)/i);
       const familyMatch = content.match(/family\s+of\s+(\d+|three|four|five|six)/i);
@@ -436,7 +469,7 @@ export default function AIChatPage() {
         travelers = words[familyMatch[1].toLowerCase()] || parseInt(familyMatch[1], 10) || 4;
       }
 
-      // 3. Budget extraction (Total budget prioritized)
+      // 4. Budget extraction (Total budget prioritized)
       let budget = 12000;
       const totalBudgetMatch = content.match(/Total\s*(?:Estimated\s*)?Budget[^₹\n]*₹\s*([\d,]+)/i);
       const generalBudgetMatch = content.match(/Budget[^₹\n]*₹\s*([\d,]+)/i);
@@ -449,7 +482,6 @@ export default function AIChatPage() {
         budget = parseInt(anyBudgetMatch[1].replace(/,/g, ""), 10);
       }
 
-      // If per-head budget was mentioned (e.g. ₹4,000 per head) and budget seems too low:
       const perHeadMatch = content.match(/₹\s*([\d,]+)\s*(?:per\s*(?:head|person)|each)/i);
       if (perHeadMatch && perHeadMatch[1]) {
         const perHead = parseInt(perHeadMatch[1].replace(/,/g, ""), 10);
@@ -458,16 +490,60 @@ export default function AIChatPage() {
         }
       }
 
-      // 4. Parse day sections with Morning, Afternoon, Evening slots
+      // 5. Parse Recommended Stays
+      const hotels: string[] = [];
+      const staysSection = content.match(/Recommended Stays[^\n]*\n([\s\S]*?)(?=\n\s*(?:###|\*\*Authentic|\*\*Food|\*\*Local|\*\*PADAYAPPA|---|$))/i);
+      if (staysSection) {
+        const stayLines = staysSection[1].split("\n");
+        for (const sl of stayLines) {
+          const clean = sl.replace(/^\s*(?:\d+\.|\*|-|•)\s*/, "").replace(/[*_]/g, "").trim();
+          if (clean.length > 5 && !clean.toLowerCase().startsWith("recommended stays")) {
+            hotels.push(clean);
+          }
+        }
+      }
+
+      // 6. Parse Regional Food & Cuisines
+      const cuisines: string[] = [];
+      const restaurants: string[] = [];
+      const dishesMatch = content.match(/Must-Try Dishes\s*[:–-]?\s*([^\n]+)/i);
+      if (dishesMatch) {
+        const items = dishesMatch[1].replace(/[*_]/g, "").split(/[,;]/);
+        for (const it of items) {
+          const c = it.replace(/^and\s+/i, "").trim();
+          if (c.length > 2) cuisines.push(c);
+        }
+      }
+
+      const eateriesMatch = content.match(/Local Eateries\s*[:–-]?\s*([^\n]+)/i);
+      if (eateriesMatch) {
+        restaurants.push(eateriesMatch[1].replace(/[*_]/g, "").trim());
+      }
+
+      // 7. Parse day sections with Morning, Afternoon, Evening slots
       const daySections: any[] = [];
       const lines = content.split("\n");
       let currentDay: any = null;
       let currentSlot: "morning" | "afternoon" | "evening" | null = null;
+      let parsingDays = true;
 
       for (const rawLine of lines) {
         const line = rawLine.trim();
-        const dMatch = line.match(/(?:###\s*)?(?:\*{1,2})?Day\s*(\d+)\s*[:–-]?\s*([^*\n]+)?(?:\*{1,2})?/i);
+
+        // Stop markers: end of day-by-day timeline
+        if (/^(?:###|\*\*|---\s*$)?\s*(?:Recommended Stays|Authentic Regional|Must-Try|Local Eateries|PADAYAPPA'S|Cost Breakdown|Weather)/i.test(line)) {
+          if (currentDay) {
+            daySections.push(currentDay);
+            currentDay = null;
+          }
+          parsingDays = false;
+          continue;
+        }
+
+        // Strictly match Day header at start of line
+        const dMatch = line.match(/^(?:###\s*)?(?:\*{1,2})?Day\s*(\d+)\s*[:–-]?\s*([^*\n]+)?(?:\*{1,2})?/i);
         if (dMatch) {
+          parsingDays = true;
           if (currentDay) daySections.push(currentDay);
           const dNum = parseInt(dMatch[1], 10);
           const dTitle = (dMatch[2] || `Day ${dNum} Exploration`)
@@ -486,12 +562,12 @@ export default function AIChatPage() {
           continue;
         }
 
-        if (!currentDay) continue;
+        if (!parsingDays || !currentDay) continue;
 
         // Slot headers: Morning, Afternoon, Evening
-        const morningMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Morning|Dawn)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
-        const afternoonMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Afternoon|Midday|Noon)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
-        const eveningMatch = line.match(/(?:\*{1,2}|•|-)?\s*(?:Evening|Night|Dusk)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+        const morningMatch = line.match(/^(?:\*{1,2}|•|-)?\s*(?:Morning|Dawn)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+        const afternoonMatch = line.match(/^(?:\*{1,2}|•|-)?\s*(?:Afternoon|Midday|Noon)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
+        const eveningMatch = line.match(/^(?:\*{1,2}|•|-)?\s*(?:Evening|Night|Dusk)(?:\s*\((.*?)\))?[:–-]?\s*(.*)/i);
 
         if (morningMatch) {
           currentSlot = "morning";
@@ -540,6 +616,9 @@ export default function AIChatPage() {
         destination_summary: cleanSummary,
         itinerary_summary: cleanSummary,
         ai_itinerary: daySections,
+        recommended_hotels: hotels,
+        recommended_restaurants: restaurants,
+        local_cuisines: cuisines,
         user_name: userName,
       };
 
@@ -562,7 +641,19 @@ export default function AIChatPage() {
   };
 
   const extractDestination = (text: string): string | undefined => {
+    // 1. Try markdown title first
+    const titleMatch = text.match(/###\s*(?:\*{0,2})([A-Za-z0-9\s\-]+?)(?:\s*[:–\-(]|$)/);
+    if (titleMatch && titleMatch[1] && titleMatch[1].trim().length >= 3) {
+      const candidate = titleMatch[1].trim();
+      if (!/^(?:day|trip|travel|itinerary)/i.test(candidate)) {
+        return candidate;
+      }
+    }
+
+    // 2. Comprehensive keyword dictionary
     const keywords = [
+      "Vattappara",
+      "Vattavada",
       "Manali",
       "Varanasi",
       "Kashi",
@@ -572,7 +663,6 @@ export default function AIChatPage() {
       "Tenkasi",
       "Courtallam",
       "Munnar",
-      "Vattavada",
       "Coorg",
       "Ooty",
       "Varkala",
@@ -596,6 +686,13 @@ export default function AIChatPage() {
       "Malaysia",
       "Thailand",
       "Lakshadweep",
+      "Hampi",
+      "Gokarna",
+      "Thekkady",
+      "Kovalam",
+      "Kasaragod",
+      "Kannur",
+      "Ponmudi",
     ];
     return keywords.find((k) => text.toLowerCase().includes(k.toLowerCase()));
   };
@@ -1145,7 +1242,7 @@ export default function AIChatPage() {
                     boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
                   }}
                 >
-                  {msg.content}
+                  {renderFormattedContent(msg.content)}
                 </div>
 
                 {/* QUICK ACTIONS FOR ASSISTANT RESPONSES */}

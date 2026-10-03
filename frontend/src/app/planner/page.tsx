@@ -1,15 +1,20 @@
 "use client";
 
-import { FormEvent, useEffect, useState, Suspense } from "react";
+import { FormEvent, useEffect, useState, useMemo, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Sparkles,
   MapPin,
+  Navigation,
+  ArrowUpDown,
   Calendar,
   Users,
   IndianRupee,
   Compass,
   Car,
+  Plane,
+  Train as TrainIcon,
+  Bus as BusIcon,
   Hotel,
   Heart,
   ArrowRight,
@@ -25,8 +30,20 @@ import Badge from "../../components/ui/Badge";
 import { GlassCard, SectionHeader } from "../../components/ui/Card";
 import tripService from "../../services/trip.service";
 import { parseDestinationQuery } from "../../utils/queryParser";
+import { calculateTransitPricing } from "../../utils/transitPricing";
+
+const POPULAR_ORIGINS = [
+  "Ernakulam (Kochi)",
+  "Trivandrum",
+  "Bangalore",
+  "Chennai",
+  "Delhi",
+  "Mumbai",
+  "Calicut",
+];
 
 const POPULAR_DESTINATIONS = [
+  "Varanasi",
   "Munnar",
   "Coorg",
   "Ooty",
@@ -86,7 +103,7 @@ const TRANSPORT_MODES = [
   },
   {
     id: "Bike",
-    label: "Bike",
+    label: "Bike / Scooter",
     desc: "Two-wheeler rental across local spots",
     icon: "🏍️",
   },
@@ -399,6 +416,7 @@ function PlannerContent() {
   const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] = useState(1);
+  const [origin, setOrigin] = useState("Ernakulam (Kochi)");
   const [destination, setDestination] = useState("");
   const [durationDays, setDurationDays] = useState(3);
   const [budget, setBudget] = useState(15000);
@@ -415,6 +433,11 @@ function PlannerContent() {
   const [loading, setLoading] = useState(false);
   const [aiProcessingStage, setAiProcessingStage] = useState(0);
   const [error, setError] = useState("");
+
+  // Live Transit Distance and Ticket Pricing Intelligence
+  const transitPricing = useMemo(() => {
+    return calculateTransitPricing(origin, destination);
+  }, [origin, destination]);
 
   // Dynamically calibrate Activity & Interest Focus Points based on Google Travel Ideas & Dataset
   useEffect(() => {
@@ -467,11 +490,16 @@ function PlannerContent() {
       });
   }, [destination]);
 
-  // Auth guard & destination param pre-fill
+  // Auth guard & destination/origin param pre-fill
   useEffect(() => {
     const token = localStorage.getItem("tripgenius_token");
     if (!token) {
       router.push("/login");
+    }
+
+    const paramOrigin = searchParams?.get("origin");
+    if (paramOrigin) {
+      setOrigin(paramOrigin);
     }
 
     const paramDest = searchParams?.get("destination");
@@ -526,6 +554,7 @@ function PlannerContent() {
     try {
       const response = await tripService.generateAIItinerary({
         destination: destination.trim(),
+        origin: origin.trim(),
         duration_days: durationDays,
         budget: budget,
         travelers_count: travelersCount,
@@ -541,6 +570,7 @@ function PlannerContent() {
       // Store authoritative response merged with trip planning parameters
       const fullTripData = {
         destination: destination.trim(),
+        origin: origin.trim(),
         duration_days: durationDays,
         budget: budget,
         travelers_count: travelersCount,
@@ -856,10 +886,10 @@ function PlannerContent() {
       ) : (
         /* STEP CARD FORM */
         <GlassCard style={{ padding: "30px 24px" }}>
-          {/* STEP 1: DESTINATION */}
+          {/* STEP 1: ROUTE & DESTINATION */}
           {currentStep === 1 && (
             <div
-              style={{ display: "flex", flexDirection: "column", gap: "28px" }}
+              style={{ display: "flex", flexDirection: "column", gap: "24px" }}
             >
               <div>
                 <h3
@@ -870,95 +900,416 @@ function PlannerContent() {
                     marginBottom: "6px",
                   }}
                 >
-                  Where would you like to travel?
+                  Plan Your Route &amp; Destination
                 </h3>
                 <p style={{ color: "#94A3B8", fontSize: "0.92rem" }}>
-                  Type any destination in India or worldwide, or pick a popular
-                  sanctuary below.
+                  Specify where you are starting from and where you want to go. TripGenius automatically calculates transit distance, minimum ticket charges, and route logistics.
                 </p>
               </div>
 
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontSize: "0.88rem",
-                    fontWeight: 600,
-                    color: "#CBD5E1",
-                    marginBottom: "8px",
-                  }}
-                >
-                  Destination City / Region
-                </label>
-                <div style={{ position: "relative" }}>
-                  <MapPin
-                    size={20}
-                    color="#38BDF8"
-                    style={{
-                      position: "absolute",
-                      left: "16px",
-                      top: "50%",
-                      transform: "translateY(-50%)",
+              {/* DUAL ORIGIN & DESTINATION INPUTS WITH SWAP */}
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr auto 1fr",
+                  gap: "12px",
+                  alignItems: "flex-end",
+                }}
+              >
+                {/* 1. STARTING POINT */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <label
+                      style={{
+                        fontSize: "0.88rem",
+                        fontWeight: 700,
+                        color: "#34D399",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <Navigation size={14} color="#10B981" />
+                      Starting Point (Departure City)
+                    </label>
+                    <span style={{ fontSize: "0.75rem", color: "#6EE7B7", background: "rgba(16, 185, 129, 0.12)", padding: "2px 8px", borderRadius: "999px" }}>
+                      Journey Origin
+                    </span>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <Navigation
+                      size={18}
+                      color="#10B981"
+                      style={{
+                        position: "absolute",
+                        left: "14px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={origin}
+                      onChange={(e) => setOrigin(e.target.value)}
+                      placeholder="e.g. Ernakulam, Trivandrum, Bangalore, Delhi..."
+                      className="input-base"
+                      style={{
+                        paddingLeft: "42px",
+                        fontSize: "1.02rem",
+                        borderColor: "rgba(16, 185, 129, 0.35)",
+                        background: "rgba(6, 78, 59, 0.15)",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 2. SWAP BUTTON */}
+                <div style={{ paddingBottom: "2px", display: "flex", justifyContent: "center" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const temp = origin;
+                      setOrigin(destination);
+                      setDestination(temp);
                     }}
-                  />
-                  <input
-                    type="text"
-                    value={destination}
-                    onChange={(e) => setDestination(e.target.value)}
-                    placeholder="e.g. Munnar, Coorg, Ooty, Varkala, Wayanad..."
-                    className="input-base"
-                    style={{ paddingLeft: "48px", fontSize: "1.1rem" }}
-                    autoFocus
-                  />
+                    title="Swap Starting Point & Destination"
+                    style={{
+                      width: "42px",
+                      height: "42px",
+                      borderRadius: "10px",
+                      background: "rgba(255, 255, 255, 0.06)",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      color: "#94A3B8",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = "#38BDF8";
+                      e.currentTarget.style.borderColor = "#38BDF8";
+                      e.currentTarget.style.background = "rgba(14, 165, 233, 0.15)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = "#94A3B8";
+                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.15)";
+                      e.currentTarget.style.background = "rgba(255, 255, 255, 0.06)";
+                    }}
+                  >
+                    <ArrowUpDown size={18} />
+                  </button>
+                </div>
+
+                {/* 3. DESTINATION */}
+                <div>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "8px" }}>
+                    <label
+                      style={{
+                        fontSize: "0.88rem",
+                        fontWeight: 700,
+                        color: "#38BDF8",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                      }}
+                    >
+                      <MapPin size={14} color="#38BDF8" />
+                      Destination City / Region
+                    </label>
+                    <span style={{ fontSize: "0.75rem", color: "#7DD3FC", background: "rgba(14, 165, 233, 0.12)", padding: "2px 8px", borderRadius: "999px" }}>
+                      Target Destination
+                    </span>
+                  </div>
+                  <div style={{ position: "relative" }}>
+                    <MapPin
+                      size={18}
+                      color="#38BDF8"
+                      style={{
+                        position: "absolute",
+                        left: "14px",
+                        top: "50%",
+                        transform: "translateY(-50%)",
+                      }}
+                    />
+                    <input
+                      type="text"
+                      value={destination}
+                      onChange={(e) => setDestination(e.target.value)}
+                      placeholder="e.g. Varanasi, Munnar, Goa, Coorg, Ooty..."
+                      className="input-base"
+                      style={{
+                        paddingLeft: "42px",
+                        fontSize: "1.02rem",
+                        borderColor: "rgba(14, 165, 233, 0.35)",
+                      }}
+                      autoFocus
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <span
-                  style={{
-                    fontSize: "0.82rem",
-                    fontWeight: 700,
-                    color: "#64748B",
-                    textTransform: "uppercase",
-                    letterSpacing: "0.5px",
-                    display: "block",
-                    marginBottom: "10px",
-                  }}
-                >
-                  Quick Picks
-                </span>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px" }}>
-                  {POPULAR_DESTINATIONS.map((dest) => (
-                    <button
-                      key={dest}
-                      type="button"
-                      onClick={() => setDestination(dest)}
-                      style={{
-                        padding: "7px 14px",
-                        borderRadius: "999px",
-                        background:
-                          destination.toLowerCase() === dest.toLowerCase()
-                            ? "rgba(14, 165, 233, 0.25)"
-                            : "rgba(255, 255, 255, 0.05)",
-                        border:
-                          destination.toLowerCase() === dest.toLowerCase()
-                            ? "1px solid #38BDF8"
-                            : "1px solid rgba(255, 255, 255, 0.10)",
-                        color:
-                          destination.toLowerCase() === dest.toLowerCase()
-                            ? "#38BDF8"
-                            : "#CBD5E1",
-                        fontSize: "0.88rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        transition: "all 0.2s ease",
-                      }}
-                    >
-                      {dest}
-                    </button>
-                  ))}
+              {/* QUICK PICKS GRID */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                {/* Starting City Quick Picks */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      color: "#10B981",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      display: "block",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Starting City Picks
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {POPULAR_ORIGINS.map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onClick={() => setOrigin(city)}
+                        style={{
+                          padding: "5px 12px",
+                          borderRadius: "999px",
+                          background:
+                            origin.toLowerCase() === city.toLowerCase()
+                              ? "rgba(16, 185, 129, 0.25)"
+                              : "rgba(255, 255, 255, 0.04)",
+                          border:
+                            origin.toLowerCase() === city.toLowerCase()
+                              ? "1px solid #10B981"
+                              : "1px solid rgba(255, 255, 255, 0.08)",
+                          color:
+                            origin.toLowerCase() === city.toLowerCase()
+                              ? "#34D399"
+                              : "#94A3B8",
+                          fontSize: "0.80rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {city}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Destination Quick Picks */}
+                <div>
+                  <span
+                    style={{
+                      fontSize: "0.78rem",
+                      fontWeight: 700,
+                      color: "#38BDF8",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px",
+                      display: "block",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Popular Destinations
+                  </span>
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                    {POPULAR_DESTINATIONS.map((dest) => (
+                      <button
+                        key={dest}
+                        type="button"
+                        onClick={() => setDestination(dest)}
+                        style={{
+                          padding: "5px 12px",
+                          borderRadius: "999px",
+                          background:
+                            destination.toLowerCase() === dest.toLowerCase()
+                              ? "rgba(14, 165, 233, 0.25)"
+                              : "rgba(255, 255, 255, 0.04)",
+                          border:
+                            destination.toLowerCase() === dest.toLowerCase()
+                              ? "1px solid #38BDF8"
+                              : "1px solid rgba(255, 255, 255, 0.08)",
+                          color:
+                            destination.toLowerCase() === dest.toLowerCase()
+                              ? "#38BDF8"
+                              : "#CBD5E1",
+                          fontSize: "0.80rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                          transition: "all 0.15s ease",
+                        }}
+                      >
+                        {dest}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+
+              {/* LIVE ROUTE DISTANCE & MINIMUM TICKET CHARGE INTELLIGENCE CARD */}
+              {destination.trim() && (
+                <div
+                  style={{
+                    background: "linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.85))",
+                    border: "1px solid rgba(56, 189, 248, 0.25)",
+                    borderRadius: "16px",
+                    padding: "16px 20px",
+                    boxShadow: "0 8px 24px rgba(0, 0, 0, 0.25)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      marginBottom: "14px",
+                      paddingBottom: "10px",
+                      borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                    }}
+                  >
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ fontSize: "1.1rem" }}>🧭</span>
+                      <span style={{ fontWeight: 800, color: "#F8FAFC", fontSize: "0.98rem" }}>
+                        Route Intelligence: <span style={{ color: "#34D399" }}>{origin || "Starting City"}</span> ➔ <span style={{ color: "#38BDF8" }}>{destination}</span>
+                      </span>
+                    </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      {transitPricing.isInternational && (
+                        <span
+                          style={{
+                            background: "rgba(245, 158, 11, 0.18)",
+                            color: "#FBBF24",
+                            border: "1px solid rgba(245, 158, 11, 0.35)",
+                            padding: "3px 10px",
+                            borderRadius: "999px",
+                            fontSize: "0.80rem",
+                            fontWeight: 700,
+                          }}
+                        >
+                          🌐 International Overseas
+                        </span>
+                      )}
+                      <span
+                        style={{
+                          background: "rgba(14, 165, 233, 0.18)",
+                          color: "#38BDF8",
+                          border: "1px solid rgba(14, 165, 233, 0.35)",
+                          padding: "3px 10px",
+                          borderRadius: "999px",
+                          fontSize: "0.80rem",
+                          fontWeight: 700,
+                        }}
+                      >
+                        ~{transitPricing.distanceKm.toLocaleString("en-IN")} km route
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* TRANSIT MINIMUM TICKET FARES GRID */}
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                      gap: "12px",
+                    }}
+                  >
+                    {/* TRAIN */}
+                    <div
+                      style={{
+                        background: transitPricing.train.available ? "rgba(255, 255, 255, 0.03)" : "rgba(239, 68, 68, 0.04)",
+                        border: transitPricing.train.available ? "1px solid rgba(255, 255, 255, 0.08)" : "1px solid rgba(239, 68, 68, 0.20)",
+                        borderRadius: "12px",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.86rem", color: transitPricing.train.available ? "#E2E8F0" : "#94A3B8", display: "flex", alignItems: "center", gap: "6px" }}>
+                          🚆 Train (IRCTC)
+                        </span>
+                        <span style={{ fontSize: "0.72rem", color: transitPricing.train.available ? "#94A3B8" : "#EF4444" }}>
+                          {transitPricing.train.available ? `~${transitPricing.train.approxDurationHours} hrs` : "No Rail Route"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.78rem", color: "#94A3B8", lineHeight: 1.4 }}>
+                        {transitPricing.train.available ? (
+                          <>
+                            <div>Sleeper: <b style={{ color: "#34D399" }}>₹{transitPricing.train.sleeperMinFare.toLocaleString("en-IN")}</b> - ₹{transitPricing.train.sleeperMaxFare.toLocaleString("en-IN")}</div>
+                            <div>3AC: <b style={{ color: "#38BDF8" }}>₹{transitPricing.train.threeTierAcMin.toLocaleString("en-IN")}</b> - ₹{transitPricing.train.threeTierAcMax.toLocaleString("en-IN")}</div>
+                          </>
+                        ) : (
+                          <div style={{ color: "#EF4444", fontSize: "0.74rem" }}>
+                            {transitPricing.train.note}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* FLIGHT */}
+                    <div
+                      style={{
+                        background: transitPricing.isInternational ? "rgba(14, 165, 233, 0.10)" : "rgba(255, 255, 255, 0.03)",
+                        border: transitPricing.isInternational ? "1px solid rgba(14, 165, 233, 0.40)" : "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "12px",
+                        padding: "12px 14px",
+                        boxShadow: transitPricing.isInternational ? "0 0 16px rgba(14, 165, 233, 0.15)" : "none",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.86rem", color: "#E2E8F0", display: "flex", alignItems: "center", gap: "6px" }}>
+                          ✈️ {transitPricing.isInternational ? "International Flight (Primary)" : "Flight + Transit"}
+                        </span>
+                        <span style={{ fontSize: "0.72rem", color: "#38BDF8", fontWeight: 600 }}>
+                          ~{transitPricing.flight.approxDurationHours} hrs
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.78rem", color: "#94A3B8", lineHeight: 1.4 }}>
+                        <div>Economy: <b style={{ color: "#F59E0B" }}>₹{transitPricing.flight.economyMinFare.toLocaleString("en-IN")}</b> - ₹{transitPricing.flight.economyMaxFare.toLocaleString("en-IN")}</div>
+                        <div style={{ fontSize: "0.70rem", color: "#38BDF8" }}>{transitPricing.flight.note}</div>
+                      </div>
+                    </div>
+
+                    {/* BUS / ROAD */}
+                    <div
+                      style={{
+                        background: "rgba(255, 255, 255, 0.03)",
+                        border: "1px solid rgba(255, 255, 255, 0.08)",
+                        borderRadius: "12px",
+                        padding: "12px 14px",
+                      }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
+                        <span style={{ fontWeight: 700, fontSize: "0.86rem", color: "#E2E8F0", display: "flex", alignItems: "center", gap: "6px" }}>
+                          🚌 Bus / Road
+                        </span>
+                        <span style={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                          {transitPricing.bus.available ? `~${transitPricing.bus.approxDurationHours} hrs` : "N/A"}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: "0.78rem", color: "#94A3B8", lineHeight: 1.4 }}>
+                        {transitPricing.bus.available ? (
+                          <>
+                            <div>Express: <b style={{ color: "#A78BFA" }}>₹{transitPricing.bus.nonAcMinFare.toLocaleString("en-IN")}</b></div>
+                            <div>AC Sleeper: <b style={{ color: "#A78BFA" }}>₹{transitPricing.bus.acSleeperMinFare.toLocaleString("en-IN")}</b></div>
+                          </>
+                        ) : (
+                          <div style={{ color: "#64748B", fontSize: "0.74rem" }}>
+                            {transitPricing.isInternational ? "No cross-continental bus routes" : "Long distance route; Train or Flight advised"}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: "10px", fontSize: "0.75rem", color: "#94A3B8", display: "flex", alignItems: "center", gap: "6px" }}>
+                    <span>💡</span>
+                    <span>TripGenius AI factors departure from <b>{origin || "Starting City"}</b> into your Day 1 arrival timing and transportation allocation.</span>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -1458,10 +1809,11 @@ function PlannerContent() {
                   Transportation Mode
                 </label>
                 <div
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
                   style={{
                     display: "grid",
-                    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                    gap: "10px",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                    gap: "12px",
                   }}
                 >
                   {TRANSPORT_MODES.map((t) => {
@@ -1471,7 +1823,7 @@ function PlannerContent() {
                         key={t.id}
                         onClick={() => setTransportationMode(t.id)}
                         style={{
-                          padding: "14px",
+                          padding: "14px 16px",
                           borderRadius: "12px",
                           background: isSelected
                             ? "rgba(20, 184, 166, 0.15)"
@@ -1482,28 +1834,138 @@ function PlannerContent() {
                           cursor: "pointer",
                           display: "flex",
                           alignItems: "center",
-                          gap: "10px",
+                          gap: "12px",
                           transition: "all 0.2s ease",
                         }}
                       >
-                        <span style={{ fontSize: "1.3rem" }}>{t.icon}</span>
-                        <div>
+                        <div
+                          style={{
+                            width: "40px",
+                            height: "40px",
+                            borderRadius: "10px",
+                            background: isSelected
+                              ? "rgba(45, 212, 191, 0.20)"
+                              : "rgba(255, 255, 255, 0.06)",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "1.35rem",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {t.icon}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
                           <h5
                             style={{
-                              fontSize: "0.88rem",
+                              fontSize: "0.90rem",
                               fontWeight: 700,
                               color: isSelected ? "#2DD4BF" : "#FFFFFF",
+                              marginBottom: "2px",
                             }}
                           >
                             {t.label}
                           </h5>
-                          <p style={{ fontSize: "0.72rem", color: "#94A3B8" }}>
+                          <p style={{ fontSize: "0.74rem", color: "#94A3B8", margin: 0, lineHeight: 1.3 }}>
                             {t.desc}
                           </p>
                         </div>
                       </div>
                     );
                   })}
+                </div>
+
+                {/* LIVE FARE INSIGHT FOR SELECTED TRANSPORT MODE */}
+                <div
+                  style={{
+                    marginTop: "16px",
+                    padding: "14px 18px",
+                    borderRadius: "12px",
+                    background: "rgba(14, 165, 233, 0.08)",
+                    border: "1px solid rgba(14, 165, 233, 0.25)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    flexWrap: "wrap",
+                    gap: "10px",
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span style={{ fontSize: "1.1rem" }}>
+                      {transportationMode === "Train"
+                        ? "🚆"
+                        : transportationMode === "Flight"
+                          ? "✈️"
+                          : transportationMode === "Bus"
+                            ? "🚌"
+                            : "🚗"}
+                    </span>
+                    <span
+                      style={{
+                        fontSize: "0.86rem",
+                        color: "#E0F2FE",
+                        fontWeight: 600,
+                      }}
+                    >
+                      Selected Transit:{" "}
+                      <b style={{ color: "#38BDF8" }}>{transportationMode}</b>{" "}
+                      from <b>{origin || "Starting Point"}</b> to{" "}
+                      <b>{destination || "Destination"}</b> (~
+                      {transitPricing.distanceKm.toLocaleString("en-IN")} km)
+                    </span>
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.82rem",
+                      color: "#34D399",
+                      fontWeight: 700,
+                    }}
+                  >
+                    {transportationMode === "Train" && (
+                      <span>
+                        IRCTC Sleeper from ₹
+                        {transitPricing.train.sleeperMinFare.toLocaleString(
+                          "en-IN"
+                        )}{" "}
+                        · 3AC from ₹
+                        {transitPricing.train.threeTierAcMin.toLocaleString(
+                          "en-IN"
+                        )}
+                      </span>
+                    )}
+                    {transportationMode === "Flight" && (
+                      <span>
+                        Economy from ~₹
+                        {transitPricing.flight.economyMinFare.toLocaleString(
+                          "en-IN"
+                        )}{" "}
+                        / passenger
+                      </span>
+                    )}
+                    {transportationMode === "Bus" && (
+                      <span>
+                        Express Bus from ₹
+                        {transitPricing.bus.nonAcMinFare.toLocaleString(
+                          "en-IN"
+                        )}{" "}
+                        · AC Sleeper ₹
+                        {transitPricing.bus.acSleeperMinFare.toLocaleString(
+                          "en-IN"
+                        )}
+                      </span>
+                    )}
+                    {(transportationMode === "Car" ||
+                      transportationMode === "Bike" ||
+                      transportationMode === "Cycling") && (
+                      <span>
+                        Est. Fuel &amp; Highway Tolls: ~₹
+                        {transitPricing.car.fuelAndTollsApprox.toLocaleString(
+                          "en-IN"
+                        )}{" "}
+                        ({transitPricing.car.drivingHours} hrs driving)
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

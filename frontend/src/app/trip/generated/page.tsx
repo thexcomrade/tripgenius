@@ -76,6 +76,7 @@ interface RentalDetails {
 interface TripData {
   id?: string;
   destination: string;
+  origin?: string;
   duration_days: number;
   budget: number;
   travelers_count: number;
@@ -1942,7 +1943,7 @@ export default function GeneratedTripPage() {
                 </div>
                 <div>
                   <h4 style={{ color: "#FFFFFF", fontSize: "1.15rem", fontWeight: 800, margin: 0 }}>
-                    Track &amp; Learn: Actual Expenses (Chelavakkiya Budget)
+                    Track &amp; Learn: Actual Expenses
                   </h4>
                   <span style={{ color: "#C4B5FD", fontSize: "0.82rem" }}>
                     AI learns from your real travel expenses to calibrate and improve future pricing models
@@ -2195,7 +2196,7 @@ export default function GeneratedTripPage() {
                     Predicted Budget: <b>₹{Number(expenseResult.predicted_cost || 0).toLocaleString("en-IN")}</b>
                   </div>
                   <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(0, 0, 0, 0.25)" }}>
-                    Chelavakkiya Budget: <b>₹{Number(expenseResult.actual_spent_total || 0).toLocaleString("en-IN")}</b>
+                    Actual Spend: <b>₹{Number(expenseResult.actual_spent_total || 0).toLocaleString("en-IN")}</b>
                   </div>
                   <div style={{ padding: "8px 12px", borderRadius: "8px", background: "rgba(0, 0, 0, 0.25)" }}>
                     Budget Variance:{" "}

@@ -116,6 +116,7 @@ class AIService:
         transportation_mode: str | None = None,
         preferred_accommodation: str | None = None,
         cost_data: dict[str, float] | None = None,
+        origin: str | None = None,
     ) -> str:
         cost = cost_data or self.estimate_trip_cost(
             budget, duration_days, travelers_count, travel_style
@@ -148,12 +149,16 @@ class AIService:
             if is_bike_rental
             else (transportation_mode or "Private Car / Taxi")
         )
+        origin_line = f"- Starting Point / Departure City: {origin}" if origin else "- Starting Point: Regional Hub"
+        route_line = f"- Route: From {origin} to {destination}" if origin else f"- Destination: {destination}"
 
         return f"""You are Trip Geni AI, an elite travel architect and real-world expense specialist.
 Create an inspiring, highly realistic, and accurate real-money travel and expense plan.
 
 DESTINATION & TRAVEL DETAILS:
+{origin_line}
 - Destination: {destination}
+{route_line}
 - Duration: {duration_days} Days ({nights} Nights)
 - Travelers: {travelers_count} Traveler(s)
 - Travel Style: {travel_style or "Leisure"}
@@ -1007,6 +1012,7 @@ Return JSON.
         travel_style: str | None = None,
         transportation_mode: str | None = None,
         preferred_accommodation: str | None = None,
+        origin: str | None = None,
     ) -> dict[str, Any]:
         """
         Full-fidelity structured fallback plan when external AI services are unavailable.
@@ -1021,8 +1027,10 @@ Return JSON.
             travel_style=travel_style,
             transportation_mode=transportation_mode,
             preferred_accommodation=preferred_accommodation,
+            origin=origin,
         )
         response["generation_mode"] = "curated_offline"
+        response["origin"] = origin
         return response
 
     # ==================================================
@@ -1083,6 +1091,7 @@ Return JSON.
         travel_style: str | None = None,
         transportation_mode: str | None = None,
         preferred_accommodation: str | None = None,
+        origin: str | None = None,
     ) -> dict[str, Any]:
 
         weather = self.get_weather_context(destination)
@@ -1145,6 +1154,7 @@ Return JSON.
 
         return {
             "destination": destination,
+            "origin": origin,
             "trip_title": f"{destination} Travel Experience",
             "destination_summary": self.generate_destination_summary(destination),
             "weather_summary": weather,
@@ -1178,6 +1188,7 @@ Return JSON.
         travel_style: str | None = None,
         transportation_mode: str | None = None,
         preferred_accommodation: str | None = None,
+        origin: str | None = None,
     ) -> dict[str, Any]:
 
         self.validate_trip_input(destination, duration_days, budget)
@@ -1205,6 +1216,7 @@ Return JSON.
         try:
             prompt = self._build_master_prompt(
                 destination=destination,
+                origin=origin,
                 duration_days=duration_days,
                 budget=budget,
                 interests=interests,
@@ -1221,6 +1233,7 @@ Return JSON.
 
             base_response = self.build_complete_response(
                 destination=destination,
+                origin=origin,
                 duration_days=duration_days,
                 budget=budget,
                 travelers_count=travelers_count,
@@ -1277,6 +1290,7 @@ Return JSON.
                         base_response["attractions"] = self.generate_attractions(destination, interests)
 
             base_response["destination"] = destination
+            base_response["origin"] = origin
             return self.format_trip_response(base_response)
 
         except Exception as error:
@@ -1284,6 +1298,7 @@ Return JSON.
 
             fallback = self.generate_offline_trip_plan(
                 destination=destination,
+                origin=origin,
                 duration_days=duration_days,
                 budget=budget,
                 interests=interests,
@@ -1295,6 +1310,7 @@ Return JSON.
 
             fallback["error"] = None
             fallback["generation_mode"] = "offline"
+            fallback["origin"] = origin
             return fallback
 
     def generate_chat_response(

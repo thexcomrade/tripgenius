@@ -86,7 +86,6 @@ export default function AppNavbar() {
     { name: "Planner", href: "/planner", highlight: true },
     { name: "Explore", href: "/explore" },
     { name: "Dashboard", href: "/dashboard" },
-    { name: "History", href: "/trip/history" },
     { name: "Favorites", href: "/favorites" },
   ];
 
@@ -95,6 +94,8 @@ export default function AppNavbar() {
     { name: "Analytics", href: "/analytics", icon: BarChart3 },
     { name: "Achievements", href: "/achievements", icon: Award },
   ];
+
+  const isHome = pathname === "/";
 
   const isActive = (path: string) => {
     if (path === "/") return pathname === "/";
@@ -109,7 +110,11 @@ export default function AppNavbar() {
         zIndex: 100,
         backdropFilter: "blur(20px)",
         WebkitBackdropFilter: "blur(20px)",
-        background: scrolled ? "rgba(3, 7, 18, 0.88)" : "rgba(3, 7, 18, 0.72)",
+        background: scrolled
+          ? "rgba(3, 7, 18, 0.88)"
+          : isHome
+            ? "rgba(3, 7, 18, 0.35)"
+            : "rgba(3, 7, 18, 0.72)",
         borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
         transition: "background 0.3s ease, border-color 0.3s ease",
       }}
@@ -130,12 +135,14 @@ export default function AppNavbar() {
         {/* BRAND LOGO */}
         <Link
           href="/"
+          className={isHome ? "animate-blur-fade-up" : ""}
           style={{
             display: "flex",
             alignItems: "center",
             gap: "12px",
             textDecoration: "none",
             flexShrink: 0,
+            animationDelay: isHome ? "0ms" : undefined,
           }}
         >
           <Image
@@ -167,12 +174,13 @@ export default function AppNavbar() {
           }}
           className="desktop-nav-container"
         >
-          {mainNav.map((item) => {
+          {mainNav.map((item, idx) => {
             const active = isActive(item.href);
             return (
               <Link
                 key={item.href}
                 href={item.href}
+                className={isHome ? "animate-blur-fade-up" : ""}
                 style={{
                   padding: "8px 14px",
                   borderRadius: "10px",
@@ -187,6 +195,7 @@ export default function AppNavbar() {
                     : "1px solid transparent",
                   transition: "all 0.2s ease",
                   textDecoration: "none",
+                  animationDelay: isHome ? `${100 + idx * 50}ms` : undefined,
                 }}
               >
                 {item.name}
@@ -314,18 +323,18 @@ export default function AppNavbar() {
           <Link
             href="/notifications"
             title="Notifications"
+            className={isHome ? "animate-blur-fade-up liquid-glass" : "liquid-glass"}
             style={{
               width: "38px",
               height: "38px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#CBD5E1",
               position: "relative",
               transition: "all 0.2s ease",
+              animationDelay: isHome ? "350ms" : undefined,
             }}
           >
             <Bell size={18} />
@@ -363,18 +372,18 @@ export default function AppNavbar() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Link
                 href="/profile"
+                className={`liquid-glass ${isHome ? "animate-blur-fade-up" : ""}`}
                 style={{
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
                   padding: "6px 14px",
                   borderRadius: "999px",
-                  background: "rgba(14, 165, 233, 0.12)",
-                  border: "1px solid rgba(14, 165, 233, 0.25)",
                   color: "#F8FAFC",
                   fontSize: "0.88rem",
                   fontWeight: 600,
                   textDecoration: "none",
+                  animationDelay: isHome ? "400ms" : undefined,
                 }}
               >
                 <User size={15} color="#38BDF8" />
@@ -393,9 +402,8 @@ export default function AppNavbar() {
               <button
                 onClick={handleLogout}
                 title="Sign Out"
+                className={`liquid-glass ${isHome ? "animate-blur-fade-up" : ""}`}
                 style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.10)",
                   borderRadius: "10px",
                   width: "38px",
                   height: "38px",
@@ -404,6 +412,7 @@ export default function AppNavbar() {
                   justifyContent: "center",
                   cursor: "pointer",
                   color: "#94A3B8",
+                  animationDelay: isHome ? "450ms" : undefined,
                 }}
               >
                 <LogOut size={16} />
@@ -413,22 +422,25 @@ export default function AppNavbar() {
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <Link
                 href="/login"
+                className={isHome ? "animate-blur-fade-up" : ""}
                 style={{
                   color: "#CBD5E1",
                   fontSize: "0.9rem",
                   fontWeight: 600,
                   padding: "8px 14px",
                   textDecoration: "none",
+                  animationDelay: isHome ? "400ms" : undefined,
                 }}
               >
                 Sign In
               </Link>
               <Link
                 href="/register"
-                className="btn-primary"
+                className={`btn-primary ${isHome ? "animate-blur-fade-up" : ""}`}
                 style={{
                   padding: "8px 16px",
                   fontSize: "0.88rem",
+                  animationDelay: isHome ? "450ms" : undefined,
                 }}
               >
                 Register
@@ -441,19 +453,18 @@ export default function AppNavbar() {
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle navigation menu"
+            className={`liquid-glass mobile-hamburger-btn ${isHome ? "animate-blur-fade-up" : ""}`}
             style={{
               width: "38px",
               height: "38px",
               borderRadius: "10px",
-              background: "rgba(255, 255, 255, 0.05)",
-              border: "1px solid rgba(255, 255, 255, 0.10)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#FFFFFF",
               cursor: "pointer",
+              color: "#CBD5E1",
+              animationDelay: isHome ? "350ms" : undefined,
             }}
-            className="mobile-hamburger-btn"
           >
             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>

@@ -1430,7 +1430,7 @@ class TourismRAGService:
             "reply": (
                 f"{greeting_prefix}"
                 "I'm ready to craft your personalized travel plan.\n\n"
-                "Which destination do you have in mind? (e.g. **Varanasi**, **Thenkasi**, **Munnar**, **Varkala**, **Coorg**, **Goa**, or **Paris**)?\n\n"
+                "Which destination do you have in mind? (e.g. Varanasi, Thenkasi, Munnar, Varkala, Coorg, Goa, or Paris)?\n\n"
                 "❓ Just drop the city or region name, and we'll take it from there!"
             ),
             "source": "rag_knowledge_engine",

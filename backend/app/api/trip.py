@@ -227,6 +227,7 @@ def generate_ai_itinerary(
 
         result = ai_service.generate_trip_plan(
             destination=payload.destination,
+            origin=payload.origin,
             duration_days=payload.duration_days,
             budget=payload.budget,
             interests=payload.interests,
@@ -237,6 +238,7 @@ def generate_ai_itinerary(
         )
 
         result["destination"] = result.get("destination") or payload.destination
+        result["origin"] = payload.origin
         result["duration_days"] = payload.duration_days
         result["budget"] = payload.budget
         result["travelers_count"] = payload.travelers_count

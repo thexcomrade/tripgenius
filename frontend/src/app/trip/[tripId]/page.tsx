@@ -162,9 +162,30 @@ export default function TripDetailsPage() {
       <section style={sectionStyle}>
         <h2>🎒 Packing Checklist</h2>
 
-        <ul>
+        <ul style={{ listStyleType: "none", paddingLeft: 0 }}>
           {(trip.packing_checklist ?? []).map((item: string, index: number) => (
-            <li key={index}>{item}</li>
+            <li
+              key={index}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "10px",
+                margin: "8px 0",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "15px",
+                  height: "15px",
+                  border: "1.5px solid #0EA5E9",
+                  borderRadius: "3px",
+                  background: "rgba(14, 165, 233, 0.12)",
+                  flexShrink: 0,
+                }}
+              />
+              <span>{item}</span>
+            </li>
           ))}
         </ul>
       </section>

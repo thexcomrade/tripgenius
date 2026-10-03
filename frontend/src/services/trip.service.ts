@@ -11,6 +11,7 @@ const getApiBaseUrl = (): string => {
 
 export interface AITripRequest {
   destination: string;
+  origin?: string;
   duration_days: number;
   budget: number;
   travelers_count: number;
@@ -23,6 +24,7 @@ export interface AITripRequest {
 export interface TripCreateRequest {
   trip_title: string;
   destination: string;
+  origin?: string;
   duration_days: number;
   budget: number;
   travelers_count: number;
